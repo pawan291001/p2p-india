@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Wallet } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,11 +26,12 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Wallet className="h-4 w-4" />
-            Connect Wallet
-          </Button>
+        <div className="hidden md:flex">
+          <ConnectButton
+            chainStatus="icon"
+            accountStatus="address"
+            showBalance={true}
+          />
         </div>
 
         <button
@@ -52,10 +54,13 @@ const Navbar = () => {
             <Button variant="ghost" size="sm" className="justify-start text-muted-foreground">
               My Ads
             </Button>
-            <Button variant="outline" size="sm" className="gap-2 mt-2">
-              <Wallet className="h-4 w-4" />
-              Connect Wallet
-            </Button>
+            <div className="mt-2">
+              <ConnectButton
+                chainStatus="icon"
+                accountStatus="address"
+                showBalance={true}
+              />
+            </div>
           </div>
         </div>
       )}
