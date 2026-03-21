@@ -40,6 +40,49 @@ const MyOrders = () => {
   const { ads, isLoading: loadingAds } = useContractAds();
   const { deals, isLoading: loadingDeals } = useContractDeals();
   const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
+  const [pendingAdId, setPendingAdId] = useState<number | null>(null);
+
+  // Cancel ad
+  const { writeContract: cancelAd, data: cancelHash, isPending: cancelPending } = useWriteContract();
+  const { isSuccess: cancelConfirmed } = useWaitForTransactionReceipt({ hash: cancelHash });
+
+  // Claim expired ad
+  const { writeContract: claimExpired, data: claimHash, isPending: claimPending } = useWriteContract();
+  const { isSuccess: claimConfirmed } = useWaitForTransactionReceipt({ hash: claimHash });
+
+  useEffect(() => {
+    if (cancelConfirmed) {
+      toast.success("Ad cancelled. Funds returned to your wallet.");
+      setPendingAdId(null);
+    }
+  }, [cancelConfirmed]);
+
+  useEffect(() => {
+    if (claimConfirmed) {
+      toast.success("Expired ad claimed. Funds returned to your wallet.");
+      setPendingAdId(null);
+    }
+  }, [claimConfirmed]);
+
+  const handleCancelAd = (adId: number) => {
+    setPendingAdId(adId);
+    cancelAd({
+      address: P2P_CONTRACT_ADDRESS,
+      abi: P2P_ESCROW_ABI,
+      functionName: "cancelAd",
+      args: [BigInt(adId)],
+    } as any);
+  };
+
+  const handleClaimExpired = (adId: number) => {
+    setPendingAdId(adId);
+    claimExpired({
+      address: P2P_CONTRACT_ADDRESS,
+      abi: P2P_ESCROW_ABI,
+      functionName: "claimExpiredAd",
+      args: [BigInt(adId)],
+    } as any);
+  };
 
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
