@@ -47,20 +47,24 @@ export function useContractAds() {
     for (const res of adsData) {
       if (res.status !== "success" || !res.result) continue;
       const ad = res.result as any;
-      const tokenAddr = ad.token || ad[2];
-      const seller = ad.seller || ad[1];
-      const tokenAmount = ad.tokenAmount || ad[3];
-      const pricePerToken = ad.pricePerToken || ad[4];
-      const dealTimeout = ad.dealTimeout || ad[5];
-      const adExpiry = ad.adExpiry || ad[6];
-      const paymentInfo = ad.paymentInfo || ad[7];
-      const status = Number(ad.status ?? ad[8]);
-      const id = Number(ad.id ?? ad[0]);
 
-      const isBNB = tokenAddr.toLowerCase() === NATIVE_BNB.toLowerCase();
+      // Handle both named and positional access
+      const id = ad.id !== undefined ? ad.id : ad[0];
+      const seller = ad.seller || ad[1];
+      const tokenAddr = ad.token || ad[2];
+      const tokenAmount = ad.tokenAmount !== undefined ? ad.tokenAmount : ad[3];
+      const pricePerToken = ad.pricePerToken !== undefined ? ad.pricePerToken : ad[4];
+      const dealTimeout = ad.dealTimeout !== undefined ? ad.dealTimeout : ad[5];
+      const adExpiry = ad.adExpiry !== undefined ? ad.adExpiry : ad[6];
+      const paymentInfo = ad.paymentInfo !== undefined ? ad.paymentInfo : ad[7];
+      const status = ad.status !== undefined ? ad.status : ad[8];
+
+      if (id === undefined || tokenAmount === undefined) continue;
+
+      const isBNB = String(tokenAddr).toLowerCase() === NATIVE_BNB.toLowerCase();
       const tokenSymbol = isBNB ? "BNB" : "USDT";
-      const amountFormatted = formatUnits(BigInt(tokenAmount), 18);
-      const priceFormatted = formatUnits(BigInt(pricePerToken), 2);
+      const amountFormatted = formatUnits(BigInt(String(tokenAmount)), 18);
+      const priceFormatted = formatUnits(BigInt(String(pricePerToken)), 2);
       const inrTotal = (parseFloat(amountFormatted) * parseFloat(priceFormatted)).toFixed(2);
 
       ads.push({
