@@ -170,6 +170,38 @@ const MyOrders = () => {
                             <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
                           </div>
                         </div>
+                        {/* Action buttons */}
+                        {(ad.status === 0) && (
+                          <div className="mt-3 flex gap-2">
+                            {!isExpired ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-sell border-sell/30 hover:bg-sell/10"
+                                onClick={() => handleCancelAd(ad.adId)}
+                                disabled={cancelPending && pendingAdId === ad.adId}
+                              >
+                                {cancelPending && pendingAdId === ad.adId ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : null}
+                                Cancel Ad
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-primary border-primary/30 hover:bg-primary/10"
+                                onClick={() => handleClaimExpired(ad.adId)}
+                                disabled={claimPending && pendingAdId === ad.adId}
+                              >
+                                {claimPending && pendingAdId === ad.adId ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : null}
+                                Claim Funds
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
