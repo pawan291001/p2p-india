@@ -288,9 +288,10 @@ function DealRow({ dealId, onResolve }: { dealId: number; onResolve: (id: number
 
   const deal = data as any;
   const status = Number(deal.status);
-  const token = deal.token === "0x0000000000000000000000000000000000000000" ? "BNB" : "USDT";
+  const NATIVE_BNB = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+  const token = String(deal.token).toLowerCase() === NATIVE_BNB.toLowerCase() ? "BNB" : "USDT";
   const amount = formatUnits(deal.tokenAmount, 18);
-  const inr = formatUnits(deal.inrAmount, 18);
+  const inr = formatUnits(deal.inrAmount, 2);
   const isDisputed = status === 4;
   const hasBuyerProof = deal.disputeProofBuyer && deal.disputeProofBuyer.length > 0;
   const hasSellerProof = deal.disputeProofSeller && deal.disputeProofSeller.length > 0;
