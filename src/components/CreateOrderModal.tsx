@@ -110,9 +110,9 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
         address: P2P_CONTRACT_ADDRESS,
         abi: P2P_ESCROW_ABI,
         functionName: "createAd",
-        args: [selectedToken.address, tokenAmountWei, pricePerTokenWei, BigInt(dealTimeout), BigInt(adDuration), paymentStr],
+        args: [selectedToken.address as `0x${string}`, tokenAmountWei, pricePerTokenWei, BigInt(dealTimeout), BigInt(adDuration), paymentStr],
         value: isBNB ? tokenAmountWei : BigInt(0),
-      });
+      } as any);
     } catch (e: any) {
       toast.error(e?.shortMessage || "Transaction failed");
       setStep("form");
