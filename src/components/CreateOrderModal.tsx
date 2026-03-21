@@ -52,7 +52,30 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
   const tokenAmountWei = amount ? parseUnits(amount, 18) : BigInt(0);
-  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0); // 2 decimals for INR
+  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0);
+
+  // Read BNB balance
+  const { data: bnbBalance } = useBalance({
+    address,
+    query: { enabled: isBNB && !!address && open },
+  });
+
+  // Read USDT balance
+  const { data: usdtBalance } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !isBNB && !!address && open },
+  });
+
+  const walletBalance = isBNB
+    ? bnbBalance ? parseFloat(formatUnits(bnbBalance.value, 18)) : 0
+    : usdtBalance ? parseFloat(formatUnits(usdtBalance as bigint, 18)) : 0;
+
+  const walletBalanceFormatted = walletBalance.toFixed(4);
+  const amountNum = amount ? parseFloat(amount) : 0;
+  const exceedsBalance = amountNum > walletBalance;
 
   // Check current USDT allowance
   const { data: allowance } = useReadContract({
