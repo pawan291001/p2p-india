@@ -1,13 +1,16 @@
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Wallet, Package, ShoppingCart } from "lucide-react";
+import { Wallet, Package, ShoppingCart, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useContractAds, LiveAd } from "@/hooks/useContractAds";
 import { useContractDeals, LiveDeal } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
 import { Clock, Shield, CheckCircle2, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TradeWindow from "@/components/TradeWindow";
+import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
+import { P2P_ESCROW_ABI } from "@/config/abi";
+import { toast } from "sonner";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
