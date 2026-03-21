@@ -1,29 +1,44 @@
-import { useState, useMemo } from "react";
-import { Plus, Search } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAccount } from "wagmi";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Navbar from "@/components/Navbar";
 import OrderCard from "@/components/OrderCard";
 import CreateOrderModal from "@/components/CreateOrderModal";
 import StatsBar from "@/components/StatsBar";
 import CryptoFilter from "@/components/CryptoFilter";
-import { mockOrders } from "@/data/mockOrders";
+import TradeWindow from "@/components/TradeWindow";
+
+interface LiveAd {
+  adId: number;
+  seller: string;
+  token: string;
+  tokenSymbol: string;
+  tokenAmount: string;
+  pricePerToken: string;
+  inrTotal: string;
+  dealTimeout: number;
+  paymentInfo: string;
+}
 
 const Index = () => {
-  const [tab, setTab] = useState<"buy" | "sell">("buy");
+  const { address, isConnected } = useAccount();
   const [crypto, setCrypto] = useState("USDT");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
 
-  const filteredOrders = useMemo(() => {
-    return mockOrders.filter((order) => {
-      const matchesType = order.type === tab;
-      const matchesCrypto = order.crypto === crypto;
-      const matchesSearch =
-        !search || order.advertiser.toLowerCase().includes(search.toLowerCase());
-      return matchesType && matchesCrypto && matchesSearch;
-    });
-  }, [tab, crypto, search]);
+  // In production: read from contract via useReadContract / useContractRead
+  // For now, empty — real data only
+  const liveAds: LiveAd[] = [];
+
+  const filteredAds = liveAds.filter((ad) => {
+    const matchesCrypto = ad.tokenSymbol === crypto;
+    const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
+    return matchesCrypto && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,7 +51,7 @@ const Index = () => {
             P2P Trading
           </h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-lg">
-            Trade crypto directly with other users. Smart contract escrow ensures every trade is safe — no middlemen, no trust required.
+            Trade BNB & USDT directly with other users on BNB Smart Chain. Smart contract escrow — no middlemen.
           </p>
         </div>
 
@@ -48,73 +63,84 @@ const Index = () => {
         {/* Controls */}
         <div className="mb-6 space-y-4 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Buy/Sell Toggle */}
-            <div className="flex rounded-lg bg-surface-2 p-1">
-              <button
-                onClick={() => setTab("buy")}
-                className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
-                  tab === "buy"
-                    ? "bg-buy text-buy-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Buy
-              </button>
-              <button
-                onClick={() => setTab("sell")}
-                className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
-                  tab === "sell"
-                    ? "bg-sell text-sell-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Sell
-              </button>
-            </div>
+            <CryptoFilter selected={crypto} onSelect={setCrypto} />
 
             <div className="flex items-center gap-3">
               <div className="relative flex-1 sm:w-64 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search advertiser..."
+                  placeholder="Search by address..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="bg-surface-2 border-input pl-9"
                 />
               </div>
-              <Button onClick={() => setShowCreate(true)} className="gap-2 shrink-0">
+              <Button
+                onClick={() => setShowCreate(true)}
+                className="gap-2 shrink-0"
+                disabled={!isConnected}
+              >
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Post Ad</span>
               </Button>
             </div>
           </div>
-
-          <CryptoFilter selected={crypto} onSelect={setCrypto} />
         </div>
+
+        {/* Connection prompt */}
+        {!isConnected && (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <Wallet className="h-8 w-8 text-primary" />
+            </div>
+            <p className="text-foreground font-semibold mb-1">Connect your wallet</p>
+            <p className="text-muted-foreground text-sm mb-4 max-w-sm">
+              Connect your BNB Smart Chain wallet to view live ads, create orders, and start trading.
+            </p>
+            <ConnectButton />
+          </div>
+        )}
 
         {/* Order List */}
-        <div className="space-y-3">
-          {filteredOrders.length > 0 ? (
-            filteredOrders.map((order, i) => (
-              <OrderCard key={order.id} {...order} index={i} />
-            ))
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
-              <p className="text-muted-foreground text-sm">No orders found for {crypto}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={() => setShowCreate(true)}
-              >
-                Be the first to post
-              </Button>
-            </div>
-          )}
-        </div>
+        {isConnected && (
+          <div className="space-y-3">
+            {filteredAds.length > 0 ? (
+              filteredAds.map((ad, i) => (
+                <OrderCard
+                  key={ad.adId}
+                  {...ad}
+                  index={i}
+                  onTrade={() => setSelectedAd(ad)}
+                />
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
+                <p className="text-muted-foreground text-sm mb-1">No live ads for {crypto}</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Deploy the contract and create the first ad to start trading.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreate(true)}
+                >
+                  Create the first ad
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       <CreateOrderModal open={showCreate} onClose={() => setShowCreate(false)} />
+
+      {selectedAd && address && (
+        <TradeWindow
+          ad={selectedAd}
+          userAddress={address}
+          onClose={() => setSelectedAd(null)}
+        />
+      )}
     </div>
   );
 };

@@ -3,7 +3,7 @@ interface CryptoFilterProps {
   onSelect: (crypto: string) => void;
 }
 
-const CRYPTOS = ["USDT", "BTC", "ETH", "BNB", "SOL"];
+const CRYPTOS = ["USDT", "BNB"];
 
 const CryptoFilter = ({ selected, onSelect }: CryptoFilterProps) => {
   return (
