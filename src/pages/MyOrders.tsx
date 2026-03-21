@@ -145,9 +145,15 @@ const MyOrders = () => {
                       <div className="flex items-center gap-2">
                         <span className={`text-xs font-semibold ${ds.color}`}>{ds.label}</span>
                         {(deal.status === 0 || deal.status === 1) && timeLeft > 0 && (
-                          <span className={`text-xs font-mono ${timeLeft < 120 ? "text-sell" : "text-muted-foreground"}`}>
-                            <Clock className="h-3 w-3 inline mr-1" />
+                          <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono ${timeLeft < 120 ? "bg-sell/10 text-sell" : "bg-primary/10 text-primary"}`}>
+                            <Clock className="h-3 w-3" />
                             {formatTime(timeLeft)}
+                          </span>
+                        )}
+                        {isTimedOut && (
+                          <span className="flex items-center gap-1 rounded-full bg-sell/10 px-2.5 py-1 text-xs font-semibold text-sell">
+                            <AlertTriangle className="h-3 w-3" />
+                            Expired
                           </span>
                         )}
                       </div>
