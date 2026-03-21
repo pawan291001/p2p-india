@@ -28,9 +28,9 @@ export function useContractDeals() {
     query: { refetchInterval: 10000 },
   });
 
-  const dealCount = nextDealId ? Number(nextDealId) : 0;
+  const dealCount = nextDealId ? Number(nextDealId) - 1 : 0;
 
-  const dealCalls = Array.from({ length: dealCount }, (_, i) => ({
+  const dealCalls = Array.from({ length: Math.max(0, dealCount) }, (_, i) => ({
     address: P2P_CONTRACT_ADDRESS as `0x${string}`,
     abi: P2P_ESCROW_ABI as any,
     functionName: "getDeal" as const,
