@@ -375,7 +375,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               variant="sell"
               className="w-full mt-2"
               size="lg"
-              disabled={!price || !amount || !paymentInfo || isProcessing}
+              disabled={!price || !amount || !paymentInfo || isProcessing || exceedsBalance}
               onClick={handleSubmit}
             >
               {isProcessing ? (
