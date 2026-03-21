@@ -34,6 +34,13 @@ const MyOrders = () => {
   const { deals, isLoading: loadingDeals } = useContractDeals();
   const [chatDealId, setChatDealId] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
+  const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+
+  // Live tick every second for countdown timers
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, []);
   const [pendingDealId, setPendingDealId] = useState<number | null>(null);
 
   // Buyer confirm payment
