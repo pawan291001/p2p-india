@@ -68,17 +68,17 @@ export function useContractAds() {
       const inrTotal = (parseFloat(amountFormatted) * parseFloat(priceFormatted)).toFixed(2);
 
       ads.push({
-        adId: id,
-        seller,
-        token: tokenAddr,
+        adId: Number(id),
+        seller: String(seller),
+        token: String(tokenAddr),
         tokenSymbol,
         tokenAmount: amountFormatted,
         pricePerToken: priceFormatted,
         inrTotal,
         dealTimeout: Number(dealTimeout),
         adExpiry: Number(adExpiry),
-        paymentInfo,
-        status,
+        paymentInfo: String(paymentInfo),
+        status: Number(status),
       });
     }
   }
