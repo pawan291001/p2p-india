@@ -238,17 +238,34 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
 
             {/* Amount */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">
-                Amount ({crypto})
-              </Label>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-xs text-muted-foreground">Amount ({crypto})</Label>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Wallet className="h-3 w-3" />
+                  <span>{walletBalanceFormatted} {crypto}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(walletBalance.toString())}
+                    disabled={isProcessing || walletBalance <= 0}
+                    className="text-primary font-medium hover:text-primary/80 transition-colors ml-1"
+                  >
+                    MAX
+                  </button>
+                </div>
+              </div>
               <Input
                 type="number"
                 placeholder="e.g. 30"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="bg-surface-2 border-input"
+                className={`bg-surface-2 border-input ${exceedsBalance && amount ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 disabled={isProcessing}
               />
+              {exceedsBalance && amount && (
+                <p className="text-xs text-destructive mt-1">
+                  Insufficient balance. You have {walletBalanceFormatted} {crypto}
+                </p>
+              )}
             </div>
 
             {/* INR Total */}
