@@ -86,7 +86,6 @@ const Admin = () => {
   // Resolve dispute
   const { writeContract, data: txHash } = useWriteContract();
   const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
-  const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {
     if (txConfirmed) {
@@ -101,7 +100,7 @@ const Admin = () => {
       abi: P2P_ESCROW_ABI,
       functionName: "resolveDispute",
       args: [BigInt(dealId), toSeller],
-    });
+    } as any);
     toast.info(`Resolving deal #${dealId} — ${toSeller ? "releasing to seller" : "releasing to buyer"}…`);
   };
 
