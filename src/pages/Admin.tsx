@@ -86,6 +86,7 @@ const Admin = () => {
   // Resolve dispute
   const { writeContract, data: txHash } = useWriteContract();
   const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
+  const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
   useEffect(() => {
     if (txConfirmed) {
