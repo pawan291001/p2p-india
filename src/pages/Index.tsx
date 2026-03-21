@@ -10,18 +10,7 @@ import CreateOrderModal from "@/components/CreateOrderModal";
 import StatsBar from "@/components/StatsBar";
 import CryptoFilter from "@/components/CryptoFilter";
 import TradeWindow from "@/components/TradeWindow";
-
-interface LiveAd {
-  adId: number;
-  seller: string;
-  token: string;
-  tokenSymbol: string;
-  tokenAmount: string;
-  pricePerToken: string;
-  inrTotal: string;
-  dealTimeout: number;
-  paymentInfo: string;
-}
+import { useContractAds, LiveAd } from "@/hooks/useContractAds";
 
 const Index = () => {
   const { address, isConnected } = useAccount();
@@ -30,11 +19,13 @@ const Index = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
 
-  // In production: read from contract via useReadContract / useContractRead
-  // For now, empty — real data only
-  const liveAds: LiveAd[] = [];
+  const { ads: liveAds, isLoading } = useContractAds();
 
+  // Only show Live ads (status 0) that haven't expired
+  const now = Date.now() / 1000;
   const filteredAds = liveAds.filter((ad) => {
+    if (ad.status !== 0) return false;
+    if (ad.adExpiry < now) return false;
     const matchesCrypto = ad.tokenSymbol === crypto;
     const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
     return matchesCrypto && matchesSearch;
@@ -104,7 +95,11 @@ const Index = () => {
         {/* Order List */}
         {isConnected && (
           <div className="space-y-3">
-            {filteredAds.length > 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-pulse">
+                <p className="text-muted-foreground text-sm">Loading ads from contract…</p>
+              </div>
+            ) : filteredAds.length > 0 ? (
               filteredAds.map((ad, i) => (
                 <OrderCard
                   key={ad.adId}
@@ -117,7 +112,7 @@ const Index = () => {
               <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
                 <p className="text-muted-foreground text-sm mb-1">No live ads for {crypto}</p>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Deploy the contract and create the first ad to start trading.
+                  Be the first to post a sell ad and start trading.
                 </p>
                 <Button
                   variant="outline"
