@@ -1,5 +1,6 @@
 import { TrendingUp, ShieldCheck, Zap, Wallet } from "lucide-react";
 import { useAccount, useBalance } from "wagmi";
+import { formatUnits } from "viem";
 
 const StatsBar = () => {
   const { address, isConnected } = useAccount();
