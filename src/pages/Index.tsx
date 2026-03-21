@@ -26,6 +26,8 @@ const Index = () => {
   const filteredAds = liveAds.filter((ad) => {
     if (ad.status !== 0) return false;
     if (ad.adExpiry < now) return false;
+    // Hide own ads — you can't buy from yourself
+    if (address && ad.seller.toLowerCase() === address.toLowerCase()) return false;
     const matchesCrypto = ad.tokenSymbol === crypto;
     const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
     return matchesCrypto && matchesSearch;
