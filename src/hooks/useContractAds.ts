@@ -27,9 +27,10 @@ export function useContractAds() {
     query: { refetchInterval: 10000 },
   });
 
-  const adCount = nextAdId ? Number(nextAdId) : 0;
+  // nextAdId is the next ID to assign, so existing ads are 1..(nextAdId-1)
+  const adCount = nextAdId ? Number(nextAdId) - 1 : 0;
 
-  const adCalls = Array.from({ length: adCount }, (_, i) => ({
+  const adCalls = Array.from({ length: Math.max(0, adCount) }, (_, i) => ({
     address: P2P_CONTRACT_ADDRESS as `0x${string}`,
     abi: P2P_ESCROW_ABI as any,
     functionName: "getAd" as const,
