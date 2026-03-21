@@ -51,19 +51,37 @@ export function useContractDeals() {
       const tokenAddr = d.token || d[4];
       const isBNB = tokenAddr.toLowerCase() === NATIVE_BNB.toLowerCase();
 
+      const rawId = d.id !== undefined ? d.id : d[0];
+      const rawAdId = d.adId !== undefined ? d.adId : d[1];
+      const rawBuyer = d.buyer || d[2];
+      const rawSeller = d.seller || d[3];
+      const rawTokenAmount = d.tokenAmount !== undefined ? d.tokenAmount : d[5];
+      const rawInrAmount = d.inrAmount !== undefined ? d.inrAmount : d[6];
+      const rawDeadline = d.deadline !== undefined ? d.deadline : d[7];
+      const rawBuyerConfirmed = d.buyerConfirmed !== undefined ? d.buyerConfirmed : d[8];
+      const rawSellerConfirmed = d.sellerConfirmed !== undefined ? d.sellerConfirmed : d[9];
+      const rawStatus = d.status !== undefined ? d.status : d[10];
+
+      if (rawId === undefined || rawTokenAmount === undefined) continue;
+
+      // inrAmount = (pricePerToken * tokenAmount) / 1e18, where pricePerToken has 2 decimals
+      // So inrAmount is in units with 2 decimals
+      const inrBigInt = BigInt(String(rawInrAmount));
+      const inrFormatted = formatUnits(inrBigInt, 2);
+
       deals.push({
-        dealId: Number(d.id ?? d[0]),
-        adId: Number(d.adId ?? d[1]),
-        buyer: d.buyer || d[2],
-        seller: d.seller || d[3],
-        token: tokenAddr,
+        dealId: Number(rawId),
+        adId: Number(rawAdId),
+        buyer: String(rawBuyer),
+        seller: String(rawSeller),
+        token: String(tokenAddr),
         tokenSymbol: isBNB ? "BNB" : "USDT",
-        tokenAmount: formatUnits(BigInt(d.tokenAmount || d[5]), 18),
-        inrAmount: formatUnits(BigInt(d.inrAmount || d[6]), 2),
-        deadline: Number(d.deadline || d[7]),
-        buyerConfirmed: Boolean(d.buyerConfirmed ?? d[8]),
-        sellerConfirmed: Boolean(d.sellerConfirmed ?? d[9]),
-        status: Number(d.status ?? d[10]),
+        tokenAmount: formatUnits(BigInt(String(rawTokenAmount)), 18),
+        inrAmount: inrFormatted,
+        deadline: Number(rawDeadline),
+        buyerConfirmed: Boolean(rawBuyerConfirmed),
+        sellerConfirmed: Boolean(rawSellerConfirmed),
+        status: Number(rawStatus),
       });
     }
   }

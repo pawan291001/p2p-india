@@ -6,7 +6,8 @@ import { Link, useLocation } from "react-router-dom";
 
 const NAV_LINKS = [
   { label: "P2P Trading", href: "/" },
-  { label: "My Orders", href: "/my-orders" },
+  { label: "My Ads", href: "/my-ads" },
+  { label: "My Deals", href: "/my-orders" },
 ];
 
 const Navbar = () => {
@@ -60,9 +61,7 @@ const Navbar = () => {
                   variant="ghost"
                   size="sm"
                   className={`justify-start ${
-                    location.pathname === link.href
-                      ? "text-foreground"
-                      : "text-muted-foreground"
+                    location.pathname === link.href ? "text-foreground" : "text-muted-foreground"
                   }`}
                 >
                   {link.label}
