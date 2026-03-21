@@ -47,6 +47,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        buy: {
+          DEFAULT: "hsl(var(--buy))",
+          foreground: "hsl(var(--buy-foreground))",
+        },
+        sell: {
+          DEFAULT: "hsl(var(--sell))",
+          foreground: "hsl(var(--sell-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
