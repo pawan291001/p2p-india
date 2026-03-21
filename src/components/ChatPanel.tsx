@@ -17,6 +17,7 @@ interface ChatMessage {
 interface ChatPanelProps {
   dealId: number;
   userAddress: string;
+  readOnly?: boolean;
 }
 
 const ChatPanel = ({ dealId, userAddress }: ChatPanelProps) => {
