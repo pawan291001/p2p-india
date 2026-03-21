@@ -1,13 +1,16 @@
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Wallet, Package, ShoppingCart } from "lucide-react";
+import { Wallet, Package, ShoppingCart, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useContractAds, LiveAd } from "@/hooks/useContractAds";
 import { useContractDeals, LiveDeal } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
 import { Clock, Shield, CheckCircle2, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TradeWindow from "@/components/TradeWindow";
+import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
+import { P2P_ESCROW_ABI } from "@/config/abi";
+import { toast } from "sonner";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
@@ -37,6 +40,49 @@ const MyOrders = () => {
   const { ads, isLoading: loadingAds } = useContractAds();
   const { deals, isLoading: loadingDeals } = useContractDeals();
   const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
+  const [pendingAdId, setPendingAdId] = useState<number | null>(null);
+
+  // Cancel ad
+  const { writeContract: cancelAd, data: cancelHash, isPending: cancelPending } = useWriteContract();
+  const { isSuccess: cancelConfirmed } = useWaitForTransactionReceipt({ hash: cancelHash });
+
+  // Claim expired ad
+  const { writeContract: claimExpired, data: claimHash, isPending: claimPending } = useWriteContract();
+  const { isSuccess: claimConfirmed } = useWaitForTransactionReceipt({ hash: claimHash });
+
+  useEffect(() => {
+    if (cancelConfirmed) {
+      toast.success("Ad cancelled. Funds returned to your wallet.");
+      setPendingAdId(null);
+    }
+  }, [cancelConfirmed]);
+
+  useEffect(() => {
+    if (claimConfirmed) {
+      toast.success("Expired ad claimed. Funds returned to your wallet.");
+      setPendingAdId(null);
+    }
+  }, [claimConfirmed]);
+
+  const handleCancelAd = (adId: number) => {
+    setPendingAdId(adId);
+    cancelAd({
+      address: P2P_CONTRACT_ADDRESS,
+      abi: P2P_ESCROW_ABI,
+      functionName: "cancelAd",
+      args: [BigInt(adId)],
+    } as any);
+  };
+
+  const handleClaimExpired = (adId: number) => {
+    setPendingAdId(adId);
+    claimExpired({
+      address: P2P_CONTRACT_ADDRESS,
+      abi: P2P_ESCROW_ABI,
+      functionName: "claimExpiredAd",
+      args: [BigInt(adId)],
+    } as any);
+  };
 
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
@@ -124,6 +170,38 @@ const MyOrders = () => {
                             <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
                           </div>
                         </div>
+                        {/* Action buttons */}
+                        {(ad.status === 0) && (
+                          <div className="mt-3 flex gap-2">
+                            {!isExpired ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-sell border-sell/30 hover:bg-sell/10"
+                                onClick={() => handleCancelAd(ad.adId)}
+                                disabled={cancelPending && pendingAdId === ad.adId}
+                              >
+                                {cancelPending && pendingAdId === ad.adId ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : null}
+                                Cancel Ad
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-primary border-primary/30 hover:bg-primary/10"
+                                onClick={() => handleClaimExpired(ad.adId)}
+                                disabled={claimPending && pendingAdId === ad.adId}
+                              >
+                                {claimPending && pendingAdId === ad.adId ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : null}
+                                Claim Funds
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
