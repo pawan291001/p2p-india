@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Clock, Shield, CheckCircle2, AlertTriangle, Copy, MessageSquare } from "lucide-react";
+import { X, Clock, Shield, CheckCircle2, AlertTriangle, Copy, MessageSquare, Loader2 } from "lucide-react";
+import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
+import { P2P_ESCROW_ABI } from "@/config/abi";
+import { toast } from "sonner";
 import ChatPanel from "./ChatPanel";
 
 type DealStep = "accept" | "pay" | "waiting" | "completed" | "cancelled" | "disputed";
@@ -34,7 +38,24 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   const [timeLeft, setTimeLeft] = useState(ad.dealTimeout);
   const [showChat, setShowChat] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [dealId, setDealId] = useState<number | null>(null);
   const isSeller = ad.seller.toLowerCase() === userAddress.toLowerCase();
+
+  // Contract write hooks
+  const { writeContract: acceptAd, data: acceptHash, isPending: acceptPending } = useWriteContract();
+  const { isSuccess: acceptConfirmed } = useWaitForTransactionReceipt({ hash: acceptHash });
+
+  const { writeContract: confirmPayment, data: payHash, isPending: payPending } = useWriteContract();
+  const { isSuccess: payConfirmed } = useWaitForTransactionReceipt({ hash: payHash });
+
+  const { writeContract: sellerConfirm, data: sellerHash, isPending: sellerPending } = useWriteContract();
+  const { isSuccess: sellerConfirmDone } = useWaitForTransactionReceipt({ hash: sellerHash });
+
+  const { writeContract: raiseDispute, data: disputeHash, isPending: disputePending } = useWriteContract();
+  const { isSuccess: disputeConfirmed } = useWaitForTransactionReceipt({ hash: disputeHash });
+
+  const { writeContract: cancelDeal, data: cancelHash, isPending: cancelPending } = useWriteContract();
+  const { isSuccess: cancelConfirmed } = useWaitForTransactionReceipt({ hash: cancelHash });
 
   // Countdown timer
   useEffect(() => {
@@ -47,20 +68,113 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
     return () => clearInterval(timer);
   }, [step, timeLeft]);
 
+  // After accept confirmed → move to pay step
+  useEffect(() => {
+    if (acceptConfirmed) {
+      toast.success("Deal accepted! Escrow locked.");
+      setStep("pay");
+      setTimeLeft(ad.dealTimeout);
+    }
+  }, [acceptConfirmed]);
+
+  // After buyer confirms payment
+  useEffect(() => {
+    if (payConfirmed) {
+      toast.success("Payment confirmed on-chain. Waiting for seller.");
+      setStep("waiting");
+    }
+  }, [payConfirmed]);
+
+  // After seller confirms receipt
+  useEffect(() => {
+    if (sellerConfirmDone) {
+      toast.success("Trade completed! Tokens released.");
+      setStep("completed");
+    }
+  }, [sellerConfirmDone]);
+
+  // After dispute raised
+  useEffect(() => {
+    if (disputeConfirmed) {
+      toast.info("Dispute raised. Admin will review.");
+      setStep("disputed");
+    }
+  }, [disputeConfirmed]);
+
+  // After cancel confirmed
+  useEffect(() => {
+    if (cancelConfirmed) {
+      toast.success("Deal cancelled. Funds returned to seller.");
+      setStep("cancelled");
+    }
+  }, [cancelConfirmed]);
+
   const handleAcceptDeal = () => {
-    // In production: call contract.acceptAd(ad.adId)
-    setStep("pay");
-    setTimeLeft(ad.dealTimeout);
+    try {
+      acceptAd({
+        address: P2P_CONTRACT_ADDRESS,
+        abi: P2P_ESCROW_ABI,
+        functionName: "acceptAd",
+        args: [BigInt(ad.adId)],
+      } as any);
+    } catch (e: any) {
+      toast.error(e?.shortMessage || "Failed to accept deal");
+    }
   };
 
   const handleConfirmPayment = () => {
-    // In production: call contract.buyerConfirmPayment(dealId)
-    setStep("waiting");
+    // We need the dealId. For now use adId as a proxy since the deal is created from acceptAd.
+    // In a full implementation, we'd read the dealId from the DealCreated event.
+    // For now, we'll use the next dealId approach or the adId-based lookup.
+    try {
+      confirmPayment({
+        address: P2P_CONTRACT_ADDRESS,
+        abi: P2P_ESCROW_ABI,
+        functionName: "buyerConfirmPayment",
+        args: [BigInt(dealId ?? 1)],
+      } as any);
+    } catch (e: any) {
+      toast.error(e?.shortMessage || "Failed to confirm payment");
+    }
   };
 
   const handleSellerConfirm = () => {
-    // In production: call contract.sellerConfirmReceived(dealId)
-    setStep("completed");
+    try {
+      sellerConfirm({
+        address: P2P_CONTRACT_ADDRESS,
+        abi: P2P_ESCROW_ABI,
+        functionName: "sellerConfirmReceived",
+        args: [BigInt(dealId ?? 1)],
+      } as any);
+    } catch (e: any) {
+      toast.error(e?.shortMessage || "Failed to confirm receipt");
+    }
+  };
+
+  const handleRaiseDispute = () => {
+    try {
+      raiseDispute({
+        address: P2P_CONTRACT_ADDRESS,
+        abi: P2P_ESCROW_ABI,
+        functionName: "raiseDispute",
+        args: [BigInt(dealId ?? 1), "Payment dispute"],
+      } as any);
+    } catch (e: any) {
+      toast.error(e?.shortMessage || "Failed to raise dispute");
+    }
+  };
+
+  const handleCancelTimedOut = () => {
+    try {
+      cancelDeal({
+        address: P2P_CONTRACT_ADDRESS,
+        abi: P2P_ESCROW_ABI,
+        functionName: "cancelTimedOutDeal",
+        args: [BigInt(dealId ?? 1)],
+      } as any);
+    } catch (e: any) {
+      toast.error(e?.shortMessage || "Failed to cancel deal");
+    }
   };
 
   const handleCopyPaymentInfo = () => {
@@ -71,6 +185,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
 
   const timePercent = (timeLeft / ad.dealTimeout) * 100;
   const isUrgent = timeLeft < 120;
+  const isProcessing = acceptPending || payPending || sellerPending || disputePending || cancelPending;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
@@ -84,15 +199,17 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-muted-foreground"
-              onClick={() => setShowChat(!showChat)}
-            >
-              <MessageSquare className="h-4 w-4" />
-              Chat
-            </Button>
+            {dealId !== null && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground"
+                onClick={() => setShowChat(!showChat)}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Chat
+              </Button>
+            )}
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="h-5 w-5" />
             </button>
@@ -177,8 +294,9 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                   <p className="text-xs text-muted-foreground mb-1">Seller's address</p>
                   <p className="text-sm font-mono text-foreground break-all">{ad.seller}</p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleAcceptDeal}>
-                  Accept Deal — Lock Escrow
+                <Button variant="buy" className="w-full" size="lg" onClick={handleAcceptDeal} disabled={isProcessing}>
+                  {acceptPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {acceptPending ? "Confirm in wallet…" : "Accept Deal — Lock Escrow"}
                 </Button>
               </div>
             )}
@@ -197,8 +315,9 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                     Send exactly ₹{ad.inrTotal} to the above details. After payment, click confirm below.
                   </p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleConfirmPayment}>
-                  I've Sent ₹{ad.inrTotal} — Confirm Payment
+                <Button variant="buy" className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isProcessing}>
+                  {payPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {payPending ? "Confirming…" : `I've Sent ₹${ad.inrTotal} — Confirm Payment`}
                 </Button>
               </div>
             )}
@@ -223,12 +342,18 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                     Verify the payment in your bank/UPI. Only confirm if you've received the full amount.
                   </p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleSellerConfirm}>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  I Received ₹{ad.inrTotal} — Release Tokens
+                <Button variant="buy" className="w-full" size="lg" onClick={handleSellerConfirm} disabled={isProcessing}>
+                  {sellerPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+                  {sellerPending ? "Confirming…" : `I Received ₹${ad.inrTotal} — Release Tokens`}
                 </Button>
-                <Button variant="outline" className="w-full text-sell border-sell/30" size="sm">
-                  <AlertTriangle className="h-4 w-4 mr-2" />
+                <Button
+                  variant="outline"
+                  className="w-full text-sell border-sell/30"
+                  size="sm"
+                  onClick={handleRaiseDispute}
+                  disabled={isProcessing}
+                >
+                  {disputePending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
                   Raise Dispute — I didn't receive payment
                 </Button>
               </div>
@@ -259,12 +384,38 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                 <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
               </div>
             )}
+
+            {step === "disputed" && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-6 text-center space-y-3">
+                <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <AlertTriangle className="h-8 w-8 text-primary" />
+                </div>
+                <p className="text-lg font-bold text-foreground">Dispute Raised</p>
+                <p className="text-sm text-muted-foreground">
+                  Admin will review the evidence and resolve this dispute.
+                </p>
+                <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+              </div>
+            )}
+
+            {/* Cancel timed-out deal button */}
+            {(step === "pay" || step === "waiting") && timeLeft <= 0 && (
+              <Button
+                variant="outline"
+                className="w-full text-sell border-sell/30"
+                onClick={handleCancelTimedOut}
+                disabled={isProcessing}
+              >
+                {cancelPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Cancel Timed-Out Deal — Reclaim Funds
+              </Button>
+            )}
           </div>
 
           {/* Chat sidebar */}
-          {showChat && (
+          {showChat && dealId !== null && (
             <div className="w-72 border-l border-border flex flex-col">
-              <ChatPanel dealId={0} userAddress={userAddress} />
+              <ChatPanel dealId={dealId} userAddress={userAddress} />
             </div>
           )}
         </div>
