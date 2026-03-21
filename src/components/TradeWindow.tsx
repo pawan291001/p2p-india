@@ -1,0 +1,276 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { X, Clock, Shield, CheckCircle2, AlertTriangle, Copy, MessageSquare } from "lucide-react";
+import ChatPanel from "./ChatPanel";
+
+type DealStep = "accept" | "pay" | "waiting" | "completed" | "cancelled" | "disputed";
+
+interface TradeAd {
+  adId: number;
+  seller: string;
+  token: string;
+  tokenSymbol: string;
+  tokenAmount: string;
+  pricePerToken: string;
+  inrTotal: string;
+  dealTimeout: number;
+  paymentInfo: string;
+}
+
+interface TradeWindowProps {
+  ad: TradeAd;
+  userAddress: string;
+  onClose: () => void;
+}
+
+const formatTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+};
+
+const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
+  const [step, setStep] = useState<DealStep>("accept");
+  const [timeLeft, setTimeLeft] = useState(ad.dealTimeout);
+  const [showChat, setShowChat] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const isSeller = ad.seller.toLowerCase() === userAddress.toLowerCase();
+
+  // Countdown timer
+  useEffect(() => {
+    if (step !== "pay" && step !== "waiting") return;
+    if (timeLeft <= 0) {
+      setStep("cancelled");
+      return;
+    }
+    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearInterval(timer);
+  }, [step, timeLeft]);
+
+  const handleAcceptDeal = () => {
+    // In production: call contract.acceptAd(ad.adId)
+    setStep("pay");
+    setTimeLeft(ad.dealTimeout);
+  };
+
+  const handleConfirmPayment = () => {
+    // In production: call contract.buyerConfirmPayment(dealId)
+    setStep("waiting");
+  };
+
+  const handleSellerConfirm = () => {
+    // In production: call contract.sellerConfirmReceived(dealId)
+    setStep("completed");
+  };
+
+  const handleCopyPaymentInfo = () => {
+    navigator.clipboard.writeText(ad.paymentInfo);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const timePercent = (timeLeft / ad.dealTimeout) * 100;
+  const isUrgent = timeLeft < 120;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-border bg-card shadow-2xl animate-fade-up max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex items-center gap-3">
+            <Shield className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold text-foreground">
+              {isSeller ? "Sell" : "Buy"} {ad.tokenSymbol}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground"
+              onClick={() => setShowChat(!showChat)}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Chat
+            </Button>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Main Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            {/* Timer bar */}
+            {(step === "pay" || step === "waiting") && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className={`flex items-center gap-1.5 ${isUrgent ? "text-sell" : "text-muted-foreground"}`}>
+                    <Clock className="h-4 w-4" />
+                    <span className="font-medium">{formatTime(timeLeft)}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {step === "pay" ? "Time to pay" : "Waiting for seller"}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      isUrgent ? "bg-sell" : "bg-primary"
+                    }`}
+                    style={{ width: `${timePercent}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Status Steps */}
+            <div className="flex items-center gap-2 text-xs">
+              {["Accept", "Pay", "Confirm", "Complete"].map((label, i) => {
+                const stepIndex = { accept: 0, pay: 1, waiting: 2, completed: 3, cancelled: -1, disputed: -1 }[step];
+                const isActive = i === stepIndex;
+                const isDone = i < (stepIndex ?? 0);
+                return (
+                  <div key={label} className="flex items-center gap-2 flex-1">
+                    <div
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                        isDone
+                          ? "bg-buy text-buy-foreground"
+                          : isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-surface-3 text-muted-foreground"
+                      }`}
+                    >
+                      {isDone ? "✓" : i + 1}
+                    </div>
+                    <span className={`hidden sm:inline ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                      {label}
+                    </span>
+                    {i < 3 && <div className="h-px flex-1 bg-border" />}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Trade Summary */}
+            <div className="rounded-lg border border-border bg-surface-1 p-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Token</span>
+                <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Price</span>
+                <span className="font-medium text-foreground">₹{ad.pricePerToken} / {ad.tokenSymbol}</span>
+              </div>
+              <div className="h-px bg-border" />
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total (INR)</span>
+                <span className="text-lg font-bold text-primary">₹{ad.inrTotal}</span>
+              </div>
+            </div>
+
+            {/* Step-specific content */}
+            {step === "accept" && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border bg-surface-1 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">Seller's address</p>
+                  <p className="text-sm font-mono text-foreground break-all">{ad.seller}</p>
+                </div>
+                <Button variant="buy" className="w-full" size="lg" onClick={handleAcceptDeal}>
+                  Accept Deal — Lock Escrow
+                </Button>
+              </div>
+            )}
+
+            {step === "pay" && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-foreground">Payment Details</p>
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-3">
+                    <p className="text-sm font-mono text-foreground break-all">{ad.paymentInfo}</p>
+                    <button onClick={handleCopyPaymentInfo} className="shrink-0 text-primary hover:text-primary/80">
+                      {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Send exactly ₹{ad.inrTotal} to the above details. After payment, click confirm below.
+                  </p>
+                </div>
+                <Button variant="buy" className="w-full" size="lg" onClick={handleConfirmPayment}>
+                  I've Sent ₹{ad.inrTotal} — Confirm Payment
+                </Button>
+              </div>
+            )}
+
+            {step === "waiting" && !isSeller && (
+              <div className="rounded-lg border border-border bg-surface-1 p-6 text-center space-y-3">
+                <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Waiting for seller to confirm receipt</p>
+                <p className="text-xs text-muted-foreground">
+                  The seller will verify your payment and release the tokens.
+                </p>
+              </div>
+            )}
+
+            {step === "waiting" && isSeller && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-center space-y-2">
+                  <p className="text-sm font-medium text-foreground">Buyer says they've paid ₹{ad.inrTotal}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Verify the payment in your bank/UPI. Only confirm if you've received the full amount.
+                  </p>
+                </div>
+                <Button variant="buy" className="w-full" size="lg" onClick={handleSellerConfirm}>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  I Received ₹{ad.inrTotal} — Release Tokens
+                </Button>
+                <Button variant="outline" className="w-full text-sell border-sell/30" size="sm">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Raise Dispute — I didn't receive payment
+                </Button>
+              </div>
+            )}
+
+            {step === "completed" && (
+              <div className="rounded-lg border border-buy/20 bg-buy/5 p-6 text-center space-y-3">
+                <div className="mx-auto h-14 w-14 rounded-full bg-buy/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-buy" />
+                </div>
+                <p className="text-lg font-bold text-foreground">Trade Completed!</p>
+                <p className="text-sm text-muted-foreground">
+                  {ad.tokenAmount} {ad.tokenSymbol} has been released to the buyer.
+                </p>
+                <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+              </div>
+            )}
+
+            {step === "cancelled" && (
+              <div className="rounded-lg border border-sell/20 bg-sell/5 p-6 text-center space-y-3">
+                <div className="mx-auto h-14 w-14 rounded-full bg-sell/10 flex items-center justify-center">
+                  <AlertTriangle className="h-8 w-8 text-sell" />
+                </div>
+                <p className="text-lg font-bold text-foreground">Deal Cancelled</p>
+                <p className="text-sm text-muted-foreground">
+                  Payment was not confirmed in time. Funds returned to seller.
+                </p>
+                <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+              </div>
+            )}
+          </div>
+
+          {/* Chat sidebar */}
+          {showChat && (
+            <div className="w-72 border-l border-border flex flex-col">
+              <ChatPanel dealId={0} userAddress={userAddress} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TradeWindow;

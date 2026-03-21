@@ -8,52 +8,44 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title P2PEscrow
- * @notice Trustless P2P crypto-to-INR escrow contract.
+ * @notice Trustless P2P crypto-to-INR escrow on BNB Smart Chain.
+ *         Supports native BNB and BEP-20 USDT only.
+ *
+ * ── Token Rules ──
+ * • address(0) = native BNB
+ * • Only whitelisted BEP-20 tokens (USDT) are accepted.
  *
  * ── Flow ──
- * 1. Seller creates an ad, depositing ERC-20 tokens into escrow.
- *    They set: price per token (INR paise), deal timeout, ad duration,
- *    and their payment details (UPI / bank).
- * 2. Ad stays live until a buyer accepts OR ad duration expires.
- *    Seller can cancel any time BEFORE a buyer accepts.
+ * 1. Seller creates ad, depositing BNB or USDT into escrow.
+ * 2. Ad stays live until buyer accepts OR ad duration expires.
  * 3. Buyer accepts → deal timer starts.
- *    - Buyer sends INR off-chain, then calls `buyerConfirmPayment()`.
- *    - Once buyer confirms, funds are LOCKED — seller cannot reclaim.
- *    - Seller verifies receipt, calls `sellerConfirmReceived()`.
+ *    - Buyer sends INR off-chain, then calls buyerConfirmPayment().
+ *    - Once buyer confirms, funds are LOCKED.
+ *    - Seller verifies receipt, calls sellerConfirmReceived().
  *    - Both confirmations → tokens released to buyer.
- * 4. If buyer does NOT confirm within deal timeout → deal auto-cancels,
- *    seller reclaims tokens, ad is re-listed.
- * 5. If buyer confirmed but seller disputes → either party raises a
- *    dispute; admin resolves by releasing to buyer or seller.
- *
- * ── Limits (enforced on-chain) ──
- * • Max 2 active (live) ads per address.
- * • Max 2 active (accepted) deals per address.
- *
- * ── Dispute / Admin ──
- * • Admin can resolve any disputed deal, sending funds to buyer or seller.
- * • Off-chain proof (screenshots / video) is referenced by IPFS hash;
- *   deletion after 48 h is handled off-chain.
+ * 4. If buyer does NOT confirm within deal timeout → deal auto-cancels.
+ * 5. Dispute → admin resolves by releasing to buyer or seller.
  */
 contract P2PEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    // ───────── Enums ─────────
+    // ───────── Constants ─────────
+    address public constant NATIVE_BNB = address(0);
 
+    // ───────── Enums ─────────
     enum AdStatus   { Live, InDeal, Completed, Cancelled }
     enum DealStatus { Active, BuyerConfirmed, Completed, Cancelled, Disputed, Resolved }
 
     // ───────── Structs ─────────
-
     struct Ad {
         uint256 id;
         address seller;
-        address token;           // ERC-20 token address (e.g. USDT)
-        uint256 tokenAmount;     // amount in token decimals
-        uint256 pricePerToken;   // price in INR paise (1 INR = 100 paise) for 1 full token unit
-        uint256 dealTimeout;     // seconds buyer has to pay after accepting
-        uint256 adExpiry;        // timestamp when ad expires if no one accepts
-        string  paymentInfo;     // seller's UPI / bank details (encrypted off-chain recommended)
+        address token;           // address(0) = native BNB, else BEP-20
+        uint256 tokenAmount;
+        uint256 pricePerToken;   // INR paise per 1 full token (18 decimals)
+        uint256 dealTimeout;
+        uint256 adExpiry;
+        string  paymentInfo;     // seller UPI / bank details
         AdStatus status;
     }
 
@@ -64,18 +56,23 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         address seller;
         address token;
         uint256 tokenAmount;
-        uint256 inrAmount;       // calculated INR paise the buyer owes
-        uint256 deadline;        // block.timestamp + dealTimeout
-        bool    buyerConfirmed;  // buyer says "I paid"
-        bool    sellerConfirmed; // seller says "I received"
+        uint256 inrAmount;       // tokenAmount * pricePerToken (UI divides by decimals)
+        uint256 deadline;
+        bool    buyerConfirmed;
+        bool    sellerConfirmed;
         DealStatus status;
-        string  disputeProofBuyer;   // IPFS hash of buyer proof
-        string  disputeProofSeller;  // IPFS hash of seller proof
+        string  disputeProofBuyer;
+        string  disputeProofSeller;
         uint256 disputeTimestamp;
     }
 
-    // ───────── State ─────────
+    struct ChatMessage {
+        address sender;
+        string  message;
+        uint256 timestamp;
+    }
 
+    // ───────── State ─────────
     uint256 public nextAdId   = 1;
     uint256 public nextDealId = 1;
 
@@ -85,31 +82,24 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     uint256 public constant MAX_AD_DURATION  = 72 hours;
     uint256 public constant PROOF_RETENTION  = 48 hours;
 
-    // Allowed deal timeouts (seconds)
     uint256[] public allowedDealTimeouts = [15 minutes, 30 minutes, 1 hours, 2 hours];
+
+    mapping(address => bool) public allowedTokens; // whitelisted BEP-20s
 
     mapping(uint256 => Ad)   public ads;
     mapping(uint256 => Deal) public deals;
 
-    // Per-user counters
     mapping(address => uint256) public activeAdCount;
     mapping(address => uint256) public activeDealCountBuyer;
     mapping(address => uint256) public activeDealCountSeller;
 
-    // Chat messages stored on-chain (lightweight; heavy chat should be off-chain)
-    struct ChatMessage {
-        address sender;
-        string  message;
-        uint256 timestamp;
-    }
-    mapping(uint256 => ChatMessage[]) public dealChats; // dealId => messages
+    mapping(uint256 => ChatMessage[]) public dealChats;
 
     // ───────── Events ─────────
-
+    event TokenWhitelisted(address indexed token, bool allowed);
     event AdCreated(uint256 indexed adId, address indexed seller, address token, uint256 amount, uint256 pricePerToken);
     event AdCancelled(uint256 indexed adId);
     event AdExpired(uint256 indexed adId);
-
     event DealCreated(uint256 indexed dealId, uint256 indexed adId, address indexed buyer, uint256 inrAmount, uint256 deadline);
     event BuyerConfirmedPayment(uint256 indexed dealId);
     event SellerConfirmedReceipt(uint256 indexed dealId);
@@ -117,11 +107,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     event DealCancelled(uint256 indexed dealId, string reason);
     event DealDisputed(uint256 indexed dealId, address indexed by);
     event DisputeResolved(uint256 indexed dealId, address indexed recipient);
-
     event ChatSent(uint256 indexed dealId, address indexed sender);
 
     // ───────── Modifiers ─────────
-
     modifier onlyDealParty(uint256 _dealId) {
         Deal storage d = deals[_dealId];
         require(msg.sender == d.buyer || msg.sender == d.seller, "Not a deal party");
@@ -129,21 +117,26 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     }
 
     // ───────── Constructor ─────────
+    constructor(address _usdt) Ownable(msg.sender) {
+        // Whitelist USDT on BSC
+        allowedTokens[_usdt] = true;
+        emit TokenWhitelisted(_usdt, true);
+    }
 
-    constructor() Ownable(msg.sender) {}
+    // ───────── Admin: Token Whitelist ─────────
+    function setAllowedToken(address _token, bool _allowed) external onlyOwner {
+        require(_token != NATIVE_BNB, "BNB is always allowed");
+        allowedTokens[_token] = _allowed;
+        emit TokenWhitelisted(_token, _allowed);
+    }
 
     // ════════════════════════════════════════════
     //                  AD  LOGIC
     // ════════════════════════════════════════════
 
     /**
-     * @notice Create a sell ad. Tokens are transferred into escrow immediately.
-     * @param _token        ERC-20 token address
-     * @param _tokenAmount  Amount of tokens to sell
-     * @param _pricePerToken Price per 1 full token unit in INR paise
-     * @param _dealTimeout  Seconds the buyer gets to pay (must be an allowed value)
-     * @param _adDuration   How long the ad stays live (30 min – 72 h)
-     * @param _paymentInfo  Seller's payment details (UPI id, bank info, etc.)
+     * @notice Create a sell ad. For BNB, send value. For USDT, approve first.
+     * @param _token address(0) for BNB, or whitelisted BEP-20
      */
     function createAd(
         address _token,
@@ -152,7 +145,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         uint256 _dealTimeout,
         uint256 _adDuration,
         string calldata _paymentInfo
-    ) external nonReentrant {
+    ) external payable nonReentrant {
         require(_tokenAmount > 0, "Amount must be > 0");
         require(_pricePerToken > 0, "Price must be > 0");
         require(_isAllowedTimeout(_dealTimeout), "Invalid deal timeout");
@@ -160,8 +153,13 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         require(activeAdCount[msg.sender] < MAX_ACTIVE_ADS, "Max 2 active ads");
         require(bytes(_paymentInfo).length > 0, "Payment info required");
 
-        // Transfer tokens to contract
-        IERC20(_token).safeTransferFrom(msg.sender, address(this), _tokenAmount);
+        if (_token == NATIVE_BNB) {
+            require(msg.value == _tokenAmount, "BNB amount mismatch");
+        } else {
+            require(allowedTokens[_token], "Token not allowed");
+            require(msg.value == 0, "Do not send BNB for token ads");
+            IERC20(_token).safeTransferFrom(msg.sender, address(this), _tokenAmount);
+        }
 
         uint256 adId = nextAdId++;
         ads[adId] = Ad({
@@ -177,13 +175,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         });
 
         activeAdCount[msg.sender]++;
-
         emit AdCreated(adId, msg.sender, _token, _tokenAmount, _pricePerToken);
     }
 
-    /**
-     * @notice Cancel a live ad (only if no buyer has accepted).
-     */
     function cancelAd(uint256 _adId) external nonReentrant {
         Ad storage a = ads[_adId];
         require(msg.sender == a.seller, "Not your ad");
@@ -192,15 +186,10 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         a.status = AdStatus.Cancelled;
         activeAdCount[msg.sender]--;
 
-        // Refund tokens
-        IERC20(a.token).safeTransfer(a.seller, a.tokenAmount);
-
+        _transferOut(a.token, a.seller, a.tokenAmount);
         emit AdCancelled(_adId);
     }
 
-    /**
-     * @notice Claim back tokens from an expired ad that nobody accepted.
-     */
     function claimExpiredAd(uint256 _adId) external nonReentrant {
         Ad storage a = ads[_adId];
         require(msg.sender == a.seller, "Not your ad");
@@ -210,8 +199,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         a.status = AdStatus.Cancelled;
         activeAdCount[msg.sender]--;
 
-        IERC20(a.token).safeTransfer(a.seller, a.tokenAmount);
-
+        _transferOut(a.token, a.seller, a.tokenAmount);
         emit AdExpired(_adId);
     }
 
@@ -219,11 +207,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     //                 DEAL  LOGIC
     // ════════════════════════════════════════════
 
-    /**
-     * @notice Buyer accepts an ad → deal starts, timer begins.
-     * INR amount is calculated: (tokenAmount * pricePerToken) / (10 ** tokenDecimals)
-     * For simplicity we store the raw multiplication; front-end divides by decimals.
-     */
     function acceptAd(uint256 _adId) external nonReentrant {
         Ad storage a = ads[_adId];
         require(a.status == AdStatus.Live, "Ad not available");
@@ -235,9 +218,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
         uint256 dealId = nextDealId++;
         uint256 deadline = block.timestamp + a.dealTimeout;
-
-        // INR paise = tokenAmount * pricePerToken / 10^decimals
-        // We store raw product; UI divides by token decimals for display.
         uint256 inrAmount = a.tokenAmount * a.pricePerToken;
 
         deals[dealId] = Deal({
@@ -263,11 +243,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         emit DealCreated(dealId, _adId, msg.sender, inrAmount, deadline);
     }
 
-    /**
-     * @notice Buyer confirms they sent INR payment.
-     * After this, the seller CANNOT reclaim — funds are locked until
-     * seller confirms receipt or admin resolves a dispute.
-     */
     function buyerConfirmPayment(uint256 _dealId) external {
         Deal storage d = deals[_dealId];
         require(msg.sender == d.buyer, "Not the buyer");
@@ -276,14 +251,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
         d.buyerConfirmed = true;
         d.status = DealStatus.BuyerConfirmed;
-
         emit BuyerConfirmedPayment(_dealId);
     }
 
-    /**
-     * @notice Seller confirms they received INR.
-     * Both parties have now confirmed → tokens released to buyer.
-     */
     function sellerConfirmReceived(uint256 _dealId) external nonReentrant {
         Deal storage d = deals[_dealId];
         require(msg.sender == d.seller, "Not the seller");
@@ -291,41 +261,27 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
         d.sellerConfirmed = true;
         d.status = DealStatus.Completed;
-
         _completeDeal(d);
 
         emit SellerConfirmedReceipt(_dealId);
         emit DealCompleted(_dealId);
     }
 
-    /**
-     * @notice Cancel a timed-out deal where the buyer never confirmed payment.
-     * Seller reclaims tokens and the ad is re-listed.
-     * Anyone can call this (seller, buyer, or keeper bot).
-     */
     function cancelTimedOutDeal(uint256 _dealId) external nonReentrant {
         Deal storage d = deals[_dealId];
-        require(
-            d.status == DealStatus.Active,
-            "Only active (unconfirmed) deals can time out"
-        );
+        require(d.status == DealStatus.Active, "Only active deals can time out");
         require(block.timestamp > d.deadline, "Deadline not reached");
 
         d.status = DealStatus.Cancelled;
+        _transferOut(d.token, d.seller, d.tokenAmount);
 
-        // Return tokens to seller
-        IERC20(d.token).safeTransfer(d.seller, d.tokenAmount);
-
-        // Re-list the ad
         Ad storage a = ads[d.adId];
         a.status = AdStatus.Live;
-        // Extend ad expiry by the original remaining duration or a minimum
         if (a.adExpiry < block.timestamp) {
-            a.adExpiry = block.timestamp + 30 minutes; // give seller 30 min to re-manage
+            a.adExpiry = block.timestamp + 30 minutes;
         }
 
         _decrementDealCounters(d);
-
         emit DealCancelled(_dealId, "Buyer did not pay in time");
     }
 
@@ -333,15 +289,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     //              DISPUTE  LOGIC
     // ════════════════════════════════════════════
 
-    /**
-     * @notice Either party raises a dispute (only after buyer confirmed payment).
-     */
     function raiseDispute(uint256 _dealId, string calldata _proofHash) external onlyDealParty(_dealId) {
         Deal storage d = deals[_dealId];
-        require(
-            d.status == DealStatus.BuyerConfirmed,
-            "Can only dispute after buyer confirms"
-        );
+        require(d.status == DealStatus.BuyerConfirmed, "Can only dispute after buyer confirms");
 
         d.status = DealStatus.Disputed;
         d.disputeTimestamp = block.timestamp;
@@ -351,13 +301,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         } else {
             d.disputeProofSeller = _proofHash;
         }
-
         emit DealDisputed(_dealId, msg.sender);
     }
 
-    /**
-     * @notice Submit proof for an existing dispute.
-     */
     function submitDisputeProof(uint256 _dealId, string calldata _proofHash) external onlyDealParty(_dealId) {
         Deal storage d = deals[_dealId];
         require(d.status == DealStatus.Disputed, "No active dispute");
@@ -369,10 +315,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @notice Admin resolves a dispute — sends escrowed tokens to the rightful party.
-     * @param _toSeller true = refund seller, false = release to buyer
-     */
     function resolveDispute(uint256 _dealId, bool _toSeller) external onlyOwner nonReentrant {
         Deal storage d = deals[_dealId];
         require(d.status == DealStatus.Disputed, "Not disputed");
@@ -380,9 +322,8 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         d.status = DealStatus.Resolved;
         address recipient = _toSeller ? d.seller : d.buyer;
 
-        IERC20(d.token).safeTransfer(recipient, d.tokenAmount);
+        _transferOut(d.token, recipient, d.tokenAmount);
 
-        // Mark ad completed
         ads[d.adId].status = AdStatus.Completed;
         activeAdCount[d.seller]--;
         _decrementDealCounters(d);
@@ -394,9 +335,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     //                  CHAT
     // ════════════════════════════════════════════
 
-    /**
-     * @notice Send a chat message in a deal (on-chain, lightweight).
-     */
     function sendChat(uint256 _dealId, string calldata _message) external onlyDealParty(_dealId) {
         Deal storage d = deals[_dealId];
         require(
@@ -412,7 +350,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
             message: _message,
             timestamp: block.timestamp
         }));
-
         emit ChatSent(_dealId, msg.sender);
     }
 
@@ -428,7 +365,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     }
 
     // ════════════════════════════════════════════
-    //               VIEW  HELPERS
+    //               VIEW HELPERS
     // ════════════════════════════════════════════
 
     function getAd(uint256 _adId) external view returns (Ad memory) {
@@ -439,12 +376,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         return deals[_dealId];
     }
 
-    /**
-     * @notice Check if dispute proof should be cleared (>48h old).
-     * Actual deletion is a no-op on-chain (strings can't truly be deleted),
-     * but the front-end should stop displaying proofs after 48h.
-     * An off-chain keeper can call this to clear the hash references.
-     */
     function clearExpiredProof(uint256 _dealId) external {
         Deal storage d = deals[_dealId];
         require(d.status == DealStatus.Resolved, "Deal not resolved");
@@ -459,9 +390,17 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     //               INTERNAL
     // ════════════════════════════════════════════
 
-    function _completeDeal(Deal storage d) internal {
-        IERC20(d.token).safeTransfer(d.buyer, d.tokenAmount);
+    function _transferOut(address _token, address _to, uint256 _amount) internal {
+        if (_token == NATIVE_BNB) {
+            (bool success, ) = payable(_to).call{value: _amount}("");
+            require(success, "BNB transfer failed");
+        } else {
+            IERC20(_token).safeTransfer(_to, _amount);
+        }
+    }
 
+    function _completeDeal(Deal storage d) internal {
+        _transferOut(d.token, d.buyer, d.tokenAmount);
         ads[d.adId].status = AdStatus.Completed;
         activeAdCount[d.seller]--;
         _decrementDealCounters(d);
@@ -478,4 +417,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         }
         return false;
     }
+
+    // Accept BNB sent directly
+    receive() external payable {}
 }
