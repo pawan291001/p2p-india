@@ -159,6 +159,18 @@ const MyOrders = () => {
                       </div>
                     </div>
 
+                    {/* Timer progress bar */}
+                    {(deal.status === 0 || deal.status === 1) && (
+                      <div className="mt-3">
+                        <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-1000 ${timeLeft < 120 ? "bg-sell" : "bg-primary"}`}
+                            style={{ width: `${Math.max(0, Math.min(100, (timeLeft / 900) * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Deal info grid */}
                     <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                       <div>
