@@ -1,16 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
-import { useAccount } from "wagmi";
+import { X, Loader2 } from "lucide-react";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
+import { parseEther, parseUnits } from "viem";
+import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
+import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
+import { toast } from "sonner";
 
 interface CreateOrderModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const CRYPTOS = ["USDT", "BNB"];
+const NATIVE_BNB = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+
+const CRYPTOS = [
+  { symbol: "USDT", address: USDT_ADDRESS },
+  { symbol: "BNB", address: NATIVE_BNB },
+];
+
 const PAYMENT_OPTIONS = ["Bank Transfer", "UPI", "PayPal", "Wise", "Google Pay", "PhonePe"];
 const DEAL_TIMEOUTS = [
   { label: "15 min", value: 900 },
@@ -26,8 +36,10 @@ const AD_DURATIONS = [
   { label: "72 hours", value: 259200 },
 ];
 
+type Step = "form" | "approving" | "posting";
+
 const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const [crypto, setCrypto] = useState("USDT");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
@@ -35,6 +47,102 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const [adDuration, setAdDuration] = useState(3600);
   const [paymentInfo, setPaymentInfo] = useState("");
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
+  const [step, setStep] = useState<Step>("form");
+
+  const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
+  const isBNB = crypto === "BNB";
+  const tokenAmountWei = amount ? parseUnits(amount, 18) : BigInt(0);
+  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0); // 2 decimals for INR
+
+  // Check current USDT allowance
+  const { data: allowance } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "allowance",
+    args: address ? [address, P2P_CONTRACT_ADDRESS] : undefined,
+    query: { enabled: !isBNB && !!address && open },
+  });
+
+  const needsApproval = !isBNB && (allowance === undefined || (allowance as bigint) < tokenAmountWei);
+
+  // Approve tx
+  const { writeContract: approve, data: approveTxHash, isPending: isApproving, reset: resetApprove } = useWriteContract();
+  const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveTxHash });
+
+  // CreateAd tx
+  const { writeContract: createAd, data: createTxHash, isPending: isCreating, reset: resetCreate } = useWriteContract();
+  const { isSuccess: createConfirmed } = useWaitForTransactionReceipt({ hash: createTxHash });
+
+  // After approval confirmed, auto-proceed to createAd
+  useEffect(() => {
+    if (approveConfirmed && step === "approving") {
+      setStep("posting");
+      submitCreateAd();
+    }
+  }, [approveConfirmed]);
+
+  // After createAd confirmed, close modal
+  useEffect(() => {
+    if (createConfirmed && step === "posting") {
+      toast.success("Ad posted successfully! Your tokens are in escrow.");
+      resetForm();
+      onClose();
+    }
+  }, [createConfirmed]);
+
+  const resetForm = () => {
+    setPrice("");
+    setAmount("");
+    setPaymentInfo("");
+    setSelectedPayments([]);
+    setStep("form");
+    resetApprove();
+    resetCreate();
+  };
+
+  const submitCreateAd = () => {
+    const paymentStr = selectedPayments.length > 0
+      ? `${paymentInfo} | Methods: ${selectedPayments.join(", ")}`
+      : paymentInfo;
+
+    try {
+      createAd({
+        address: P2P_CONTRACT_ADDRESS,
+        abi: P2P_ESCROW_ABI,
+        functionName: "createAd",
+        args: [selectedToken.address, tokenAmountWei, pricePerTokenWei, BigInt(dealTimeout), BigInt(adDuration), paymentStr],
+        value: isBNB ? tokenAmountWei : BigInt(0),
+      });
+    } catch (e: any) {
+      toast.error(e?.shortMessage || "Transaction failed");
+      setStep("form");
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!price || !amount || !paymentInfo) return;
+
+    if (isBNB) {
+      setStep("posting");
+      submitCreateAd();
+    } else if (needsApproval) {
+      setStep("approving");
+      try {
+        approve({
+          address: USDT_ADDRESS,
+          abi: ERC20_ABI,
+          functionName: "approve",
+          args: [P2P_CONTRACT_ADDRESS, tokenAmountWei],
+        });
+      } catch (e: any) {
+        toast.error(e?.shortMessage || "Approval failed");
+        setStep("form");
+      }
+    } else {
+      setStep("posting");
+      submitCreateAd();
+    }
+  };
 
   const togglePayment = (method: string) => {
     setSelectedPayments((prev) =>
@@ -43,6 +151,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   };
 
   const inrTotal = price && amount ? (parseFloat(price) * parseFloat(amount)).toFixed(2) : "0.00";
+  const isProcessing = step !== "form";
 
   if (!open) return null;
 
@@ -53,8 +162,9 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={onClose}
+          onClick={() => { if (!isProcessing) { resetForm(); onClose(); } }}
           className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+          disabled={isProcessing}
         >
           <X className="h-5 w-5" />
         </button>
@@ -67,21 +177,22 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Crypto */}
+            {/* Token */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Token to Sell</Label>
               <div className="flex flex-wrap gap-1.5">
                 {CRYPTOS.map((c) => (
                   <button
-                    key={c}
-                    onClick={() => setCrypto(c)}
+                    key={c.symbol}
+                    onClick={() => setCrypto(c.symbol)}
+                    disabled={isProcessing}
                     className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-                      crypto === c
+                      crypto === c.symbol
                         ? "bg-primary text-primary-foreground"
                         : "bg-surface-3 text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {c}
+                    {c.symbol}
                   </button>
                 ))}
               </div>
@@ -98,6 +209,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="bg-surface-2 border-input"
+                disabled={isProcessing}
               />
             </div>
 
@@ -112,6 +224,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="bg-surface-2 border-input"
+                disabled={isProcessing}
               />
             </div>
 
@@ -133,6 +246,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                   <button
                     key={t.value}
                     onClick={() => setDealTimeout(t.value)}
+                    disabled={isProcessing}
                     className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                       dealTimeout === t.value
                         ? "bg-primary text-primary-foreground"
@@ -155,6 +269,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                   <button
                     key={d.value}
                     onClick={() => setAdDuration(d.value)}
+                    disabled={isProcessing}
                     className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                       adDuration === d.value
                         ? "bg-primary text-primary-foreground"
@@ -177,6 +292,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 value={paymentInfo}
                 onChange={(e) => setPaymentInfo(e.target.value)}
                 className="bg-surface-2 border-input"
+                disabled={isProcessing}
               />
             </div>
 
@@ -188,6 +304,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                   <button
                     key={method}
                     onClick={() => togglePayment(method)}
+                    disabled={isProcessing}
                     className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                       selectedPayments.includes(method)
                         ? "bg-primary/15 text-primary border border-primary/30"
@@ -200,13 +317,39 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             </div>
 
+            {/* Status indicator */}
+            {step === "approving" && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-center text-sm text-primary flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Approving USDT spend… confirm in wallet
+              </div>
+            )}
+            {step === "posting" && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-center text-sm text-primary flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Posting ad… confirm in wallet
+              </div>
+            )}
+
             <Button
               variant="sell"
               className="w-full mt-2"
               size="lg"
-              disabled={!price || !amount || !paymentInfo}
+              disabled={!price || !amount || !paymentInfo || isProcessing}
+              onClick={handleSubmit}
             >
-              Post Sell Ad — Deposit {amount || "0"} {crypto}
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              {step === "approving"
+                ? "Approving…"
+                : step === "posting"
+                ? "Posting…"
+                : isBNB
+                ? `Post Sell Ad — Deposit ${amount || "0"} BNB`
+                : needsApproval
+                ? `Approve & Post — Deposit ${amount || "0"} USDT`
+                : `Post Sell Ad — Deposit ${amount || "0"} USDT`}
             </Button>
           </div>
         )}
