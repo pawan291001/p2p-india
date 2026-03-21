@@ -278,6 +278,9 @@ function DealTable({ dealCount, refreshKey, onResolve }: { dealCount: number; re
 }
 
 function DealRow({ dealId, onResolve }: { dealId: number; onResolve: (id: number, toSeller: boolean) => void }) {
+  const [showChat, setShowChat] = useState(false);
+  const { address } = useAccount();
+
   const { data } = useReadContract({
     address: P2P_CONTRACT_ADDRESS,
     abi: P2P_ESCROW_ABI,
@@ -298,62 +301,88 @@ function DealRow({ dealId, onResolve }: { dealId: number; onResolve: (id: number
   const hasSellerProof = deal.disputeProofSeller && deal.disputeProofSeller.length > 0;
 
   return (
-    <TableRow className={isDisputed ? "bg-red-500/5" : ""}>
-      <TableCell className="font-mono text-xs">#{dealId}</TableCell>
-      <TableCell className="font-mono text-xs">{shortenAddress(deal.buyer)}</TableCell>
-      <TableCell className="font-mono text-xs">{shortenAddress(deal.seller)}</TableCell>
-      <TableCell>{token}</TableCell>
-      <TableCell className="tabular-nums">{parseFloat(amount).toFixed(4)}</TableCell>
-      <TableCell className="tabular-nums">₹{parseFloat(inr).toFixed(2)}</TableCell>
-      <TableCell>
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${DEAL_STATUS_COLORS[status] || ""}`}>
-          {DEAL_STATUS_LABELS[status] || "Unknown"}
-        </span>
-      </TableCell>
-      <TableCell>
-        <div className="flex gap-1">
-          {hasBuyerProof && (
-            <Badge variant="outline" className="text-[10px] px-1.5">
-              Buyer ✓
-            </Badge>
-          )}
-          {hasSellerProof && (
-            <Badge variant="outline" className="text-[10px] px-1.5">
-              Seller ✓
-            </Badge>
-          )}
-          {!hasBuyerProof && !hasSellerProof && (
-            <span className="text-xs text-muted-foreground">—</span>
-          )}
-        </div>
-      </TableCell>
-      <TableCell>
-        {isDisputed ? (
-          <div className="flex gap-1.5">
-            <Button
-              size="sm"
-              variant="buy"
-              className="h-7 text-xs px-2"
-              onClick={() => onResolve(dealId, false)}
-            >
-              Release to Buyer
-            </Button>
-            <Button
-              size="sm"
-              variant="sell"
-              className="h-7 text-xs px-2"
-              onClick={() => onResolve(dealId, true)}
-            >
-              Release to Seller
-            </Button>
-          </div>
-        ) : (
-          <span className="text-xs text-muted-foreground">
-            {status === 5 ? "Resolved" : status >= 2 ? "Closed" : "Ongoing"}
+    <>
+      <TableRow className={isDisputed ? "bg-red-500/5" : ""}>
+        <TableCell className="font-mono text-xs">#{dealId}</TableCell>
+        <TableCell className="font-mono text-xs">{shortenAddress(deal.buyer)}</TableCell>
+        <TableCell className="font-mono text-xs">{shortenAddress(deal.seller)}</TableCell>
+        <TableCell>{token}</TableCell>
+        <TableCell className="tabular-nums">{parseFloat(amount).toFixed(4)}</TableCell>
+        <TableCell className="tabular-nums">₹{parseFloat(inr).toFixed(2)}</TableCell>
+        <TableCell>
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${DEAL_STATUS_COLORS[status] || ""}`}>
+            {DEAL_STATUS_LABELS[status] || "Unknown"}
           </span>
-        )}
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        <TableCell>
+          <div className="flex gap-1">
+            {hasBuyerProof && (
+              <Badge variant="outline" className="text-[10px] px-1.5">
+                Buyer ✓
+              </Badge>
+            )}
+            {hasSellerProof && (
+              <Badge variant="outline" className="text-[10px] px-1.5">
+                Seller ✓
+              </Badge>
+            )}
+            {!hasBuyerProof && !hasSellerProof && (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </div>
+        </TableCell>
+        <TableCell>
+          <div className="flex gap-1.5 items-center">
+            {isDisputed && (
+              <>
+                <Button
+                  size="sm"
+                  variant="buy"
+                  className="h-7 text-xs px-2"
+                  onClick={() => onResolve(dealId, false)}
+                >
+                  Release to Buyer
+                </Button>
+                <Button
+                  size="sm"
+                  variant="sell"
+                  className="h-7 text-xs px-2"
+                  onClick={() => onResolve(dealId, true)}
+                >
+                  Release to Seller
+                </Button>
+              </>
+            )}
+            {/* Chat button for active/disputed deals */}
+            {(status === 0 || status === 1 || status === 4) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs px-2 text-muted-foreground"
+                onClick={() => setShowChat(!showChat)}
+              >
+                <MessageSquare className="h-3 w-3 mr-1" />
+                {showChat ? "Hide" : "Chat"}
+              </Button>
+            )}
+            {!isDisputed && status !== 0 && status !== 1 && (
+              <span className="text-xs text-muted-foreground">
+                {status === 5 ? "Resolved" : status >= 2 ? "Closed" : ""}
+              </span>
+            )}
+          </div>
+        </TableCell>
+      </TableRow>
+      {showChat && address && (
+        <TableRow>
+          <TableCell colSpan={9} className="p-0">
+            <div className="h-72 border-t border-border">
+              <ChatPanel dealId={dealId} userAddress={address} readOnly />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 
