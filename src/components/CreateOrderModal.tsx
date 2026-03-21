@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Loader2 } from "lucide-react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
-import { parseEther, parseUnits } from "viem";
+import { X, Loader2, Wallet } from "lucide-react";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useBalance } from "wagmi";
+import { parseEther, parseUnits, formatUnits } from "viem";
 import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
 import { toast } from "sonner";
@@ -52,7 +52,30 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
   const tokenAmountWei = amount ? parseUnits(amount, 18) : BigInt(0);
-  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0); // 2 decimals for INR
+  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0);
+
+  // Read BNB balance
+  const { data: bnbBalance } = useBalance({
+    address,
+    query: { enabled: isBNB && !!address && open },
+  });
+
+  // Read USDT balance
+  const { data: usdtBalance } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !isBNB && !!address && open },
+  });
+
+  const walletBalance = isBNB
+    ? bnbBalance ? parseFloat(formatUnits(bnbBalance.value, 18)) : 0
+    : usdtBalance ? parseFloat(formatUnits(usdtBalance as bigint, 18)) : 0;
+
+  const walletBalanceFormatted = walletBalance.toFixed(4);
+  const amountNum = amount ? parseFloat(amount) : 0;
+  const exceedsBalance = amountNum > walletBalance;
 
   // Check current USDT allowance
   const { data: allowance } = useReadContract({
@@ -215,17 +238,34 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
 
             {/* Amount */}
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">
-                Amount ({crypto})
-              </Label>
+              <div className="flex items-center justify-between mb-1.5">
+                <Label className="text-xs text-muted-foreground">Amount ({crypto})</Label>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Wallet className="h-3 w-3" />
+                  <span>{walletBalanceFormatted} {crypto}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(walletBalance.toString())}
+                    disabled={isProcessing || walletBalance <= 0}
+                    className="text-primary font-medium hover:text-primary/80 transition-colors ml-1"
+                  >
+                    MAX
+                  </button>
+                </div>
+              </div>
               <Input
                 type="number"
                 placeholder="e.g. 30"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="bg-surface-2 border-input"
+                className={`bg-surface-2 border-input ${exceedsBalance && amount ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 disabled={isProcessing}
               />
+              {exceedsBalance && amount && (
+                <p className="text-xs text-destructive mt-1">
+                  Insufficient balance. You have {walletBalanceFormatted} {crypto}
+                </p>
+              )}
             </div>
 
             {/* INR Total */}
@@ -335,7 +375,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               variant="sell"
               className="w-full mt-2"
               size="lg"
-              disabled={!price || !amount || !paymentInfo || isProcessing}
+              disabled={!price || !amount || !paymentInfo || isProcessing || exceedsBalance}
               onClick={handleSubmit}
             >
               {isProcessing ? (
