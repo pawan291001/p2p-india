@@ -396,9 +396,10 @@ function AdRow({ adId }: { adId: number }) {
 
   const ad = data as any;
   const status = Number(ad.status);
-  const token = ad.token === "0x0000000000000000000000000000000000000000" ? "BNB" : "USDT";
+  const NATIVE_BNB = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+  const token = String(ad.token).toLowerCase() === NATIVE_BNB.toLowerCase() ? "BNB" : "USDT";
   const amount = formatUnits(ad.tokenAmount, 18);
-  const price = formatUnits(ad.pricePerToken, 0);
+  const price = formatUnits(ad.pricePerToken, 2);
   const timeoutMin = Number(ad.dealTimeout) / 60;
 
   return (
