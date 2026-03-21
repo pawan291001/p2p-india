@@ -117,10 +117,10 @@ const MyOrders = () => {
               const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
               const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
               const paymentInfo = getPaymentInfo(deal.adId);
-              const now = Math.floor(Date.now() / 1000);
               const timeLeft = deal.deadline - now;
               const isTimedOut = timeLeft <= 0 && (deal.status === 0 || deal.status === 1);
               const showChat = chatDealId === deal.dealId;
+              const progress = deal.deadline > 0 ? Math.max(0, Math.min(100, (timeLeft / (deal.deadline - (deal.deadline - 900))) * 100)) : 0;
 
               return (
                 <div
