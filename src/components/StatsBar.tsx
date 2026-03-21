@@ -10,7 +10,7 @@ const StatsBar = () => {
     {
       icon: Wallet,
       label: "Your Balance",
-      value: isConnected && balance ? `${parseFloat(balance.formatted).toFixed(4)} ${balance.symbol}` : "—",
+      value: isConnected && balance ? `${parseFloat(formatUnits(balance.value, balance.decimals)).toFixed(4)} ${balance.symbol}` : "—",
     },
     { icon: TrendingUp, label: "Network", value: isConnected ? "BSC Mainnet" : "Not Connected" },
     { icon: ShieldCheck, label: "Escrow", value: "Smart Contract" },
