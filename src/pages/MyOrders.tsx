@@ -34,6 +34,13 @@ const MyOrders = () => {
   const { deals, isLoading: loadingDeals } = useContractDeals();
   const [chatDealId, setChatDealId] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
+  const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+
+  // Live tick every second for countdown timers
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, []);
   const [pendingDealId, setPendingDealId] = useState<number | null>(null);
 
   // Buyer confirm payment
@@ -110,10 +117,10 @@ const MyOrders = () => {
               const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
               const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
               const paymentInfo = getPaymentInfo(deal.adId);
-              const now = Math.floor(Date.now() / 1000);
               const timeLeft = deal.deadline - now;
               const isTimedOut = timeLeft <= 0 && (deal.status === 0 || deal.status === 1);
               const showChat = chatDealId === deal.dealId;
+              const progress = deal.deadline > 0 ? Math.max(0, Math.min(100, (timeLeft / (deal.deadline - (deal.deadline - 900))) * 100)) : 0;
 
               return (
                 <div
@@ -138,13 +145,31 @@ const MyOrders = () => {
                       <div className="flex items-center gap-2">
                         <span className={`text-xs font-semibold ${ds.color}`}>{ds.label}</span>
                         {(deal.status === 0 || deal.status === 1) && timeLeft > 0 && (
-                          <span className={`text-xs font-mono ${timeLeft < 120 ? "text-sell" : "text-muted-foreground"}`}>
-                            <Clock className="h-3 w-3 inline mr-1" />
+                          <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono ${timeLeft < 120 ? "bg-sell/10 text-sell" : "bg-primary/10 text-primary"}`}>
+                            <Clock className="h-3 w-3" />
                             {formatTime(timeLeft)}
+                          </span>
+                        )}
+                        {isTimedOut && (
+                          <span className="flex items-center gap-1 rounded-full bg-sell/10 px-2.5 py-1 text-xs font-semibold text-sell">
+                            <AlertTriangle className="h-3 w-3" />
+                            Expired
                           </span>
                         )}
                       </div>
                     </div>
+
+                    {/* Timer progress bar */}
+                    {(deal.status === 0 || deal.status === 1) && (
+                      <div className="mt-3">
+                        <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-1000 ${timeLeft < 120 ? "bg-sell" : "bg-primary"}`}
+                            style={{ width: `${Math.max(0, Math.min(100, (timeLeft / 900) * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Deal info grid */}
                     <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
@@ -257,8 +282,8 @@ const MyOrders = () => {
                         </Button>
                       )}
 
-                      {/* Cancel timed out */}
-                      {isTimedOut && !deal.buyerConfirmed && (
+                      {/* Cancel timed out / Claim funds */}
+                      {isTimedOut && (
                         <Button
                           variant="outline"
                           size="sm"
