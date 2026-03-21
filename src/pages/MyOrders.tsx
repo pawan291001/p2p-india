@@ -282,8 +282,8 @@ const MyOrders = () => {
                         </Button>
                       )}
 
-                      {/* Cancel timed out */}
-                      {isTimedOut && !deal.buyerConfirmed && (
+                      {/* Cancel timed out / Claim funds */}
+                      {isTimedOut && (
                         <Button
                           variant="outline"
                           size="sm"
