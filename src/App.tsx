@@ -6,6 +6,7 @@ import WalletProvider from "@/components/WalletProvider";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import MyOrders from "./pages/MyOrders";
+import MyAds from "./pages/MyAds";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -16,6 +17,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/my-ads" element={<MyAds />} />
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />

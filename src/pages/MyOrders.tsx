@@ -1,31 +1,17 @@
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Wallet, Package, ShoppingCart, Loader2 } from "lucide-react";
+import { Wallet, ShoppingCart, Loader2, Copy, CheckCircle2, Clock, AlertTriangle, MessageSquare, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { useContractAds, LiveAd } from "@/hooks/useContractAds";
-import { useContractDeals, LiveDeal } from "@/hooks/useContractDeals";
+import { useContractAds } from "@/hooks/useContractAds";
+import { useContractDeals } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
-import { Clock, Shield, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useState, useEffect } from "react";
-import TradeWindow from "@/components/TradeWindow";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
+import ChatPanel from "@/components/ChatPanel";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-
-const formatTimeout = (seconds: number) => {
-  if (seconds >= 3600) return `${seconds / 3600}h`;
-  return `${seconds / 60} min`;
-};
-
-const STATUS_LABELS: Record<number, { label: string; color: string }> = {
-  0: { label: "Live", color: "text-buy" },
-  1: { label: "In Deal", color: "text-primary" },
-  2: { label: "Completed", color: "text-muted-foreground" },
-  3: { label: "Cancelled", color: "text-sell" },
-  4: { label: "Expired", color: "text-muted-foreground" },
-};
 
 const DEAL_STATUS: Record<number, { label: string; color: string }> = {
   0: { label: "Active", color: "text-primary" },
@@ -35,58 +21,41 @@ const DEAL_STATUS: Record<number, { label: string; color: string }> = {
   4: { label: "Disputed", color: "text-sell" },
 };
 
+const formatTime = (seconds: number) => {
+  if (seconds <= 0) return "00:00";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+};
+
 const MyOrders = () => {
   const { address, isConnected } = useAccount();
   const { ads, isLoading: loadingAds } = useContractAds();
   const { deals, isLoading: loadingDeals } = useContractDeals();
-  const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
-  const [pendingAdId, setPendingAdId] = useState<number | null>(null);
+  const [chatDealId, setChatDealId] = useState<number | null>(null);
+  const [copied, setCopied] = useState<number | null>(null);
+  const [pendingDealId, setPendingDealId] = useState<number | null>(null);
 
-  // Cancel ad
-  const { writeContract: cancelAd, data: cancelHash, isPending: cancelPending } = useWriteContract();
-  const { isSuccess: cancelConfirmed } = useWaitForTransactionReceipt({ hash: cancelHash });
+  // Buyer confirm payment
+  const { writeContract: confirmPayment, data: payHash, isPending: payPending } = useWriteContract();
+  const { isSuccess: payConfirmed } = useWaitForTransactionReceipt({ hash: payHash });
 
-  // Claim expired ad
-  const { writeContract: claimExpired, data: claimHash, isPending: claimPending } = useWriteContract();
-  const { isSuccess: claimConfirmed } = useWaitForTransactionReceipt({ hash: claimHash });
+  // Seller confirm receipt
+  const { writeContract: sellerConfirm, data: sellerHash, isPending: sellerPending } = useWriteContract();
+  const { isSuccess: sellerDone } = useWaitForTransactionReceipt({ hash: sellerHash });
 
-  useEffect(() => {
-    if (cancelConfirmed) {
-      toast.success("Ad cancelled. Funds returned to your wallet.");
-      setPendingAdId(null);
-    }
-  }, [cancelConfirmed]);
+  // Raise dispute
+  const { writeContract: raiseDispute, data: disputeHash, isPending: disputePending } = useWriteContract();
+  const { isSuccess: disputeDone } = useWaitForTransactionReceipt({ hash: disputeHash });
 
-  useEffect(() => {
-    if (claimConfirmed) {
-      toast.success("Expired ad claimed. Funds returned to your wallet.");
-      setPendingAdId(null);
-    }
-  }, [claimConfirmed]);
+  // Cancel timed out
+  const { writeContract: cancelDeal, data: cancelHash, isPending: cancelPending } = useWriteContract();
+  const { isSuccess: cancelDone } = useWaitForTransactionReceipt({ hash: cancelHash });
 
-  const handleCancelAd = (adId: number) => {
-    setPendingAdId(adId);
-    cancelAd({
-      address: P2P_CONTRACT_ADDRESS,
-      abi: P2P_ESCROW_ABI,
-      functionName: "cancelAd",
-      args: [BigInt(adId)],
-    } as any);
-  };
-
-  const handleClaimExpired = (adId: number) => {
-    setPendingAdId(adId);
-    claimExpired({
-      address: P2P_CONTRACT_ADDRESS,
-      abi: P2P_ESCROW_ABI,
-      functionName: "claimExpiredAd",
-      args: [BigInt(adId)],
-    } as any);
-  };
-
-  const myAds = address
-    ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
-    : [];
+  useEffect(() => { if (payConfirmed) { toast.success("Payment confirmed on-chain!"); setPendingDealId(null); } }, [payConfirmed]);
+  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); setPendingDealId(null); } }, [sellerDone]);
+  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); setPendingDealId(null); } }, [disputeDone]);
+  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); setPendingDealId(null); } }, [cancelDone]);
 
   const myDeals = address
     ? deals.filter(
@@ -96,12 +65,26 @@ const MyOrders = () => {
       )
     : [];
 
+  // Get payment info from associated ad
+  const getPaymentInfo = (adId: number) => {
+    const ad = ads.find((a) => a.adId === adId);
+    return ad?.paymentInfo || "N/A";
+  };
+
+  const handleCopy = (text: string, dealId: number) => {
+    navigator.clipboard.writeText(text);
+    setCopied(dealId);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const isProcessing = payPending || sellerPending || disputePending || cancelPending;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <h1 className="text-2xl font-bold text-foreground mb-6" style={{ lineHeight: "1.1" }}>
-          My Orders
+          My Deals
         </h1>
 
         {!isConnected ? (
@@ -110,177 +93,218 @@ const MyOrders = () => {
               <Wallet className="h-8 w-8 text-primary" />
             </div>
             <p className="text-foreground font-semibold mb-1">Connect your wallet</p>
-            <p className="text-muted-foreground text-sm mb-4">Connect to view your ads and deals.</p>
+            <p className="text-muted-foreground text-sm mb-4">Connect to view your deals.</p>
             <ConnectButton />
           </div>
+        ) : loadingDeals || loadingAds ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm animate-pulse">
+            Loading deals from contract…
+          </div>
+        ) : myDeals.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
+            No deals yet. Accept an ad on the P2P Trading page to start.
+          </div>
         ) : (
-          <div className="space-y-8">
-            {/* My Ads */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <Package className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">My Ads ({myAds.length})</h2>
-              </div>
-              {loadingAds ? (
-                <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm animate-pulse">
-                  Loading ads from contract…
-                </div>
-              ) : myAds.length === 0 ? (
-                <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-                  You haven't created any ads yet.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {myAds.map((ad, i) => {
-                    const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
-                    const isExpired = ad.status === 0 && Date.now() / 1000 > ad.adExpiry;
-                    return (
-                      <div
-                        key={ad.adId}
-                        className="rounded-lg border border-border bg-card p-4 sm:p-5 transition-all hover:border-primary/30 animate-fade-up"
-                        style={{ animationDelay: `${i * 60}ms` }}
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
-                              #{ad.adId}
-                            </div>
-                            <div>
-                              <span className="font-medium text-foreground">
-                                {ad.tokenAmount} {ad.tokenSymbol}
-                              </span>
-                              <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
-                            </div>
-                          </div>
-                          <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
-                            {isExpired ? "Expired" : st.label}
+          <div className="space-y-4">
+            {myDeals.map((deal, i) => {
+              const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
+              const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
+              const paymentInfo = getPaymentInfo(deal.adId);
+              const now = Math.floor(Date.now() / 1000);
+              const timeLeft = deal.deadline - now;
+              const isTimedOut = timeLeft <= 0 && (deal.status === 0 || deal.status === 1);
+              const showChat = chatDealId === deal.dealId;
+
+              return (
+                <div
+                  key={deal.dealId}
+                  className="rounded-lg border border-border bg-card overflow-hidden transition-all hover:border-primary/30 animate-fade-up"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  {/* Deal header */}
+                  <div className="p-4 sm:p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isBuyer ? "bg-buy/10 text-buy" : "bg-sell/10 text-sell"} font-bold text-sm`}>
+                          {isBuyer ? "B" : "S"}
+                        </div>
+                        <div>
+                          <span className="font-medium text-foreground">Deal #{deal.dealId}</span>
+                          <span className="text-muted-foreground text-sm ml-2">
+                            {isBuyer ? "Buying" : "Selling"} {deal.tokenAmount} {deal.tokenSymbol}
                           </span>
                         </div>
-                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground text-xs">Total INR</span>
-                            <p className="text-foreground font-medium tabular-nums">₹{ad.inrTotal}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Deal Timeout</span>
-                            <p className="text-foreground text-xs">{formatTimeout(ad.dealTimeout)}</p>
-                          </div>
-                          <div className="col-span-2 sm:col-span-1">
-                            <span className="text-muted-foreground text-xs">Payment</span>
-                            <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
-                          </div>
-                        </div>
-                        {/* Action buttons */}
-                        {(ad.status === 0) && (
-                          <div className="mt-3 flex gap-2">
-                            {!isExpired ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-sell border-sell/30 hover:bg-sell/10"
-                                onClick={() => handleCancelAd(ad.adId)}
-                                disabled={cancelPending && pendingAdId === ad.adId}
-                              >
-                                {cancelPending && pendingAdId === ad.adId ? (
-                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                ) : null}
-                                Cancel Ad
-                              </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-primary border-primary/30 hover:bg-primary/10"
-                                onClick={() => handleClaimExpired(ad.adId)}
-                                disabled={claimPending && pendingAdId === ad.adId}
-                              >
-                                {claimPending && pendingAdId === ad.adId ? (
-                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                ) : null}
-                                Claim Funds
-                              </Button>
-                            )}
-                          </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-semibold ${ds.color}`}>{ds.label}</span>
+                        {(deal.status === 0 || deal.status === 1) && timeLeft > 0 && (
+                          <span className={`text-xs font-mono ${timeLeft < 120 ? "text-sell" : "text-muted-foreground"}`}>
+                            <Clock className="h-3 w-3 inline mr-1" />
+                            {formatTime(timeLeft)}
+                          </span>
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+                    </div>
 
-            {/* My Deals */}
-            <section>
-              <div className="flex items-center gap-2 mb-4">
-                <ShoppingCart className="h-5 w-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground">My Deals ({myDeals.length})</h2>
-              </div>
-              {loadingDeals ? (
-                <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm animate-pulse">
-                  Loading deals from contract…
-                </div>
-              ) : myDeals.length === 0 ? (
-                <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-                  No active deals.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {myDeals.map((deal, i) => {
-                    const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
-                    const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
-                    return (
-                      <div
-                        key={deal.dealId}
-                        className="rounded-lg border border-border bg-card p-4 sm:p-5 transition-all hover:border-primary/30 animate-fade-up"
-                        style={{ animationDelay: `${i * 60}ms` }}
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isBuyer ? "bg-buy/10 text-buy" : "bg-sell/10 text-sell"} font-bold text-sm`}>
-                              {isBuyer ? "B" : "S"}
-                            </div>
-                            <div>
-                              <span className="font-medium text-foreground">
-                                Deal #{deal.dealId}
-                              </span>
-                              <span className="text-muted-foreground text-sm ml-2">
-                                {isBuyer ? "Buying" : "Selling"} {deal.tokenAmount} {deal.tokenSymbol}
-                              </span>
-                            </div>
-                          </div>
-                          <span className={`text-xs font-semibold ${ds.color}`}>{ds.label}</span>
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground text-xs">INR Amount</span>
-                            <p className="text-foreground font-medium tabular-nums">₹{deal.inrAmount}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Counterparty</span>
-                            <p className="text-foreground text-xs font-mono">
-                              {shortAddr(isBuyer ? deal.seller : deal.buyer)}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Confirmations</span>
-                            <p className="text-foreground text-xs">
-                              Buyer: {deal.buyerConfirmed ? "✓" : "✗"} | Seller: {deal.sellerConfirmed ? "✓" : "✗"}
-                            </p>
-                          </div>
-                        </div>
+                    {/* Deal info grid */}
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground text-xs">INR Amount</span>
+                        <p className="text-foreground font-medium tabular-nums">₹{deal.inrAmount}</p>
                       </div>
-                    );
-                  })}
+                      <div>
+                        <span className="text-muted-foreground text-xs">Counterparty</span>
+                        <p className="text-foreground text-xs font-mono">
+                          {shortAddr(isBuyer ? deal.seller : deal.buyer)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Buyer Confirmed</span>
+                        <p className={`text-xs font-medium ${deal.buyerConfirmed ? "text-buy" : "text-muted-foreground"}`}>
+                          {deal.buyerConfirmed ? "✓ Yes" : "✗ No"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground text-xs">Seller Confirmed</span>
+                        <p className={`text-xs font-medium ${deal.sellerConfirmed ? "text-buy" : "text-muted-foreground"}`}>
+                          {deal.sellerConfirmed ? "✓ Yes" : "✗ No"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Payment details for buyer */}
+                    {isBuyer && (deal.status === 0 || deal.status === 1) && (
+                      <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
+                        <p className="text-xs font-semibold text-foreground">Payment Details</p>
+                        <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-2">
+                          <p className="text-sm font-mono text-foreground break-all">{paymentInfo}</p>
+                          <button
+                            onClick={() => handleCopy(paymentInfo, deal.dealId)}
+                            className="shrink-0 text-primary hover:text-primary/80"
+                          >
+                            {copied === deal.dealId ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Send exactly ₹{deal.inrAmount} to the above details, then confirm payment.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {/* Buyer: confirm payment (if active, not yet confirmed) */}
+                      {isBuyer && deal.status === 0 && !deal.buyerConfirmed && (
+                        <Button
+                          variant="buy"
+                          size="sm"
+                          disabled={isProcessing}
+                          onClick={() => {
+                            setPendingDealId(deal.dealId);
+                            confirmPayment({
+                              address: P2P_CONTRACT_ADDRESS,
+                              abi: P2P_ESCROW_ABI,
+                              functionName: "buyerConfirmPayment",
+                              args: [BigInt(deal.dealId)],
+                            } as any);
+                          }}
+                        >
+                          {payPending && pendingDealId === deal.dealId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                          I've Paid — Confirm
+                        </Button>
+                      )}
+
+                      {/* Seller: confirm receipt (if buyer confirmed) */}
+                      {!isBuyer && deal.buyerConfirmed && !deal.sellerConfirmed && (deal.status === 0 || deal.status === 1) && (
+                        <Button
+                          variant="buy"
+                          size="sm"
+                          disabled={isProcessing}
+                          onClick={() => {
+                            setPendingDealId(deal.dealId);
+                            sellerConfirm({
+                              address: P2P_CONTRACT_ADDRESS,
+                              abi: P2P_ESCROW_ABI,
+                              functionName: "sellerConfirmReceived",
+                              args: [BigInt(deal.dealId)],
+                            } as any);
+                          }}
+                        >
+                          {sellerPending && pendingDealId === deal.dealId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                          I Received ₹{deal.inrAmount} — Release
+                        </Button>
+                      )}
+
+                      {/* Raise dispute */}
+                      {(deal.status === 0 || deal.status === 1) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-sell border-sell/30"
+                          disabled={isProcessing}
+                          onClick={() => {
+                            setPendingDealId(deal.dealId);
+                            raiseDispute({
+                              address: P2P_CONTRACT_ADDRESS,
+                              abi: P2P_ESCROW_ABI,
+                              functionName: "raiseDispute",
+                              args: [BigInt(deal.dealId), "Payment dispute"],
+                            } as any);
+                          }}
+                        >
+                          {disputePending && pendingDealId === deal.dealId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                          Dispute
+                        </Button>
+                      )}
+
+                      {/* Cancel timed out */}
+                      {isTimedOut && !deal.buyerConfirmed && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isProcessing}
+                          onClick={() => {
+                            setPendingDealId(deal.dealId);
+                            cancelDeal({
+                              address: P2P_CONTRACT_ADDRESS,
+                              abi: P2P_ESCROW_ABI,
+                              functionName: "cancelTimedOutDeal",
+                              args: [BigInt(deal.dealId)],
+                            } as any);
+                          }}
+                        >
+                          {cancelPending && pendingDealId === deal.dealId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                          Cancel (Timed Out)
+                        </Button>
+                      )}
+
+                      {/* Chat toggle */}
+                      {(deal.status === 0 || deal.status === 1 || deal.status === 4) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground ml-auto"
+                          onClick={() => setChatDealId(showChat ? null : deal.dealId)}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          {showChat ? "Hide Chat" : "Chat"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Inline chat */}
+                  {showChat && (
+                    <div className="border-t border-border h-72">
+                      <ChatPanel dealId={deal.dealId} userAddress={address!} />
+                    </div>
+                  )}
                 </div>
-              )}
-            </section>
+              );
+            })}
           </div>
         )}
       </main>
-
-      {selectedAd && address && (
-        <TradeWindow ad={selectedAd} userAddress={address} onClose={() => setSelectedAd(null)} />
-      )}
     </div>
   );
 };
