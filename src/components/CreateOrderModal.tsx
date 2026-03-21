@@ -133,7 +133,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
           abi: ERC20_ABI,
           functionName: "approve",
           args: [P2P_CONTRACT_ADDRESS, tokenAmountWei],
-        });
+        } as any);
       } catch (e: any) {
         toast.error(e?.shortMessage || "Approval failed");
         setStep("form");
