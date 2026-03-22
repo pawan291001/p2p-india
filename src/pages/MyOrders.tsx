@@ -136,9 +136,13 @@ const MyOrders = () => {
           <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
             No deals yet. Accept an ad on the P2P Trading page to start.
           </div>
+        ) : filteredDeals.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
+            No {statusFilter} deals found.
+          </div>
         ) : (
           <div className="space-y-4">
-            {myDeals.map((deal, i) => {
+            {filteredDeals.map((deal, i) => {
               const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
               const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
               const paymentInfo = getPaymentInfo(deal.adId);
