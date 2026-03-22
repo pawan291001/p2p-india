@@ -41,7 +41,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex">
-          <ConnectButton chainStatus="icon" accountStatus="address" showBalance={true} />
+          <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
         </div>
 
         <button
