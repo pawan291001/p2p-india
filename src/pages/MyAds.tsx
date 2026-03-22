@@ -30,6 +30,7 @@ const MyAds = () => {
   const { address, isConnected } = useAccount();
   const { ads, isLoading } = useContractAds();
   const { deals } = useContractDeals();
+  const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
 
   const { writeContract: cancelAd, data: cancelHash, isPending: cancelPending } = useWriteContract();
