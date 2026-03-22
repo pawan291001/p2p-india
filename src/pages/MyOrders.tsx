@@ -9,6 +9,7 @@ import { useContractDeals } from "@/hooks/useContractDeals";
 import { useDealTxHashes } from "@/hooks/useDealTxHashes";
 import { Button } from "@/components/ui/button";
 import { parsePaymentInfo } from "@/lib/parsePaymentInfo";
+import UpiQrCode from "@/components/UpiQrCode";
 import { useState, useEffect, useRef } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
