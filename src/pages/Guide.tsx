@@ -47,7 +47,7 @@ const SECTIONS = [
   {
     id: "payment",
     title: "Step 4 — Making & Confirming Payment",
-    image: guidePayment,
+    image: null,
     content: [
       "Once you accept a deal as a buyer, you'll see the seller's payment details — UPI ID, bank account info, or other method-specific details. For UPI payments, a QR code is automatically generated so you can scan and pay instantly.",
       "Send the exact INR amount shown in the deal to the seller's provided payment details. Double-check the amount and account details before sending.",
