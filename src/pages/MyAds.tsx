@@ -502,7 +502,7 @@ const MyAds = () => {
                                 </Button>
                               </div>
                             </div>
-                          )
+                          )}
                         </div>
 
                         {/* Chat panel */}
