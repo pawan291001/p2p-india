@@ -6,6 +6,8 @@ export interface ParsedPayment {
   copyableDetail: string;
   /** All detail fields as key-value pairs */
   fields: { label: string; value: string }[];
+  /** UPI deep link for QR code, if applicable */
+  upiLink: string | null;
 }
 
 export function parsePaymentInfo(raw: string): ParsedPayment {
@@ -37,5 +39,15 @@ export function parsePaymentInfo(raw: string): ParsedPayment {
     copyableDetail = detailParts[0] || raw;
   }
 
-  return { name, method, copyableDetail, fields };
+  // Build UPI deep link if method is UPI, GPay, or PhonePe
+  let upiLink: string | null = null;
+  const isUpiMethod = ["UPI", "Google Pay", "PhonePe"].includes(method);
+  if (isUpiMethod) {
+    const upiField = fields.find((f) => f.label === "UPI" || f.label === "Phone/UPI");
+    if (upiField) {
+      upiLink = `upi://pay?pa=${encodeURIComponent(upiField.value)}&pn=${encodeURIComponent(name)}`;
+    }
+  }
+
+  return { name, method, copyableDetail, fields, upiLink };
 }

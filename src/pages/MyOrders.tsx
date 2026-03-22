@@ -9,6 +9,7 @@ import { useContractDeals } from "@/hooks/useContractDeals";
 import { useDealTxHashes } from "@/hooks/useDealTxHashes";
 import { Button } from "@/components/ui/button";
 import { parsePaymentInfo } from "@/lib/parsePaymentInfo";
+import UpiQrCode from "@/components/UpiQrCode";
 import { useState, useEffect, useRef } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
@@ -232,6 +233,9 @@ const MyOrders = () => {
                     {copied === deal.dealId ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
+                {parsed.upiLink && (
+                  <UpiQrCode upiLink={parsed.upiLink} amount={deal.inrAmount} />
+                )}
                 <p className="text-xs text-muted-foreground">Send exactly ₹{deal.inrAmount} to the above details, then confirm payment.</p>
               </div>
             );
