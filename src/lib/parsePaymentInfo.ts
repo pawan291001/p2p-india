@@ -6,6 +6,8 @@ export interface ParsedPayment {
   copyableDetail: string;
   /** All detail fields as key-value pairs */
   fields: { label: string; value: string }[];
+  /** UPI deep link for QR code, if applicable */
+  upiLink: string | null;
 }
 
 export function parsePaymentInfo(raw: string): ParsedPayment {
