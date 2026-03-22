@@ -373,9 +373,11 @@ const MyAds = () => {
                                     <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> returned to your wallet.</p>
                                   )}
                                 </div>
-                                <a href={BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                                  <ExternalLink className="h-3 w-3" /> View on BscScan
-                                </a>
+                                {(() => { const txh = completedDeal ? (dealTxMap[completedDeal.dealId]?.completed || dealTxMap[completedDeal.dealId]?.cancelled || dealTxMap[completedDeal.dealId]?.resolved || dealTxMap[completedDeal.dealId]?.created) : undefined; return (
+                                  <a href={txh ? `https://bscscan.com/tx/${txh}` : BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                                    <ExternalLink className="h-3 w-3" /> {txh ? `View tx ${txh.slice(0, 10)}…` : "View on BscScan"}
+                                  </a>
+                                ); })()}
                               </div>
                             );
                           })()}
