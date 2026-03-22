@@ -19,6 +19,7 @@ export interface DealTxInfo {
   cancelled?: string;
   disputed?: string;
   resolved?: string;
+  resolvedRecipient?: string;
   events: DealEvent[];
 }
 
