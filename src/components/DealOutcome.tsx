@@ -161,6 +161,28 @@ const DealOutcome = ({
             </p>
           </>
         )}
+
+        {isResolved && (
+          <>
+            <p className="text-muted-foreground">
+              The dispute was reviewed by admin and resolved. Funds have been released to the rightful party.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-buy" />
+                <span className="text-buy font-medium">Dispute reviewed</span>
+              </div>
+              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-buy" />
+                <span className="text-buy font-medium">Funds released by admin</span>
+              </div>
+            </div>
+            <p className="text-muted-foreground pt-1">
+              <span className="font-medium text-foreground">{tokenAmount} {tokenSymbol}</span> released from escrow.
+            </p>
+          </>
+        )}
       </div>
 
       {/* BscScan link — specific tx or contract fallback */}

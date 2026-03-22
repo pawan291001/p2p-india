@@ -115,7 +115,7 @@ const MyOrders = () => {
   const sortedDeals = [...myDeals].sort((a, b) => b.dealId - a.dealId);
   const activeDeals = sortedDeals.filter((d) => d.status === 0 || d.status === 1);
   const disputedDeals = sortedDeals.filter((d) => d.status === 4);
-  const historyDeals = sortedDeals.filter((d) => d.status === 2 || d.status === 3);
+  const historyDeals = sortedDeals.filter((d) => d.status === 2 || d.status === 3 || d.status === 5);
 
   const [tab, setTab] = useState<"live" | "history">("live");
 
