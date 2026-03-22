@@ -267,7 +267,7 @@ const MyOrders = () => {
                     I Received ₹{deal.inrAmount} — Release
                   </Button>
                 )}
-                {(deal.status === 0 || deal.status === 1) && (
+                {(deal.status === 0 || deal.status === 1) && isTimedOut && (deal.buyerConfirmed !== deal.sellerConfirmed) && (
                   <Button variant="outline" size="sm" className="text-sell border-sell/30" disabled={isProcessing} onClick={() => { setPendingDealId(deal.dealId); raiseDispute({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "raiseDispute", args: [BigInt(deal.dealId), "Payment dispute"] } as any); }}>
                     {disputePending && pendingDealId === deal.dealId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                     Dispute

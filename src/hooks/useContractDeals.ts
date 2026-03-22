@@ -67,7 +67,7 @@ export function useContractDeals() {
       // inrAmount = tokenAmount * pricePerToken (no division in contract)
       // tokenAmount has 18 decimals, pricePerToken has 2 decimals → total 20 decimals
       const inrBigInt = BigInt(String(rawInrAmount));
-      const inrFormatted = formatUnits(inrBigInt, 20);
+      const inrFormatted = parseFloat(formatUnits(inrBigInt, 20)).toFixed(2);
 
       deals.push({
         dealId: Number(rawId),
