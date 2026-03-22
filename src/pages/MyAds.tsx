@@ -199,14 +199,26 @@ const MyAds = () => {
                                 <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col items-end gap-1">
                               <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
                                 {isExpired ? "Expired" : st.label}
                               </span>
+                              {/* Ad expiry countdown */}
+                              {isLive && (() => {
+                                const adTimeLeft = ad.adExpiry - now;
+                                const h = Math.floor(adTimeLeft / 3600);
+                                const m = Math.floor((adTimeLeft % 3600) / 60);
+                                return (
+                                  <span className={`flex items-center gap-1 text-xs font-mono ${adTimeLeft < 1800 ? "text-sell" : "text-muted-foreground"}`}>
+                                    <Clock className="h-3 w-3" />
+                                    {h > 0 ? `${h}h ${m}m` : `${m}m`} left
+                                  </span>
+                                );
+                              })()}
                               {relatedDeal && (relatedDeal.status === 0 || relatedDeal.status === 1) && dealTimeLeft > 0 && (
                                 <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono ${dealTimeLeft < 120 ? "bg-sell/10 text-sell" : "bg-primary/10 text-primary"}`}>
                                   <Clock className="h-3 w-3" />
-                                  {formatTime(dealTimeLeft)}
+                                  Deal: {formatTime(dealTimeLeft)}
                                 </span>
                               )}
                               {isDealTimedOut && (
