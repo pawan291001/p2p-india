@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const FAQS = [
   {
@@ -42,24 +43,28 @@ const FAQS = [
 
 const FaqSection = () => (
   <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-    <h2
-      className="text-xl font-bold text-foreground mb-6 text-center sm:text-2xl"
-      style={{ lineHeight: "1.15" }}
-    >
-      Frequently Asked Questions
-    </h2>
-    <Accordion type="single" collapsible className="w-full">
-      {FAQS.map((faq, i) => (
-        <AccordionItem key={i} value={`faq-${i}`} className="border-border">
-          <AccordionTrigger className="text-left text-sm text-foreground hover:no-underline hover:text-primary">
-            {faq.q}
-          </AccordionTrigger>
-          <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
-            {faq.a}
-          </AccordionContent>
-        </AccordionItem>
-      ))}
-    </Accordion>
+    <ScrollReveal>
+      <h2
+        className="text-xl font-bold text-foreground mb-6 text-center sm:text-2xl"
+        style={{ lineHeight: "1.15" }}
+      >
+        Frequently Asked Questions
+      </h2>
+    </ScrollReveal>
+    <ScrollReveal delay={100}>
+      <Accordion type="single" collapsible className="w-full">
+        {FAQS.map((faq, i) => (
+          <AccordionItem key={i} value={`faq-${i}`} className="border-border">
+            <AccordionTrigger className="text-left text-sm text-foreground hover:no-underline hover:text-primary">
+              {faq.q}
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
+              {faq.a}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </ScrollReveal>
   </section>
 );
 
