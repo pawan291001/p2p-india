@@ -84,6 +84,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (acceptConfirmed) {
       toast.success("Deal accepted! Redirecting to My Deals…");
+      playSuccessChime();
       onClose();
       navigate("/my-orders");
     }
