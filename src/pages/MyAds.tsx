@@ -73,6 +73,8 @@ const MyAds = () => {
     { value: "cancelled", label: "Cancelled", count: myAds.filter((a) => a.status === 3).length },
     { value: "expired", label: "Expired", count: myAds.filter((a) => a.status === 0 && a.adExpiry < now).length },
   ].filter((o) => o.value === "all" || o.count > 0);
+
+  return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
