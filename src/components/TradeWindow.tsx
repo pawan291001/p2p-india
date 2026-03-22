@@ -8,6 +8,7 @@ import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 import ChatPanel from "./ChatPanel";
+import { parsePaymentInfo } from "@/lib/parsePaymentInfo";
 
 type DealStep = "accept" | "pay" | "waiting" | "completed" | "cancelled" | "disputed";
 
