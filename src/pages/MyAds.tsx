@@ -261,7 +261,8 @@ const MyAds = () => {
                                   {(() => { const txh = dealTxMap[relatedDeal.dealId]?.created; return (
                                     <a href={txh ? `https://bscscan.com/tx/${txh}` : `https://bscscan.com/address/${P2P_CONTRACT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
                                       <ExternalLink className="h-3 w-3" /> {txh ? `tx ${txh.slice(0, 10)}…` : "BscScan"}
-                                  </a>
+                                    </a>
+                                  ); })()}
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                                   <div>
