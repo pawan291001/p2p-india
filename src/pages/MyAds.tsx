@@ -83,7 +83,8 @@ const MyAds = () => {
   useEffect(() => { if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [claimConfirmed]);
   useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); refetchAds(); refetchDeals(); } }, [sellerDone]);
   useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); refetchAds(); refetchDeals(); } }, [disputeDone]);
-  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Funds returned to your wallet."); playAlertChime(); refetchAds(); refetchDeals(); } }, [cancelDealDone]);
+  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Ad is now offline. Re-list to go live again."); playAlertChime(); refetchAds(); refetchDeals(); } }, [cancelDealDone]);
+  useEffect(() => { if (relistDone) { toast.success("Ad is live again!"); playSuccessChime(); refetchAds(); refetchDeals(); } }, [relistDone]);
 
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
