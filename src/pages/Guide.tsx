@@ -89,7 +89,8 @@ const SECTIONS = [
     content: [
       "Sellers can cancel their ad at any time if no deal is active. The locked tokens are returned to their wallet.",
       "Buyers can cancel a deal before confirming payment. Once you've clicked \"I Have Paid,\" you cannot cancel — you'll need to wait for the seller or use the dispute system.",
-      "If a deal times out and neither party acts, the tokens stay safely in escrow. The seller can cancel the timed-out deal to reclaim tokens, or either party can raise a dispute.",
+      "If a deal times out because the buyer didn't pay, the ad automatically goes Live again with a fresh timer. The seller's tokens stay safely locked in escrow — ready for the next buyer. No action needed from the seller.",
+      "The seller can always manually cancel their ad (when it's Live) to withdraw their tokens back to their wallet.",
     ],
   },
   {
