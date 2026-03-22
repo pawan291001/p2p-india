@@ -2,7 +2,7 @@ import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { bsc } from "wagmi/chains";
 
 export const config = getDefaultConfig({
-  appName: "ChainSwap P2P",
+  appName: "Crypto P2P",
   projectId: "demo_project_id", // Replace with your WalletConnect project ID
   chains: [bsc],
   ssr: false,

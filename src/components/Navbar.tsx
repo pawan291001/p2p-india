@@ -18,8 +18,9 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-surface-1/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link to="/" className="text-xl font-bold tracking-tight text-primary">
-            ChainSwap
+          <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
+            <img src="/favicon.png" alt="Crypto P2P" className="h-7 w-7" />
+            Crypto P2P
           </Link>
           <div className="hidden items-center gap-1 md:flex">
             {NAV_LINKS.map((link) => (
