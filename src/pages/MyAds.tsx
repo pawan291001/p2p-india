@@ -116,9 +116,13 @@ const MyAds = () => {
               Create your first ad
             </Button>
           </div>
+        ) : filteredMyAds.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
+            No {adFilter} ads found.
+          </div>
         ) : (
           <div className="space-y-3">
-            {myAds.map((ad, i) => {
+            {filteredMyAds.map((ad, i) => {
               const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
               const isExpired = ad.status === 0 && Date.now() / 1000 > ad.adExpiry;
               const isLive = ad.status === 0 && !isExpired;
