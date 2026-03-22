@@ -25,7 +25,7 @@ export function useContractDeals() {
     address: P2P_CONTRACT_ADDRESS,
     abi: P2P_ESCROW_ABI,
     functionName: "nextDealId",
-    query: { refetchInterval: 10000 },
+    query: { refetchInterval: 5000 },
   });
 
   const dealCount = nextDealId ? Number(nextDealId) - 1 : 0;
@@ -39,7 +39,7 @@ export function useContractDeals() {
 
   const { data: dealsData, isLoading: loadingDeals, refetch: refetchDeals } = useReadContracts({
     contracts: dealCalls,
-    query: { enabled: dealCount > 0, refetchInterval: 10000 },
+    query: { enabled: dealCount > 0, refetchInterval: 5000 },
   });
 
   const deals: LiveDeal[] = [];

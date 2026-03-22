@@ -42,8 +42,8 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 
 const MyAds = () => {
   const { address, isConnected } = useAccount();
-  const { ads, isLoading } = useContractAds();
-  const { deals } = useContractDeals();
+  const { ads, isLoading, refetch: refetchAds } = useContractAds();
+  const { deals, refetch: refetchDeals } = useContractDeals();
   const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
   const [chatDealId, setChatDealId] = useState<number | null>(null);
@@ -75,11 +75,11 @@ const MyAds = () => {
   const { writeContract: cancelDeal, data: cancelDealHash, isPending: cancelDealPending } = useWriteContract();
   const { isSuccess: cancelDealDone } = useWaitForTransactionReceipt({ hash: cancelDealHash });
 
-  useEffect(() => { if (cancelConfirmed) { toast.success("Ad cancelled. Funds returned."); setPendingAdId(null); } }, [cancelConfirmed]);
-  useEffect(() => { if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); } }, [claimConfirmed]);
-  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); } }, [sellerDone]);
-  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); } }, [disputeDone]);
-  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Funds returned to your wallet."); playAlertChime(); } }, [cancelDealDone]);
+  useEffect(() => { if (cancelConfirmed) { toast.success("Ad cancelled. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [cancelConfirmed]);
+  useEffect(() => { if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [claimConfirmed]);
+  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); refetchAds(); refetchDeals(); } }, [sellerDone]);
+  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); refetchAds(); refetchDeals(); } }, [disputeDone]);
+  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Funds returned to your wallet."); playAlertChime(); refetchAds(); refetchDeals(); } }, [cancelDealDone]);
 
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
