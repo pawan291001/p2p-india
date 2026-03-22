@@ -135,7 +135,7 @@ const Index = () => {
         <TradeWindow
           ad={selectedAd}
           userAddress={address}
-          onClose={() => setSelectedAd(null)}
+          onClose={() => { setSelectedAd(null); refetchAds(); }}
         />
       )}
     </div>

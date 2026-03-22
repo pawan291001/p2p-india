@@ -69,7 +69,7 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="mt-2">
-              <ConnectButton chainStatus="icon" accountStatus="address" showBalance={true} />
+              <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
             </div>
           </div>
         </div>
