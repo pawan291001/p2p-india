@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Loader2, Wallet } from "lucide-react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useBalance } from "wagmi";
-import { parseEther, parseUnits, formatUnits } from "viem";
+import { parseUnits, formatUnits } from "viem";
 import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
 import { toast } from "sonner";
@@ -21,7 +21,9 @@ const CRYPTOS = [
   { symbol: "BNB", address: NATIVE_BNB },
 ];
 
-const PAYMENT_OPTIONS = ["Bank Transfer", "UPI", "PayPal", "Wise", "Google Pay", "PhonePe"];
+const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise"] as const;
+type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 const DEAL_TIMEOUTS = [
   { label: "15 min", value: 900 },
   { label: "30 min", value: 1800 },
@@ -45,22 +47,30 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const [amount, setAmount] = useState("");
   const [dealTimeout, setDealTimeout] = useState(900);
   const [adDuration, setAdDuration] = useState(3600);
-  const [paymentInfo, setPaymentInfo] = useState("");
-  const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
   const [step, setStep] = useState<Step>("form");
+
+  // Payment fields
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | "">("");
+  const [sellerName, setSellerName] = useState("");
+  // UPI fields
+  const [upiId, setUpiId] = useState("");
+  // Bank Transfer fields
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  // Generic payment ID (Google Pay, PhonePe, PayPal, Wise)
+  const [paymentId, setPaymentId] = useState("");
 
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
   const tokenAmountWei = amount ? parseUnits(amount, 18) : BigInt(0);
   const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0);
 
-  // Read BNB balance
+  // Balances
   const { data: bnbBalance } = useBalance({
     address,
     query: { enabled: isBNB && !!address && open },
   });
-
-  // Read USDT balance
   const { data: usdtBalance } = useReadContract({
     address: USDT_ADDRESS,
     abi: ERC20_ABI,
@@ -72,12 +82,11 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const walletBalance = isBNB
     ? bnbBalance ? parseFloat(formatUnits(bnbBalance.value, 18)) : 0
     : usdtBalance ? parseFloat(formatUnits(usdtBalance as bigint, 18)) : 0;
-
   const walletBalanceFormatted = walletBalance.toFixed(4);
   const amountNum = amount ? parseFloat(amount) : 0;
   const exceedsBalance = amountNum > walletBalance;
 
-  // Check current USDT allowance
+  // Allowance
   const { data: allowance } = useReadContract({
     address: USDT_ADDRESS,
     abi: ERC20_ABI,
@@ -85,18 +94,14 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
     args: address ? [address, P2P_CONTRACT_ADDRESS] : undefined,
     query: { enabled: !isBNB && !!address && open },
   });
-
   const needsApproval = !isBNB && (allowance === undefined || (allowance as bigint) < tokenAmountWei);
 
-  // Approve tx
+  // Transactions
   const { writeContract: approve, data: approveTxHash, isPending: isApproving, reset: resetApprove } = useWriteContract();
   const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveTxHash });
-
-  // CreateAd tx
   const { writeContract: createAd, data: createTxHash, isPending: isCreating, reset: resetCreate } = useWriteContract();
   const { isSuccess: createConfirmed } = useWaitForTransactionReceipt({ hash: createTxHash });
 
-  // After approval confirmed, auto-proceed to createAd
   useEffect(() => {
     if (approveConfirmed && step === "approving") {
       setStep("posting");
@@ -104,7 +109,6 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
     }
   }, [approveConfirmed]);
 
-  // After createAd confirmed, close modal
   useEffect(() => {
     if (createConfirmed && step === "posting") {
       toast.success("Ad posted successfully! Your tokens are in escrow.");
@@ -113,21 +117,44 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
     }
   }, [createConfirmed]);
 
+  // Build payment info string
+  const buildPaymentInfo = (): string => {
+    const parts: string[] = [];
+    parts.push(`Name: ${sellerName.trim()}`);
+    parts.push(`Method: ${selectedMethod}`);
+
+    if (selectedMethod === "UPI") {
+      parts.push(`UPI: ${upiId.trim()}`);
+    } else if (selectedMethod === "Bank Transfer") {
+      parts.push(`Bank: ${bankName.trim()}`);
+      parts.push(`A/C: ${accountNumber.trim()}`);
+      parts.push(`IFSC: ${ifscCode.trim()}`);
+    } else if (selectedMethod === "Google Pay" || selectedMethod === "PhonePe") {
+      parts.push(`Phone/UPI: ${paymentId.trim()}`);
+    } else if (selectedMethod === "PayPal" || selectedMethod === "Wise") {
+      parts.push(`Email/ID: ${paymentId.trim()}`);
+    }
+
+    return parts.join(" | ");
+  };
+
+  const isPaymentValid = (): boolean => {
+    if (!sellerName.trim() || !selectedMethod) return false;
+    if (selectedMethod === "UPI") return !!upiId.trim();
+    if (selectedMethod === "Bank Transfer") return !!bankName.trim() && !!accountNumber.trim() && !!ifscCode.trim();
+    return !!paymentId.trim();
+  };
+
   const resetForm = () => {
-    setPrice("");
-    setAmount("");
-    setPaymentInfo("");
-    setSelectedPayments([]);
+    setPrice(""); setAmount("");
+    setSellerName(""); setSelectedMethod(""); setUpiId("");
+    setBankName(""); setAccountNumber(""); setIfscCode(""); setPaymentId("");
     setStep("form");
-    resetApprove();
-    resetCreate();
+    resetApprove(); resetCreate();
   };
 
   const submitCreateAd = () => {
-    const paymentStr = selectedPayments.length > 0
-      ? `${paymentInfo} | Methods: ${selectedPayments.join(", ")}`
-      : paymentInfo;
-
+    const paymentStr = buildPaymentInfo();
     try {
       createAd({
         address: P2P_CONTRACT_ADDRESS,
@@ -143,7 +170,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   };
 
   const handleSubmit = () => {
-    if (!price || !amount || !paymentInfo) return;
+    if (!price || !amount || !isPaymentValid()) return;
 
     if (isBNB) {
       setStep("posting");
@@ -167,14 +194,9 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
     }
   };
 
-  const togglePayment = (method: string) => {
-    setSelectedPayments((prev) =>
-      prev.includes(method) ? prev.filter((m) => m !== method) : [...prev, method]
-    );
-  };
-
   const inrTotal = price && amount ? (parseFloat(price) * parseFloat(amount)).toFixed(2) : "0.00";
   const isProcessing = step !== "form";
+  const canSubmit = !!price && !!amount && isPaymentValid() && !isProcessing && !exceedsBalance;
 
   if (!open) return null;
 
@@ -220,6 +242,123 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 ))}
               </div>
             </div>
+
+            {/* Payment Method — FIRST */}
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Payment Method</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {PAYMENT_METHODS.map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => { setSelectedMethod(method); setUpiId(""); setBankName(""); setAccountNumber(""); setIfscCode(""); setPaymentId(""); }}
+                    disabled={isProcessing}
+                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+                      selectedMethod === method
+                        ? "bg-primary/15 text-primary border border-primary/30"
+                        : "bg-surface-3 text-muted-foreground hover:text-foreground border border-transparent"
+                    }`}
+                  >
+                    {method}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Seller Name — always shown once method selected */}
+            {selectedMethod && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Your Name (shown to buyer)</Label>
+                <Input
+                  placeholder="e.g. Ravi Kumar"
+                  value={sellerName}
+                  onChange={(e) => setSellerName(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={100}
+                />
+              </div>
+            )}
+
+            {/* Dynamic payment detail fields */}
+            {selectedMethod === "UPI" && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">UPI ID</Label>
+                <Input
+                  placeholder="e.g. yourname@ybl"
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={100}
+                />
+              </div>
+            )}
+
+            {selectedMethod === "Bank Transfer" && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Bank Name</Label>
+                  <Input
+                    placeholder="e.g. State Bank of India"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Account Number</Label>
+                  <Input
+                    placeholder="e.g. 1234567890"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={30}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">IFSC Code</Label>
+                  <Input
+                    placeholder="e.g. SBIN0001234"
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={11}
+                  />
+                </div>
+              </div>
+            )}
+
+            {(selectedMethod === "Google Pay" || selectedMethod === "PhonePe") && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Phone Number or UPI ID</Label>
+                <Input
+                  placeholder="e.g. 9876543210 or yourname@ybl"
+                  value={paymentId}
+                  onChange={(e) => setPaymentId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={100}
+                />
+              </div>
+            )}
+
+            {(selectedMethod === "PayPal" || selectedMethod === "Wise") && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">{selectedMethod} Email or Username</Label>
+                <Input
+                  placeholder={`e.g. your@email.com`}
+                  value={paymentId}
+                  onChange={(e) => setPaymentId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={100}
+                />
+              </div>
+            )}
 
             {/* Price */}
             <div>
@@ -322,42 +461,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             </div>
 
-            {/* Payment Info */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">
-                Payment Details (UPI ID / Bank account)
-              </Label>
-              <Input
-                placeholder="e.g. yourname@upi or Bank details"
-                value={paymentInfo}
-                onChange={(e) => setPaymentInfo(e.target.value)}
-                className="bg-surface-2 border-input"
-                disabled={isProcessing}
-              />
-            </div>
-
-            {/* Payment Methods */}
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Accepted Payment Methods</Label>
-              <div className="flex flex-wrap gap-2">
-                {PAYMENT_OPTIONS.map((method) => (
-                  <button
-                    key={method}
-                    onClick={() => togglePayment(method)}
-                    disabled={isProcessing}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-                      selectedPayments.includes(method)
-                        ? "bg-primary/15 text-primary border border-primary/30"
-                        : "bg-surface-3 text-muted-foreground hover:text-foreground border border-transparent"
-                    }`}
-                  >
-                    {method}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Status indicator */}
+            {/* Status indicators */}
             {step === "approving" && (
               <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-center text-sm text-primary flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -375,7 +479,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               variant="sell"
               className="w-full mt-2"
               size="lg"
-              disabled={!price || !amount || !paymentInfo || isProcessing || exceedsBalance}
+              disabled={!canSubmit}
               onClick={handleSubmit}
             >
               {isProcessing ? (
