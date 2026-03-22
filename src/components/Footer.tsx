@@ -54,7 +54,7 @@ const Footer = () => (
             rel="noopener noreferrer"
             className="text-primary hover:underline font-mono"
           >
-            0x0ACF…5F3f
+            0xd79e…0d95
           </a>
         </p>
       </div>
