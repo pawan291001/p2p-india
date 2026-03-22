@@ -36,6 +36,7 @@ const formatTime = (seconds: number) => {
 };
 
 const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<DealStep>("accept");
   const [timeLeft, setTimeLeft] = useState(ad.dealTimeout);
   const [showChat, setShowChat] = useState(false);
