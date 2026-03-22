@@ -9,7 +9,7 @@ const Terms = () => (
       <p className="text-xs text-muted-foreground mb-8">Last updated: {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</p>
 
       {[
-        { t: "1. Acceptance of Terms", p: "By accessing or using the Crypto P2P platform ("Platform"), you agree to be bound by these Terms & Conditions. If you do not agree, do not use the Platform." },
+        { t: "1. Acceptance of Terms", p: "By accessing or using the Crypto P2P platform, you agree to be bound by these Terms & Conditions. If you do not agree, do not use the Platform." },
         { t: "2. Platform Description", p: "Crypto P2P is a decentralised peer-to-peer trading interface built on BNB Smart Chain. It facilitates direct trades between users via a smart contract escrow. Crypto P2P does not custody, hold, or control user funds at any time — all tokens are managed by the on-chain escrow contract." },
         { t: "3. Eligibility", p: "You must be at least 18 years old and legally able to enter into binding agreements in your jurisdiction. You are solely responsible for ensuring your use of the Platform complies with applicable laws." },
         { t: "4. Wallet & Security", p: "You are responsible for maintaining the security of your wallet, private keys, and seed phrases. Crypto P2P never asks for your private key. We are not liable for any loss resulting from unauthorised access to your wallet." },

@@ -185,6 +185,9 @@ const Index = () => {
         )}
       </main>
 
+      <FaqSection />
+      <Footer />
+
       <CreateOrderModal open={showCreate} onClose={() => setShowCreate(false)} />
 
       {selectedAd && address && (

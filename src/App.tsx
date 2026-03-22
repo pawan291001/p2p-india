@@ -22,8 +22,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/my-ads" element={<MyAds />} />
           <Route path="/my-orders" element={<MyOrders />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFound />} />
+           <Route path="/admin" element={<Admin />} />
+           <Route path="/about" element={<About />} />
+           <Route path="/terms" element={<Terms />} />
+           <Route path="/privacy" element={<Privacy />} />
+           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
