@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import MyOrders from "./pages/MyOrders";
 import MyAds from "./pages/MyAds";
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
