@@ -32,11 +32,12 @@ const DealOutcome = ({
   txHash,
 }: DealOutcomeProps) => {
   // Only show for terminal states
-  if (status !== 2 && status !== 3 && status !== 4) return null;
+  if (status !== 2 && status !== 3 && status !== 4 && status !== 5) return null;
 
   const isCompleted = status === 2;
   const isCancelled = status === 3;
   const isDisputed = status === 4;
+  const isResolved = status === 5;
 
   return (
     <div
