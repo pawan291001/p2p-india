@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Loader2, Wallet } from "lucide-react";
+import { X, Loader2, Wallet, TrendingUp } from "lucide-react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useBalance } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
 import { toast } from "sonner";
+import { useBnbPrice } from "@/hooks/useBnbPrice";
 
 interface CreateOrderModalProps {
   open: boolean;
@@ -64,7 +65,13 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
   const tokenAmountWei = amount ? parseUnits(amount, 18) : BigInt(0);
-  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0);
+
+  // For BNB: user enters INR per USD rate, we multiply by live BNB/USD price
+  const { bnbPrice, isLoading: bnbPriceLoading } = useBnbPrice(isBNB && open);
+  const effectivePricePerToken = isBNB && bnbPrice && price
+    ? (parseFloat(price) * bnbPrice).toFixed(2)
+    : price;
+  const pricePerTokenWei = effectivePricePerToken ? parseUnits(effectivePricePerToken, 2) : BigInt(0);
 
   // Balances
   const { data: bnbBalance } = useBalance({
@@ -217,9 +224,14 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
     }
   };
 
-  const inrTotal = price && amount ? (parseFloat(price) * parseFloat(amount)).toFixed(2) : "0.00";
+  const bnbUsdValue = isBNB && bnbPrice && amount ? (parseFloat(amount) * bnbPrice) : null;
+  const inrTotal = price && amount
+    ? isBNB && bnbPrice
+      ? (parseFloat(price) * parseFloat(amount) * bnbPrice).toFixed(2)
+      : (parseFloat(price) * parseFloat(amount)).toFixed(2)
+    : "0.00";
   const isProcessing = step !== "form";
-  const canSubmit = !!price && !!amount && isPaymentValid() && !isProcessing && !exceedsBalance;
+  const canSubmit = !!price && !!amount && isPaymentValid() && !isProcessing && !exceedsBalance && (!isBNB || bnbPrice !== null);
 
   if (!open) return null;
 
@@ -438,10 +450,30 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             )}
 
+            {/* BNB Live Price */}
+            {isBNB && (
+              <div className="rounded-lg border border-border bg-surface-2 p-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <TrendingUp className="h-4 w-4 text-buy" />
+                  <span className="text-muted-foreground">Live BNB Price:</span>
+                  {bnbPriceLoading || !bnbPrice ? (
+                    <span className="text-muted-foreground animate-pulse">Fetching…</span>
+                  ) : (
+                    <span className="font-bold text-foreground tabular-nums">${bnbPrice.toFixed(2)}</span>
+                  )}
+                </div>
+                {bnbPrice && amount && parseFloat(amount) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {amount} BNB ≈ <span className="font-medium text-foreground">${bnbUsdValue?.toFixed(2)}</span> USD
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Price */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">
-                Price per {crypto} (INR)
+                {isBNB ? "INR rate per 1 USD" : `Price per ${crypto} (INR)`}
               </Label>
               <Input
                 type="number"
@@ -451,6 +483,11 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 className="bg-surface-2 border-input"
                 disabled={isProcessing}
               />
+              {isBNB && price && bnbPrice && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Effective: <span className="font-medium text-foreground">₹{(parseFloat(price) * bnbPrice).toFixed(2)}</span> per BNB
+                </p>
+              )}
             </div>
 
             {/* Amount */}
@@ -472,7 +509,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
               <Input
                 type="number"
-                placeholder="e.g. 30"
+                placeholder={isBNB ? "e.g. 0.1" : "e.g. 30"}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className={`bg-surface-2 border-input ${exceedsBalance && amount ? "border-destructive focus-visible:ring-destructive" : ""}`}
@@ -490,6 +527,11 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
                 <span className="text-xs text-muted-foreground">Buyer will pay </span>
                 <span className="text-lg font-bold text-primary">₹{inrTotal}</span>
+                {isBNB && bnbPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {amount} BNB × ${bnbPrice.toFixed(2)} × ₹{price} = ₹{inrTotal}
+                  </p>
+                )}
               </div>
             )}
 

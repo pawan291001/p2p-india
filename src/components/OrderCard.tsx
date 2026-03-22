@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Clock, Timer } from "lucide-react";
+import { Shield, Clock, Timer, TrendingUp } from "lucide-react";
+import { useBnbPrice } from "@/hooks/useBnbPrice";
 
 interface OrderCardProps {
   adId: number;
@@ -45,6 +46,10 @@ const OrderCard = ({
   index,
 }: OrderCardProps) => {
   const timeLeftStr = formatTimeLeft(adExpiry);
+  const isBNB = tokenSymbol === "BNB";
+  const { bnbPrice } = useBnbPrice(isBNB);
+  // For BNB ads, derive the INR/USD rate from stored pricePerToken / bnbPrice
+  const inrPerUsd = isBNB && bnbPrice ? (parseFloat(pricePerToken) / bnbPrice).toFixed(2) : null;
 
   return (
     <div
@@ -67,9 +72,21 @@ const OrderCard = ({
 
         {/* Price */}
         <div className="sm:text-right">
-          <div className="text-lg font-bold text-foreground tabular-nums">
-            ₹{pricePerToken} <span className="text-sm font-normal text-muted-foreground">INR</span>
-          </div>
+          {isBNB && inrPerUsd ? (
+            <div>
+              <div className="text-lg font-bold text-foreground tabular-nums">
+                ₹{inrPerUsd} <span className="text-sm font-normal text-muted-foreground">/ USD</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground sm:justify-end">
+                <TrendingUp className="h-3 w-3" />
+                ₹{pricePerToken}/BNB
+              </div>
+            </div>
+          ) : (
+            <div className="text-lg font-bold text-foreground tabular-nums">
+              ₹{pricePerToken} <span className="text-sm font-normal text-muted-foreground">INR</span>
+            </div>
+          )}
         </div>
       </div>
 
