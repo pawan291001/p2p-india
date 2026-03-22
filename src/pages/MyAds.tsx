@@ -10,6 +10,7 @@ import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import CreateOrderModal from "@/components/CreateOrderModal";
+import StatusFilter from "@/components/StatusFilter";
 
 const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
 
@@ -51,20 +52,47 @@ const MyAds = () => {
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
     : [];
 
+  const [adFilter, setAdFilter] = useState("all");
+
+  const now = Date.now() / 1000;
+  const filteredMyAds = myAds.filter((ad) => {
+    if (adFilter === "all") return true;
+    if (adFilter === "live") return ad.status === 0 && ad.adExpiry >= now;
+    if (adFilter === "in-deal") return ad.status === 1;
+    if (adFilter === "completed") return ad.status === 2;
+    if (adFilter === "cancelled") return ad.status === 3;
+    if (adFilter === "expired") return ad.status === 0 && ad.adExpiry < now;
+    return true;
+  });
+
+  const adFilterOptions = [
+    { value: "all", label: "All", count: myAds.length },
+    { value: "live", label: "Live", count: myAds.filter((a) => a.status === 0 && a.adExpiry >= now).length },
+    { value: "in-deal", label: "In Deal", count: myAds.filter((a) => a.status === 1).length },
+    { value: "completed", label: "Completed", count: myAds.filter((a) => a.status === 2).length },
+    { value: "cancelled", label: "Cancelled", count: myAds.filter((a) => a.status === 3).length },
+    { value: "expired", label: "Expired", count: myAds.filter((a) => a.status === 0 && a.adExpiry < now).length },
+  ].filter((o) => o.value === "all" || o.count > 0);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>
             My Ads
           </h1>
-          {isConnected && (
-            <Button onClick={() => setShowCreate(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Post Ad
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {isConnected && myAds.length > 0 && (
+              <StatusFilter options={adFilterOptions} selected={adFilter} onSelect={setAdFilter} />
+            )}
+            {isConnected && (
+              <Button onClick={() => setShowCreate(true)} className="gap-2 shrink-0">
+                <Plus className="h-4 w-4" />
+                Post Ad
+              </Button>
+            )}
+          </div>
         </div>
 
         {!isConnected ? (
@@ -88,9 +116,13 @@ const MyAds = () => {
               Create your first ad
             </Button>
           </div>
+        ) : filteredMyAds.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
+            No {adFilter} ads found.
+          </div>
         ) : (
           <div className="space-y-3">
-            {myAds.map((ad, i) => {
+            {filteredMyAds.map((ad, i) => {
               const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
               const isExpired = ad.status === 0 && Date.now() / 1000 > ad.adExpiry;
               const isLive = ad.status === 0 && !isExpired;

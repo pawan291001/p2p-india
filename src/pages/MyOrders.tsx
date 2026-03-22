@@ -11,6 +11,7 @@ import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import ChatPanel from "@/components/ChatPanel";
+import StatusFilter from "@/components/StatusFilter";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
@@ -36,6 +37,7 @@ const MyOrders = () => {
   const [chatDealId, setChatDealId] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Live tick every second for countdown timers
   useEffect(() => {
@@ -73,6 +75,23 @@ const MyOrders = () => {
       )
     : [];
 
+  const filteredDeals = myDeals.filter((d) => {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "active") return d.status === 0 || d.status === 1;
+    if (statusFilter === "completed") return d.status === 2;
+    if (statusFilter === "cancelled") return d.status === 3;
+    if (statusFilter === "disputed") return d.status === 4;
+    return true;
+  });
+
+  const dealFilterOptions = [
+    { value: "all", label: "All", count: myDeals.length },
+    { value: "active", label: "Active", count: myDeals.filter((d) => d.status === 0 || d.status === 1).length },
+    { value: "completed", label: "Completed", count: myDeals.filter((d) => d.status === 2).length },
+    { value: "cancelled", label: "Cancelled", count: myDeals.filter((d) => d.status === 3).length },
+    { value: "disputed", label: "Disputed", count: myDeals.filter((d) => d.status === 4).length },
+  ].filter((o) => o.value === "all" || o.count > 0);
+
   // Get payment info from associated ad
   const getPaymentInfo = (adId: number) => {
     const ad = ads.find((a) => a.adId === adId);
@@ -91,9 +110,14 @@ const MyOrders = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6" style={{ lineHeight: "1.1" }}>
-          My Deals
-        </h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>
+            My Deals
+          </h1>
+          {isConnected && myDeals.length > 0 && (
+            <StatusFilter options={dealFilterOptions} selected={statusFilter} onSelect={setStatusFilter} />
+          )}
+        </div>
 
         {!isConnected ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
@@ -112,9 +136,13 @@ const MyOrders = () => {
           <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
             No deals yet. Accept an ad on the P2P Trading page to start.
           </div>
+        ) : filteredDeals.length === 0 ? (
+          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
+            No {statusFilter} deals found.
+          </div>
         ) : (
           <div className="space-y-4">
-            {myDeals.map((deal, i) => {
+            {filteredDeals.map((deal, i) => {
               const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
               const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
               const paymentInfo = getPaymentInfo(deal.adId);
