@@ -26,7 +26,7 @@ const SECTIONS = [
   {
     id: "browse",
     title: "Step 2 — Browse Sell Ads",
-    image: guideBrowse,
+    image: null,
     content: [
       "The main P2P Trading page shows all active sell ads from other users. Each ad card displays the seller's wallet address, the token they're selling (USDT or BNB), the price per token in INR, and their preferred payment method.",
       "You can filter ads by cryptocurrency (USDT or BNB) using the filter buttons at the top. Ads are sorted by price so you can quickly find the best deals.",
