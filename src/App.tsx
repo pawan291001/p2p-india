@@ -7,6 +7,9 @@ import Index from "./pages/Index";
 import Admin from "./pages/Admin";
 import MyOrders from "./pages/MyOrders";
 import MyAds from "./pages/MyAds";
+import About from "./pages/About";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 
 const App = () => (
@@ -19,8 +22,11 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/my-ads" element={<MyAds />} />
           <Route path="/my-orders" element={<MyOrders />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFound />} />
+           <Route path="/admin" element={<Admin />} />
+           <Route path="/about" element={<About />} />
+           <Route path="/terms" element={<Terms />} />
+           <Route path="/privacy" element={<Privacy />} />
+           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
