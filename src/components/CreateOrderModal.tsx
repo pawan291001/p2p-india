@@ -150,8 +150,10 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
       parts.push(`Phone/UPI: ${paymentId.trim()}`);
     } else if (selectedMethod === "PayPal" || selectedMethod === "Wise") {
       parts.push(`Email/ID: ${paymentId.trim()}`);
-    } else if (selectedMethod === "COD" || selectedMethod === "Cash Deposit") {
-      parts.push(`Location: ${paymentId.trim()}`);
+    } else if (selectedMethod === "Cash/Bank Deposit") {
+      parts.push(`Bank: ${bankName.trim()}`);
+      parts.push(`A/C: ${accountNumber.trim()}`);
+      parts.push(`IFSC: ${ifscCode.trim()}`);
     } else if (selectedMethod === "Digital Rupee") {
       parts.push(`Wallet/ID: ${paymentId.trim()}`);
     }
