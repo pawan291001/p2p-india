@@ -3,15 +3,18 @@ import { usePublicClient } from "wagmi";
 import { parseAbiItem } from "viem";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 
+export interface DealTxInfo {
+  created?: string;
+  buyerConfirmed?: string;
+  sellerConfirmed?: string;
+  completed?: string;
+  cancelled?: string;
+  disputed?: string;
+  resolved?: string;
+}
+
 export interface DealTxMap {
-  [dealId: number]: {
-    created?: string;
-    buyerConfirmed?: string;
-    sellerConfirmed?: string;
-    cancelled?: string;
-    disputed?: string;
-    resolved?: string;
-  };
+  [dealId: number]: DealTxInfo;
 }
 
 const EVENTS = [
