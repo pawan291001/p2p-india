@@ -1,6 +1,7 @@
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet, ShoppingCart, Loader2, Copy, CheckCircle2, Clock, AlertTriangle, MessageSquare, X } from "lucide-react";
+import DealOutcome from "@/components/DealOutcome";
 import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
