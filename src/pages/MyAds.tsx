@@ -248,9 +248,14 @@ const MyAds = () => {
                           {ad.status === 1 && relatedDeal && (
                             <div className="mt-3 space-y-3">
                               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-primary shrink-0" />
-                                  <span className="text-sm font-semibold text-primary">Deal #{relatedDeal.dealId} In Progress</span>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm font-semibold text-primary">Deal #{relatedDeal.dealId} In Progress</span>
+                                  </div>
+                                  <a href={`https://bscscan.com/address/${P2P_CONTRACT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                                    <ExternalLink className="h-3 w-3" /> BscScan
+                                  </a>
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                                   <div>
