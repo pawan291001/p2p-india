@@ -233,6 +233,9 @@ const MyOrders = () => {
                     {copied === deal.dealId ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </button>
                 </div>
+                {parsed.upiLink && (
+                  <UpiQrCode upiLink={parsed.upiLink} amount={deal.inrAmount} />
+                )}
                 <p className="text-xs text-muted-foreground">Send exactly ₹{deal.inrAmount} to the above details, then confirm payment.</p>
               </div>
             );

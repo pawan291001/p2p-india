@@ -332,6 +332,9 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                       {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
+                  {parsedPayment.upiLink && (
+                    <UpiQrCode upiLink={parsedPayment.upiLink} amount={ad.inrTotal} />
+                  )}
                   <p className="text-xs text-muted-foreground">
                     Send exactly ₹{ad.inrTotal} to the above details. After payment, click confirm below.
                   </p>
