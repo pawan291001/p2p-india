@@ -43,7 +43,9 @@ const AD_DURATIONS = [
 type Step = "form" | "approving" | "posting";
 
 const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const isWrongNetwork = isConnected && chainId !== bsc.id;
   const [crypto, setCrypto] = useState("USDT");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
