@@ -478,6 +478,31 @@ const MyAds = () => {
                               </div>
                             </div>
                           )}
+
+                          {/* Actions for Offline ads — seller must re-list or cancel */}
+                          {ad.status === 4 && (
+                            <div className="mt-3 space-y-2">
+                              <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 p-2 text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                                ⏸️ Ad is offline after a timed-out deal. Your <span className="font-semibold">{ad.tokenAmount} {ad.tokenSymbol}</span> is still locked in escrow. Re-list to go live again, or cancel to withdraw.
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="buy" size="sm" disabled={isProcessing} onClick={() => {
+                                  setPendingAdId(ad.adId);
+                                  relistAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "relistAd", args: [BigInt(ad.adId)] } as any);
+                                }}>
+                                  {relistPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                  Re-list Ad
+                                </Button>
+                                <Button variant="sell" size="sm" disabled={isProcessing} onClick={() => {
+                                  setPendingAdId(ad.adId);
+                                  cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any);
+                                }}>
+                                  {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                  Cancel &amp; Withdraw
+                                </Button>
+                              </div>
+                            </div>
+                          )
                         </div>
 
                         {/* Chat panel */}
