@@ -83,6 +83,10 @@ const MyAds = () => {
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
     : [];
 
+  const myAdIds = myAds.map(a => a.adId);
+  const relatedDealIds = deals.filter(d => myAdIds.includes(d.adId)).map(d => d.dealId);
+  const dealTxMap = useDealTxHashes(relatedDealIds);
+
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => a.status === 0 || a.status === 1);
   const historyAds = sortedAds.filter((a) => a.status === 2 || a.status === 3);
