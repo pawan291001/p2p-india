@@ -75,6 +75,23 @@ const MyOrders = () => {
       )
     : [];
 
+  const filteredDeals = myDeals.filter((d) => {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "active") return d.status === 0 || d.status === 1;
+    if (statusFilter === "completed") return d.status === 2;
+    if (statusFilter === "cancelled") return d.status === 3;
+    if (statusFilter === "disputed") return d.status === 4;
+    return true;
+  });
+
+  const dealFilterOptions = [
+    { value: "all", label: "All", count: myDeals.length },
+    { value: "active", label: "Active", count: myDeals.filter((d) => d.status === 0 || d.status === 1).length },
+    { value: "completed", label: "Completed", count: myDeals.filter((d) => d.status === 2).length },
+    { value: "cancelled", label: "Cancelled", count: myDeals.filter((d) => d.status === 3).length },
+    { value: "disputed", label: "Disputed", count: myDeals.filter((d) => d.status === 4).length },
+  ].filter((o) => o.value === "all" || o.count > 0);
+
   // Get payment info from associated ad
   const getPaymentInfo = (adId: number) => {
     const ad = ads.find((a) => a.adId === adId);
