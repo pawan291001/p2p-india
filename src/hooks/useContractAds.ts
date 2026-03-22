@@ -37,7 +37,7 @@ export function useContractAds() {
     args: [BigInt(i + 1)],
   }));
 
-  const { data: adsData, isLoading: loadingAds } = useReadContracts({
+  const { data: adsData, isLoading: loadingAds, refetch: refetchAds } = useReadContracts({
     contracts: adCalls,
     query: { enabled: adCount > 0, refetchInterval: 10000 },
   });
@@ -66,7 +66,9 @@ export function useContractAds() {
       const tokenSymbol = isBNB ? "BNB" : "USDT";
       const amountFormatted = formatUnits(BigInt(String(tokenAmount)), 18);
       const priceFormatted = formatUnits(BigInt(String(pricePerToken)), 2);
-      const inrTotal = (parseFloat(amountFormatted) * parseFloat(priceFormatted)).toFixed(2);
+      // inrTotal = tokenAmount * pricePerToken, both raw → combined 20 decimals
+      const rawInrTotal = BigInt(String(tokenAmount)) * BigInt(String(pricePerToken));
+      const inrTotal = parseFloat(formatUnits(rawInrTotal, 20)).toFixed(2);
 
       ads.push({
         adId: Number(id),
@@ -84,5 +86,6 @@ export function useContractAds() {
     }
   }
 
-  return { ads, isLoading: loadingCount || loadingAds };
+  const refetch = () => { refetchAds(); };
+  return { ads, isLoading: loadingCount || loadingAds, refetch };
 }

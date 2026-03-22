@@ -19,7 +19,7 @@ const Index = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
 
-  const { ads: liveAds, isLoading } = useContractAds();
+  const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
 
   // Only show Live ads (status 0) that haven't expired
   const now = Date.now() / 1000;
@@ -135,7 +135,7 @@ const Index = () => {
         <TradeWindow
           ad={selectedAd}
           userAddress={address}
-          onClose={() => setSelectedAd(null)}
+          onClose={() => { setSelectedAd(null); refetchAds(); }}
         />
       )}
     </div>

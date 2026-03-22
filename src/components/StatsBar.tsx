@@ -1,20 +1,37 @@
 import { TrendingUp, ShieldCheck, Zap, Wallet } from "lucide-react";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
+import { USDT_ADDRESS } from "@/config/wagmi";
+import { ERC20_ABI } from "@/config/abi";
 
 const StatsBar = () => {
   const { address, isConnected } = useAccount();
-  const { data: balance } = useBalance({ address });
+  const { data: bnbBalance } = useBalance({ address, query: { enabled: !!address } });
+
+  const { data: usdtRaw } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  });
+
+  const bnbFormatted = bnbBalance ? parseFloat(formatUnits(bnbBalance.value, 18)).toFixed(4) : "0";
+  const usdtFormatted = usdtRaw ? parseFloat(formatUnits(usdtRaw as bigint, 18)).toFixed(2) : "0";
 
   const stats = [
     {
       icon: Wallet,
-      label: "Your Balance",
-      value: isConnected && balance ? `${parseFloat(formatUnits(balance.value, balance.decimals)).toFixed(4)} ${balance.symbol}` : "—",
+      label: "BNB Balance",
+      value: isConnected ? `${bnbFormatted} BNB` : "—",
+    },
+    {
+      icon: Wallet,
+      label: "USDT Balance",
+      value: isConnected ? `${usdtFormatted} USDT` : "—",
     },
     { icon: TrendingUp, label: "Network", value: isConnected ? "BSC Mainnet" : "Not Connected" },
     { icon: ShieldCheck, label: "Escrow", value: "Smart Contract" },
-    { icon: Zap, label: "Tokens", value: "BNB · USDT" },
   ];
 
   return (
