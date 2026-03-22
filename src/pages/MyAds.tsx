@@ -1,7 +1,8 @@
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock } from "lucide-react";
+import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock, AlertTriangle, MessageSquare, Copy } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import DealOutcome from "@/components/DealOutcome";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,17 @@ import { useState, useEffect } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
+import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 import CreateOrderModal from "@/components/CreateOrderModal";
+import ChatPanel from "@/components/ChatPanel";
 
+const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+const formatTime = (seconds: number) => {
+  if (seconds <= 0) return "00:00";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+};
 
 const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
 
@@ -33,26 +43,45 @@ const MyAds = () => {
   const { deals } = useContractDeals();
   const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
+  const [chatDealId, setChatDealId] = useState<number | null>(null);
+  const [copied, setCopied] = useState<number | null>(null);
+  const [now, setNow] = useState(Math.floor(Date.now() / 1000));
 
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Cancel ad
   const { writeContract: cancelAd, data: cancelHash, isPending: cancelPending } = useWriteContract();
   const { isSuccess: cancelConfirmed } = useWaitForTransactionReceipt({ hash: cancelHash });
 
+  // Claim expired
   const { writeContract: claimExpired, data: claimHash, isPending: claimPending } = useWriteContract();
   const { isSuccess: claimConfirmed } = useWaitForTransactionReceipt({ hash: claimHash });
 
-  useEffect(() => {
-    if (cancelConfirmed) { toast.success("Ad cancelled. Funds returned."); setPendingAdId(null); }
-  }, [cancelConfirmed]);
+  // Seller confirm receipt
+  const { writeContract: sellerConfirm, data: sellerHash, isPending: sellerPending } = useWriteContract();
+  const { isSuccess: sellerDone } = useWaitForTransactionReceipt({ hash: sellerHash });
 
-  useEffect(() => {
-    if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); }
-  }, [claimConfirmed]);
+  // Raise dispute
+  const { writeContract: raiseDispute, data: disputeHash, isPending: disputePending } = useWriteContract();
+  const { isSuccess: disputeDone } = useWaitForTransactionReceipt({ hash: disputeHash });
+
+  // Cancel timed out deal
+  const { writeContract: cancelDeal, data: cancelDealHash, isPending: cancelDealPending } = useWriteContract();
+  const { isSuccess: cancelDealDone } = useWaitForTransactionReceipt({ hash: cancelDealHash });
+
+  useEffect(() => { if (cancelConfirmed) { toast.success("Ad cancelled. Funds returned."); setPendingAdId(null); } }, [cancelConfirmed]);
+  useEffect(() => { if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); } }, [claimConfirmed]);
+  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); } }, [sellerDone]);
+  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); } }, [disputeDone]);
+  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Funds returned to your wallet."); playAlertChime(); } }, [cancelDealDone]);
 
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
     : [];
 
-  const now = Date.now() / 1000;
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => a.status === 0 || a.status === 1);
   const historyAds = sortedAds.filter((a) => a.status === 2 || a.status === 3);
@@ -60,6 +89,14 @@ const MyAds = () => {
   const [adTab, setAdTab] = useState<"live" | "history">("live");
   const liveCount = liveAds.length;
   const historyCount = historyAds.length;
+
+  const isProcessing = cancelPending || claimPending || sellerPending || disputePending || cancelDealPending;
+
+  const handleCopy = (text: string, id: number) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,111 +171,225 @@ const MyAds = () => {
                     const isExpired = ad.status === 0 && now > ad.adExpiry;
                     const isLive = ad.status === 0 && !isExpired;
                     const expiryDate = new Date(ad.adExpiry * 1000);
+                    const relatedDeal = deals.find((d) => d.adId === ad.adId && (d.status === 0 || d.status === 1 || d.status === 4));
+                    const completedDeal = deals.find((d) => d.adId === ad.adId);
+                    const dealTimeLeft = relatedDeal ? relatedDeal.deadline - now : 0;
+                    const isDealTimedOut = relatedDeal && dealTimeLeft <= 0 && (relatedDeal.status === 0 || relatedDeal.status === 1);
+                    const showChat = relatedDeal && chatDealId === relatedDeal.dealId;
 
                     return (
                       <div
                         key={ad.adId}
-                        className="rounded-lg border border-border bg-card p-4 sm:p-5 transition-all hover:border-primary/30 animate-fade-up"
+                        className="rounded-lg border border-border bg-card overflow-hidden transition-all hover:border-primary/30 animate-fade-up"
                         style={{ animationDelay: `${i * 60}ms` }}
                       >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold text-sm ${isLive ? "bg-buy/10 text-buy" : "bg-surface-3 text-muted-foreground"}`}>
-                              #{ad.adId}
+                        <div className="p-4 sm:p-5">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold text-sm ${isLive ? "bg-buy/10 text-buy" : ad.status === 1 ? "bg-primary/10 text-primary" : "bg-surface-3 text-muted-foreground"}`}>
+                                #{ad.adId}
+                              </div>
+                              <div>
+                                <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span>
+                                <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span>
-                              <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
-                            </div>
-                          </div>
-                          <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
-                            {isExpired ? "Expired" : st.label}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground text-xs">Total INR</span>
-                            <p className="text-foreground font-medium tabular-nums">₹{ad.inrTotal}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Deal Timeout</span>
-                            <p className="text-foreground text-xs">{formatTimeout(ad.dealTimeout)}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">{isExpired ? "Expired At" : "Expires"}</span>
-                            <p className="text-foreground text-xs">{expiryDate.toLocaleString()}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground text-xs">Payment</span>
-                            <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
-                          </div>
-                        </div>
-
-                        {/* Outcome for completed/cancelled ads */}
-                        {(ad.status === 2 || ad.status === 3) && (() => {
-                          const relatedDeal = deals.find((d) => d.adId === ad.adId);
-                          const isAdCompleted = ad.status === 2;
-                          return (
-                            <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
-                              <div className="flex items-center gap-2">
-                                {isAdCompleted ? <CheckCircle2 className="h-4 w-4 text-buy shrink-0" /> : <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />}
-                                <span className={`text-sm font-semibold ${isAdCompleted ? "text-buy" : "text-muted-foreground"}`}>
-                                  {isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
+                            <div className="flex items-center gap-2">
+                              <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
+                                {isExpired ? "Expired" : st.label}
+                              </span>
+                              {relatedDeal && (relatedDeal.status === 0 || relatedDeal.status === 1) && dealTimeLeft > 0 && (
+                                <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono ${dealTimeLeft < 120 ? "bg-sell/10 text-sell" : "bg-primary/10 text-primary"}`}>
+                                  <Clock className="h-3 w-3" />
+                                  {formatTime(dealTimeLeft)}
                                 </span>
-                              </div>
-                              <div className="text-xs text-muted-foreground space-y-1">
-                                {isAdCompleted && relatedDeal ? (
-                                  <>
-                                    <p>Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> paid ₹{relatedDeal.inrAmount}</p>
-                                    <p>You released <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to buyer</p>
-                                  </>
-                                ) : isAdCompleted ? (
-                                  <p>Deal completed. {ad.tokenAmount} {ad.tokenSymbol} released to buyer.</p>
-                                ) : (
-                                  <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> returned to your wallet.</p>
-                                )}
-                              </div>
-                              <a href={BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                                <ExternalLink className="h-3 w-3" /> View on BscScan
-                              </a>
-                            </div>
-                          );
-                        })()}
-
-                        {/* In Deal status */}
-                        {ad.status === 1 && (() => {
-                          const relatedDeal = deals.find((d) => d.adId === ad.adId);
-                          return (
-                            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
-                              <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-primary shrink-0" />
-                                <span className="text-sm font-semibold text-primary">Deal In Progress</span>
-                              </div>
-                              {relatedDeal && (
-                                <p className="text-xs text-muted-foreground">
-                                  Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> accepted your ad.
-                                  {relatedDeal.buyerConfirmed ? " Buyer has confirmed payment — check your bank/UPI." : " Waiting for buyer to pay."}
-                                </p>
+                              )}
+                              {isDealTimedOut && (
+                                <span className="flex items-center gap-1 rounded-full bg-sell/10 px-2.5 py-1 text-xs font-semibold text-sell">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  Deal Expired
+                                </span>
                               )}
                             </div>
-                          );
-                        })()}
+                          </div>
 
-                        {/* Actions */}
-                        {ad.status === 0 && (
-                          <div className="mt-3 flex gap-2">
-                            {!isExpired ? (
-                              <Button variant="outline" size="sm" className="text-sell border-sell/30 hover:bg-sell/10" onClick={() => { setPendingAdId(ad.adId); cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any); }} disabled={cancelPending && pendingAdId === ad.adId}>
-                                {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                                Cancel Ad
+                          {/* Timer progress bar for active deals */}
+                          {relatedDeal && (relatedDeal.status === 0 || relatedDeal.status === 1) && dealTimeLeft > 0 && (
+                            <div className="mt-3">
+                              <div className="h-1.5 w-full rounded-full bg-surface-3 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-1000 ${dealTimeLeft < 120 ? "bg-sell" : "bg-primary"}`}
+                                  style={{ width: `${Math.max(0, Math.min(100, (dealTimeLeft / 900) * 100))}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground text-xs">Total INR</span>
+                              <p className="text-foreground font-medium tabular-nums">₹{ad.inrTotal}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Deal Timeout</span>
+                              <p className="text-foreground text-xs">{formatTimeout(ad.dealTimeout)}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">{isExpired ? "Expired At" : "Expires"}</span>
+                              <p className="text-foreground text-xs">{expiryDate.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground text-xs">Payment</span>
+                              <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
+                            </div>
+                          </div>
+
+                          {/* In Deal — full seller deal management */}
+                          {ad.status === 1 && relatedDeal && (
+                            <div className="mt-3 space-y-3">
+                              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-primary shrink-0" />
+                                  <span className="text-sm font-semibold text-primary">Deal #{relatedDeal.dealId} In Progress</span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                  <div>
+                                    <span className="text-muted-foreground">Buyer</span>
+                                    <p className="font-mono text-foreground">{shortAddr(relatedDeal.buyer)}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">INR Amount</span>
+                                    <p className="text-foreground font-medium tabular-nums">₹{relatedDeal.inrAmount}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Buyer Confirmed</span>
+                                    <p className={relatedDeal.buyerConfirmed ? "text-buy font-medium" : "text-muted-foreground"}>
+                                      {relatedDeal.buyerConfirmed ? "✓ Yes" : "✗ No"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">Seller Confirmed</span>
+                                    <p className={relatedDeal.sellerConfirmed ? "text-buy font-medium" : "text-muted-foreground"}>
+                                      {relatedDeal.sellerConfirmed ? "✓ Yes" : "✗ No"}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {relatedDeal.buyerConfirmed && (
+                                  <div className="rounded-md bg-buy/10 border border-buy/20 p-2 text-xs text-buy font-medium">
+                                    💰 Buyer has confirmed payment — check your bank/UPI and release tokens if received.
+                                  </div>
+                                )}
+
+                                {isDealTimedOut && (
+                                  <div className="rounded-md bg-sell/10 border border-sell/20 p-2 text-xs text-sell font-medium">
+                                    ⏰ Deal expired — cancel to get your {ad.tokenSymbol} back.
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Seller deal actions */}
+                              <div className="flex flex-wrap gap-2">
+                                {isDealTimedOut ? (
+                                  <Button variant="sell" size="sm" disabled={isProcessing} onClick={() => {
+                                    cancelDeal({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelTimedOutDeal", args: [BigInt(relatedDeal.dealId)] } as any);
+                                  }}>
+                                    {cancelDealPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                                    Cancel &amp; Reclaim Funds
+                                  </Button>
+                                ) : (
+                                  <>
+                                    {relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
+                                      <Button variant="buy" size="sm" disabled={isProcessing} onClick={() => {
+                                        sellerConfirm({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "sellerConfirmReceived", args: [BigInt(relatedDeal.dealId)] } as any);
+                                      }}>
+                                        {sellerPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                        I Received ₹{relatedDeal.inrAmount} — Release
+                                      </Button>
+                                    )}
+                                    <Button variant="outline" size="sm" className="text-sell border-sell/30" disabled={isProcessing} onClick={() => {
+                                      raiseDispute({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "raiseDispute", args: [BigInt(relatedDeal.dealId), "Seller dispute"] } as any);
+                                    }}>
+                                      {disputePending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                                      Dispute
+                                    </Button>
+                                  </>
+                                )}
+                                <Button variant="ghost" size="sm" className="text-muted-foreground ml-auto" onClick={() => setChatDealId(showChat ? null : relatedDeal.dealId)}>
+                                  <MessageSquare className="h-3 w-3 mr-1" />
+                                  {showChat ? "Hide Chat" : "Chat"}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Disputed deal on ad */}
+                          {relatedDeal && relatedDeal.status === 4 && (
+                            <div className="mt-3 rounded-lg border border-sell/20 bg-sell/5 p-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-sell shrink-0" />
+                                <span className="text-sm font-semibold text-sell">Deal #{relatedDeal.dealId} Disputed</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">Admin is reviewing. Funds are locked in escrow.</p>
+                              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setChatDealId(showChat ? null : relatedDeal.dealId)}>
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                {showChat ? "Hide Chat" : "Chat"}
                               </Button>
-                            ) : (
-                              <Button variant="outline" size="sm" className="text-primary border-primary/30 hover:bg-primary/10" onClick={() => { setPendingAdId(ad.adId); claimExpired({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "claimExpiredAd", args: [BigInt(ad.adId)] } as any); }} disabled={claimPending && pendingAdId === ad.adId}>
-                                {claimPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                                Claim Funds
-                              </Button>
-                            )}
+                            </div>
+                          )}
+
+                          {/* Outcome for completed/cancelled ads */}
+                          {(ad.status === 2 || ad.status === 3) && (() => {
+                            const isAdCompleted = ad.status === 2;
+                            return (
+                              <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
+                                <div className="flex items-center gap-2">
+                                  {isAdCompleted ? <CheckCircle2 className="h-4 w-4 text-buy shrink-0" /> : <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />}
+                                  <span className={`text-sm font-semibold ${isAdCompleted ? "text-buy" : "text-muted-foreground"}`}>
+                                    {isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-muted-foreground space-y-1">
+                                  {isAdCompleted && completedDeal ? (
+                                    <>
+                                      <p>Buyer <span className="font-mono text-foreground">{shortAddr(completedDeal.buyer)}</span> paid ₹{completedDeal.inrAmount}</p>
+                                      <p>You released <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to buyer</p>
+                                    </>
+                                  ) : isAdCompleted ? (
+                                    <p>Deal completed. {ad.tokenAmount} {ad.tokenSymbol} released to buyer.</p>
+                                  ) : (
+                                    <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> returned to your wallet.</p>
+                                  )}
+                                </div>
+                                <a href={BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                                  <ExternalLink className="h-3 w-3" /> View on BscScan
+                                </a>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Actions for live/expired ads (no deal yet) */}
+                          {ad.status === 0 && (
+                            <div className="mt-3 flex gap-2">
+                              {!isExpired ? (
+                                <Button variant="outline" size="sm" className="text-sell border-sell/30 hover:bg-sell/10" onClick={() => { setPendingAdId(ad.adId); cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any); }} disabled={cancelPending && pendingAdId === ad.adId}>
+                                  {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                  Cancel Ad
+                                </Button>
+                              ) : (
+                                <Button variant="outline" size="sm" className="text-primary border-primary/30 hover:bg-primary/10" onClick={() => { setPendingAdId(ad.adId); claimExpired({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "claimExpiredAd", args: [BigInt(ad.adId)] } as any); }} disabled={claimPending && pendingAdId === ad.adId}>
+                                  {claimPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                  Claim Funds
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Chat panel */}
+                        {showChat && relatedDeal && (
+                          <div className="border-t border-border h-72">
+                            <ChatPanel dealId={relatedDeal.dealId} userAddress={address!} />
                           </div>
                         )}
                       </div>
