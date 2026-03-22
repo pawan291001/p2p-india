@@ -463,7 +463,7 @@ const MyAds = () => {
                           )}
 
                           {/* Actions for live/expired ads (no deal yet) */}
-                          {ad.status === 0 && (
+                          {ad.status === 0 && !isRefundedRelisted && (
                             <div className="mt-3 space-y-2">
                               {!isExpired && (
                                 <p className="text-xs text-muted-foreground">
