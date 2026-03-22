@@ -171,6 +171,9 @@ const Guide = () => (
                 {s.title}
               </a>
             ))}
+            <a href="#walkthrough" className="text-sm text-primary hover:underline py-0.5 font-medium">
+              📖 Live Example — Full Trade Walkthrough
+            </a>
           </div>
         </nav>
       </ScrollReveal>
@@ -201,6 +204,180 @@ const Guide = () => (
             </section>
           </ScrollReveal>
         ))}
+      </div>
+
+      {/* Step-by-step walkthrough */}
+      <ScrollReveal delay={80}>
+        <div className="mt-16 mb-4">
+          <h2 className="text-xl font-bold text-foreground sm:text-2xl mb-2" style={{ lineHeight: "1.15" }}>
+            Live Example — Full Trade Walkthrough
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-2xl">
+            Let's follow two users — <span className="text-foreground font-medium">Ravi</span> (the seller) and <span className="text-foreground font-medium">Priya</span> (the buyer) — through a complete USDT trade from start to finish.
+          </p>
+        </div>
+      </ScrollReveal>
+
+      <div className="space-y-6" id="walkthrough">
+        {/* Step 1 */}
+        <ScrollReveal delay={60}>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-3 bg-surface-2 px-4 py-3 border-b border-border">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">1</div>
+              <h3 className="text-sm font-semibold text-foreground">Ravi Creates a Sell Ad</h3>
+              <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-surface-1 px-2 py-0.5 rounded-full">SELLER SIDE</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">Ravi has <span className="text-foreground font-medium">50 USDT</span> in his wallet and wants to sell them for INR. He goes to the P2P Trading page and clicks <span className="text-foreground font-medium">"Sell USDT"</span>.</p>
+              <div className="rounded-md bg-surface-2 p-3 text-xs space-y-1.5">
+                <div className="flex justify-between"><span className="text-muted-foreground">Token:</span><span className="text-foreground">USDT</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Amount:</span><span className="text-foreground">50 USDT</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Price:</span><span className="text-foreground">₹94 per USDT</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Payment Method:</span><span className="text-foreground">UPI</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">UPI ID:</span><span className="text-foreground">ravi@ybl</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Deal Timeout:</span><span className="text-foreground">30 minutes</span></div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">Ravi approves the USDT spend and confirms the transaction. His <span className="text-foreground font-medium">50 USDT</span> are now locked in the escrow smart contract. The ad goes live on the marketplace.</p>
+              <div className="flex items-center gap-2 text-xs text-buy">
+                <span className="h-1.5 w-1.5 rounded-full bg-buy animate-pulse" />
+                Ravi's 50 USDT → Locked in Smart Contract
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Step 2 */}
+        <ScrollReveal delay={60}>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-3 bg-surface-2 px-4 py-3 border-b border-border">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">2</div>
+              <h3 className="text-sm font-semibold text-foreground">Priya Browses & Accepts the Deal</h3>
+              <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-surface-1 px-2 py-0.5 rounded-full">BUYER SIDE</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">Priya wants to buy USDT. She connects her MetaMask wallet and browses the P2P Trading page. She sees Ravi's ad: <span className="text-foreground font-medium">50 USDT at ₹94/USDT via UPI</span>.</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">She clicks <span className="text-foreground font-medium">"Accept"</span> and enters the amount she wants to buy — let's say <span className="text-foreground font-medium">20 USDT</span> (= ₹1,880).</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">She confirms the on-chain transaction. The deal is now active and the <span className="text-foreground font-medium">30-minute countdown</span> begins.</p>
+              <div className="flex items-center gap-2 text-xs text-amber-500">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Deal Active — 30:00 countdown started
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Step 3 */}
+        <ScrollReveal delay={60}>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-3 bg-surface-2 px-4 py-3 border-b border-border">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">3</div>
+              <h3 className="text-sm font-semibold text-foreground">Priya Sees Payment Details & Sends ₹1,880</h3>
+              <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-surface-1 px-2 py-0.5 rounded-full">BUYER SIDE</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">After accepting, Priya sees Ravi's payment details in her <span className="text-foreground font-medium">"My Deals"</span> page:</p>
+              <div className="rounded-md bg-surface-2 p-3 text-xs space-y-1.5">
+                <div className="flex justify-between"><span className="text-muted-foreground">Pay to:</span><span className="text-foreground">Ravi Kumar</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Method:</span><span className="text-foreground">UPI</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">UPI ID:</span><span className="text-foreground font-mono">ravi@ybl</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Amount:</span><span className="text-foreground font-semibold">₹1,880</span></div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">A <span className="text-foreground font-medium">QR code</span> is also shown — Priya scans it with Google Pay, sends exactly ₹1,880 to ravi@ybl, and then clicks <span className="text-foreground font-medium">"I Have Paid"</span> on the platform.</p>
+              <div className="flex items-center gap-2 text-xs text-blue-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
+                Priya confirms payment — waiting for seller
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Step 4 */}
+        <ScrollReveal delay={60}>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-3 bg-surface-2 px-4 py-3 border-b border-border">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">4</div>
+              <h3 className="text-sm font-semibold text-foreground">Ravi Verifies Payment & Releases Tokens</h3>
+              <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-surface-1 px-2 py-0.5 rounded-full">SELLER SIDE</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">Ravi gets notified that Priya has marked the payment as sent. He checks his UPI app and sees <span className="text-foreground font-medium">₹1,880 received from Priya</span>.</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">He goes to his <span className="text-foreground font-medium">"My Ads"</span> page, finds the active deal, and clicks <span className="text-foreground font-medium">"Release"</span>. This triggers an on-chain transaction.</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">The smart contract verifies everything and releases <span className="text-foreground font-medium">20 USDT</span> directly to Priya's wallet.</p>
+              <div className="flex items-center gap-2 text-xs text-buy">
+                <span className="h-1.5 w-1.5 rounded-full bg-buy" />
+                ✅ 20 USDT released to Priya's wallet
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Step 5 */}
+        <ScrollReveal delay={60}>
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="flex items-center gap-3 bg-surface-2 px-4 py-3 border-b border-border">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">5</div>
+              <h3 className="text-sm font-semibold text-foreground">Deal Complete!</h3>
+              <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-surface-1 px-2 py-0.5 rounded-full">BOTH SIDES</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">The deal is now complete. Here's the final summary:</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-md bg-surface-2 p-3">
+                  <p className="text-xs font-semibold text-foreground mb-2">🟢 Ravi (Seller)</p>
+                  <div className="text-xs space-y-1 text-muted-foreground">
+                    <p>• Sold 20 USDT</p>
+                    <p>• Received ₹1,880 via UPI</p>
+                    <p>• Remaining 30 USDT still in escrow for next buyer</p>
+                  </div>
+                </div>
+                <div className="rounded-md bg-surface-2 p-3">
+                  <p className="text-xs font-semibold text-foreground mb-2">🟢 Priya (Buyer)</p>
+                  <div className="text-xs space-y-1 text-muted-foreground">
+                    <p>• Bought 20 USDT</p>
+                    <p>• Paid ₹1,880 via UPI</p>
+                    <p>• 20 USDT now in her wallet</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">The entire trade is recorded on the blockchain with timestamps and transaction hashes — visible in the deal timeline.</p>
+            </div>
+          </div>
+        </ScrollReveal>
+
+        {/* Dispute scenario */}
+        <ScrollReveal delay={60}>
+          <div className="mt-4 rounded-lg border border-destructive/30 bg-card overflow-hidden">
+            <div className="flex items-center gap-3 bg-destructive/10 px-4 py-3 border-b border-destructive/20">
+              <span className="text-sm">⚠️</span>
+              <h3 className="text-sm font-semibold text-foreground">What If Something Goes Wrong?</h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-foreground mb-1.5">Scenario A — Priya claims she paid, but Ravi didn't receive money</p>
+                <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+                  <p>Ravi checks his UPI and doesn't see ₹1,880. He does <span className="text-foreground font-medium">NOT</span> click "Release."</p>
+                  <p>The 30-minute timer expires. Ravi clicks <span className="text-foreground font-medium">"Raise Dispute."</span></p>
+                  <p>An admin reviews the case. Since Priya didn't actually pay, the admin releases the 20 USDT back to Ravi.</p>
+                </div>
+              </div>
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-semibold text-foreground mb-1.5">Scenario B — Priya paid, but Ravi won't release tokens</p>
+                <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+                  <p>Priya sent ₹1,880 and has the payment screenshot. But Ravi isn't clicking "Release."</p>
+                  <p>The 30-minute timer expires. Priya clicks <span className="text-foreground font-medium">"Raise Dispute."</span></p>
+                  <p>An admin checks the evidence, verifies Priya's payment, and releases the 20 USDT to Priya's wallet.</p>
+                </div>
+              </div>
+              <div className="border-t border-border pt-4">
+                <p className="text-xs font-semibold text-foreground mb-1.5">Scenario C — Priya accepted but never pays</p>
+                <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+                  <p>Priya accepted the deal but doesn't send any payment and doesn't click "I Have Paid."</p>
+                  <p>The 30-minute timer expires. Ravi clicks <span className="text-foreground font-medium">"Cancel Deal"</span> and his 20 USDT are returned to the escrow (available for other buyers).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollReveal>
       </div>
 
       {/* CTA */}
