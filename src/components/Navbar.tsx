@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link, useLocation } from "react-router-dom";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV_LINKS = [
   { label: "P2P Trading", href: "/" },
@@ -41,7 +42,8 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="hidden md:flex">
+        <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
         </div>
 
@@ -69,7 +71,8 @@ const Navbar = () => {
                 </Button>
               </Link>
             ))}
-            <div className="mt-2">
+            <div className="mt-2 flex items-center gap-2">
+              <ThemeToggle />
               <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
             </div>
           </div>
