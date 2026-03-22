@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Clock } from "lucide-react";
+import { Shield, Clock, Timer } from "lucide-react";
 
 interface OrderCardProps {
   adId: number;
@@ -9,6 +9,7 @@ interface OrderCardProps {
   pricePerToken: string;
   inrTotal: string;
   dealTimeout: number;
+  adExpiry: number;
   paymentInfo: string;
   onTrade: () => void;
   index: number;
@@ -21,6 +22,16 @@ const formatTimeout = (seconds: number) => {
   return `${seconds / 60} min`;
 };
 
+const formatTimeLeft = (expiryTimestamp: number) => {
+  const now = Date.now() / 1000;
+  const diff = Math.max(0, expiryTimestamp - now);
+  if (diff <= 0) return "Expired";
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m left`;
+  return `${m}m left`;
+};
+
 const OrderCard = ({
   seller,
   tokenSymbol,
@@ -28,10 +39,13 @@ const OrderCard = ({
   pricePerToken,
   inrTotal,
   dealTimeout,
+  adExpiry,
   paymentInfo,
   onTrade,
   index,
 }: OrderCardProps) => {
+  const timeLeftStr = formatTimeLeft(adExpiry);
+
   return (
     <div
       className="group rounded-lg border border-border bg-card p-4 sm:p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.15)] animate-fade-up"
@@ -59,7 +73,7 @@ const OrderCard = ({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
         <div>
           <span className="text-muted-foreground text-xs">Available</span>
           <p className="text-foreground font-medium tabular-nums">{tokenAmount} {tokenSymbol}</p>
@@ -68,9 +82,16 @@ const OrderCard = ({
           <span className="text-muted-foreground text-xs">Total (INR)</span>
           <p className="text-foreground font-medium tabular-nums">₹{inrTotal}</p>
         </div>
-        <div className="col-span-2 sm:col-span-1">
+        <div>
           <span className="text-muted-foreground text-xs">Payment</span>
           <p className="text-foreground text-xs mt-1 truncate">{paymentInfo}</p>
+        </div>
+        <div>
+          <span className="text-muted-foreground text-xs">Ad Expires</span>
+          <p className="text-foreground text-xs mt-1 flex items-center gap-1">
+            <Timer className="h-3 w-3 text-muted-foreground" />
+            {timeLeftStr}
+          </p>
         </div>
       </div>
 

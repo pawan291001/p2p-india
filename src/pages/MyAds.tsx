@@ -199,14 +199,26 @@ const MyAds = () => {
                                 <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col items-end gap-1">
                               <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
                                 {isExpired ? "Expired" : st.label}
                               </span>
+                              {/* Ad expiry countdown */}
+                              {isLive && (() => {
+                                const adTimeLeft = ad.adExpiry - now;
+                                const h = Math.floor(adTimeLeft / 3600);
+                                const m = Math.floor((adTimeLeft % 3600) / 60);
+                                return (
+                                  <span className={`flex items-center gap-1 text-xs font-mono ${adTimeLeft < 1800 ? "text-sell" : "text-muted-foreground"}`}>
+                                    <Clock className="h-3 w-3" />
+                                    {h > 0 ? `${h}h ${m}m` : `${m}m`} left
+                                  </span>
+                                );
+                              })()}
                               {relatedDeal && (relatedDeal.status === 0 || relatedDeal.status === 1) && dealTimeLeft > 0 && (
                                 <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono ${dealTimeLeft < 120 ? "bg-sell/10 text-sell" : "bg-primary/10 text-primary"}`}>
                                   <Clock className="h-3 w-3" />
-                                  {formatTime(dealTimeLeft)}
+                                  Deal: {formatTime(dealTimeLeft)}
                                 </span>
                               )}
                               {isDealTimedOut && (
@@ -384,18 +396,30 @@ const MyAds = () => {
 
                           {/* Actions for live/expired ads (no deal yet) */}
                           {ad.status === 0 && (
-                            <div className="mt-3 flex gap-2">
-                              {!isExpired ? (
-                                <Button variant="outline" size="sm" className="text-sell border-sell/30 hover:bg-sell/10" onClick={() => { setPendingAdId(ad.adId); cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any); }} disabled={cancelPending && pendingAdId === ad.adId}>
-                                  {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                                  Cancel Ad
-                                </Button>
-                              ) : (
-                                <Button variant="outline" size="sm" className="text-primary border-primary/30 hover:bg-primary/10" onClick={() => { setPendingAdId(ad.adId); claimExpired({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "claimExpiredAd", args: [BigInt(ad.adId)] } as any); }} disabled={claimPending && pendingAdId === ad.adId}>
-                                  {claimPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                                  Claim Funds
-                                </Button>
+                            <div className="mt-3 space-y-2">
+                              {!isExpired && (
+                                <p className="text-xs text-muted-foreground">
+                                  💡 Cancel to return <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to your wallet.
+                                </p>
                               )}
+                              {isExpired && (
+                                <p className="text-xs text-sell">
+                                  ⏰ Ad expired. Claim to return <span className="font-medium">{ad.tokenAmount} {ad.tokenSymbol}</span> to your wallet.
+                                </p>
+                              )}
+                              <div className="flex gap-2">
+                                {!isExpired ? (
+                                  <Button variant="sell" size="sm" onClick={() => { setPendingAdId(ad.adId); cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any); }} disabled={cancelPending && pendingAdId === ad.adId}>
+                                    {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+                                    Cancel Ad &amp; Get Funds
+                                  </Button>
+                                ) : (
+                                  <Button variant="outline" size="sm" className="text-primary border-primary/30 hover:bg-primary/10" onClick={() => { setPendingAdId(ad.adId); claimExpired({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "claimExpiredAd", args: [BigInt(ad.adId)] } as any); }} disabled={claimPending && pendingAdId === ad.adId}>
+                                    {claimPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                    Claim Funds Back
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
