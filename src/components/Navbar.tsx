@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link, useLocation } from "react-router-dom";
@@ -43,6 +43,11 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
+          <a href="https://t.me/XplorerTobi1" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+          </a>
           <ThemeToggle />
           <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
         </div>
@@ -72,6 +77,11 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="mt-2 flex items-center gap-2">
+              <a href="https://t.me/XplorerTobi1" target="_blank" rel="noopener noreferrer">
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+              </a>
               <ThemeToggle />
               <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
             </div>
