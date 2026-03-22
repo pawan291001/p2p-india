@@ -1,11 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollReveal from "@/components/ScrollReveal";
-import guideWallet from "@/assets/guide-connect-wallet.jpg";
-import guideBrowse from "@/assets/guide-browse-ads.jpg";
-import guideEscrow from "@/assets/guide-escrow.jpg";
-import guidePayment from "@/assets/guide-payment.jpg";
-import guideDispute from "@/assets/guide-dispute.jpg";
 
 const SECTIONS = [
   {
