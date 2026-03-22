@@ -27,14 +27,26 @@ const Index = () => {
   const [minAmount, setMinAmount] = useState("");
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
+  const { deals } = useContractDeals();
 
   const now = Date.now() / 1000;
+
+  const refundedRelistedAdIds = useMemo(
+    () =>
+      new Set(
+        deals
+          .filter((d) => d.status === 3 && !d.buyerConfirmed && !d.sellerConfirmed)
+          .map((d) => d.adId),
+      ),
+    [deals],
+  );
 
   const filteredAds = useMemo(() => {
     return liveAds
       .filter((ad) => {
         if (ad.status !== 0) return false;
         if (ad.adExpiry < now) return false;
+        if (refundedRelistedAdIds.has(ad.adId)) return false;
         if (address && ad.seller.toLowerCase() === address.toLowerCase()) return false;
         const matchesCrypto = ad.tokenSymbol === crypto;
         const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
@@ -43,7 +55,7 @@ const Index = () => {
         return matchesCrypto && matchesSearch && matchesPrice && matchesAmount;
       })
       .sort((a, b) => parseFloat(a.pricePerToken) - parseFloat(b.pricePerToken));
-  }, [liveAds, crypto, search, maxPrice, minAmount, address, now]);
+  }, [liveAds, crypto, search, maxPrice, minAmount, address, now, refundedRelistedAdIds]);
 
   return (
     <div className="min-h-screen bg-background">
