@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import FaqSection from "@/components/FaqSection";
 import OrderCard from "@/components/OrderCard";
 import CreateOrderModal from "@/components/CreateOrderModal";
 import StatsBar from "@/components/StatsBar";
