@@ -10,7 +10,7 @@ import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import CreateOrderModal from "@/components/CreateOrderModal";
-import StatusFilter from "@/components/StatusFilter";
+
 
 const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
 
@@ -52,47 +52,27 @@ const MyAds = () => {
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
     : [];
 
-  const [adFilter, setAdFilter] = useState("all");
-
   const now = Date.now() / 1000;
-  const filteredMyAds = myAds.filter((ad) => {
-    if (adFilter === "all") return true;
-    if (adFilter === "live") return ad.status === 0 && ad.adExpiry >= now;
-    if (adFilter === "in-deal") return ad.status === 1;
-    if (adFilter === "completed") return ad.status === 2;
-    if (adFilter === "cancelled") return ad.status === 3;
-    if (adFilter === "expired") return ad.status === 0 && ad.adExpiry < now;
-    return true;
-  });
+  const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
+  const liveAds = sortedAds.filter((a) => a.status === 0 || a.status === 1);
+  const historyAds = sortedAds.filter((a) => a.status === 2 || a.status === 3);
 
-  const adFilterOptions = [
-    { value: "all", label: "All", count: myAds.length },
-    { value: "live", label: "Live", count: myAds.filter((a) => a.status === 0 && a.adExpiry >= now).length },
-    { value: "in-deal", label: "In Deal", count: myAds.filter((a) => a.status === 1).length },
-    { value: "completed", label: "Completed", count: myAds.filter((a) => a.status === 2).length },
-    { value: "cancelled", label: "Cancelled", count: myAds.filter((a) => a.status === 3).length },
-    { value: "expired", label: "Expired", count: myAds.filter((a) => a.status === 0 && a.adExpiry < now).length },
-  ].filter((o) => o.value === "all" || o.count > 0);
+  const [adTab, setAdTab] = useState<"live" | "history">("live");
+  const liveCount = liveAds.length;
+  const historyCount = historyAds.length;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>
-            My Ads
-          </h1>
-          <div className="flex items-center gap-3">
-            {isConnected && myAds.length > 0 && (
-              <StatusFilter options={adFilterOptions} selected={adFilter} onSelect={setAdFilter} />
-            )}
-            {isConnected && (
-              <Button onClick={() => setShowCreate(true)} className="gap-2 shrink-0">
-                <Plus className="h-4 w-4" />
-                Post Ad
-              </Button>
-            )}
-          </div>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>My Ads</h1>
+          {isConnected && (
+            <Button onClick={() => setShowCreate(true)} className="gap-2 shrink-0">
+              <Plus className="h-4 w-4" />
+              Post Ad
+            </Button>
+          )}
         </div>
 
         {!isConnected ? (
@@ -116,188 +96,158 @@ const MyAds = () => {
               Create your first ad
             </Button>
           </div>
-        ) : filteredMyAds.length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-            No {adFilter} ads found.
-          </div>
         ) : (
-          <div className="space-y-3">
-            {filteredMyAds.map((ad, i) => {
-              const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
-              const isExpired = ad.status === 0 && Date.now() / 1000 > ad.adExpiry;
-              const isLive = ad.status === 0 && !isExpired;
-              const expiryDate = new Date(ad.adExpiry * 1000);
+          <>
+            {/* Tabs */}
+            <div className="flex gap-1 mb-6 border-b border-border">
+              <button
+                onClick={() => setAdTab("live")}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${adTab === "live" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Live
+                {liveCount > 0 && <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums ${adTab === "live" ? "bg-primary/15 text-primary" : "bg-surface-3 text-muted-foreground"}`}>{liveCount}</span>}
+                {adTab === "live" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+              </button>
+              <button
+                onClick={() => setAdTab("history")}
+                className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${adTab === "history" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                History
+                {historyCount > 0 && <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums ${adTab === "history" ? "bg-primary/15 text-primary" : "bg-surface-3 text-muted-foreground"}`}>{historyCount}</span>}
+                {adTab === "history" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+              </button>
+            </div>
 
+            {(() => {
+              const currentAds = adTab === "live" ? liveAds : historyAds;
+              if (currentAds.length === 0) {
+                return (
+                  <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
+                    {adTab === "live" ? "No live ads. Check History for past ads." : "No completed or cancelled ads yet."}
+                  </div>
+                );
+              }
               return (
-                <div
-                  key={ad.adId}
-                  className="rounded-lg border border-border bg-card p-4 sm:p-5 transition-all hover:border-primary/30 animate-fade-up"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold text-sm ${isLive ? "bg-buy/10 text-buy" : "bg-surface-3 text-muted-foreground"}`}>
-                        #{ad.adId}
-                      </div>
-                      <div>
-                        <span className="font-medium text-foreground">
-                          {ad.tokenAmount} {ad.tokenSymbol}
-                        </span>
-                        <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
-                      </div>
-                    </div>
-                    <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
-                      {isExpired ? "Expired" : st.label}
-                    </span>
-                  </div>
+                <div className="space-y-3">
+                  {currentAds.map((ad, i) => {
+                    const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
+                    const isExpired = ad.status === 0 && now > ad.adExpiry;
+                    const isLive = ad.status === 0 && !isExpired;
+                    const expiryDate = new Date(ad.adExpiry * 1000);
 
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground text-xs">Total INR</span>
-                      <p className="text-foreground font-medium tabular-nums">₹{ad.inrTotal}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-xs">Deal Timeout</span>
-                      <p className="text-foreground text-xs">{formatTimeout(ad.dealTimeout)}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-xs">{isExpired ? "Expired At" : "Expires"}</span>
-                      <p className="text-foreground text-xs">{expiryDate.toLocaleString()}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground text-xs">Payment</span>
-                      <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
-                    </div>
-                  </div>
-
-                  {/* Outcome for completed/cancelled ads */}
-                  {(ad.status === 2 || ad.status === 3) && (() => {
-                    const relatedDeal = deals.find((d) => d.adId === ad.adId);
-                    const isAdCompleted = ad.status === 2;
                     return (
-                      <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
-                        <div className="flex items-center gap-2">
-                          {isAdCompleted ? (
-                            <CheckCircle2 className="h-4 w-4 text-buy shrink-0" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
-                          )}
-                          <span className={`text-sm font-semibold ${isAdCompleted ? "text-buy" : "text-muted-foreground"}`}>
-                            {isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
+                      <div
+                        key={ad.adId}
+                        className="rounded-lg border border-border bg-card p-4 sm:p-5 transition-all hover:border-primary/30 animate-fade-up"
+                        style={{ animationDelay: `${i * 60}ms` }}
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-bold text-sm ${isLive ? "bg-buy/10 text-buy" : "bg-surface-3 text-muted-foreground"}`}>
+                              #{ad.adId}
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span>
+                              <span className="text-muted-foreground text-sm ml-2">@ ₹{ad.pricePerToken}</span>
+                            </div>
+                          </div>
+                          <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
+                            {isExpired ? "Expired" : st.label}
                           </span>
                         </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          {isAdCompleted && relatedDeal ? (
-                            <>
-                              <p>
-                                Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> paid ₹{relatedDeal.inrAmount}
-                              </p>
-                              <p>
-                                You released <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to buyer
-                              </p>
-                              <div className="flex items-center gap-2 pt-1">
-                                <div className="flex items-center gap-1">
-                                  <CheckCircle2 className="h-3 w-3 text-buy" />
-                                  <span className="text-buy font-medium">Buyer paid</span>
-                                </div>
-                                <span>→</span>
-                                <div className="flex items-center gap-1">
-                                  <CheckCircle2 className="h-3 w-3 text-buy" />
-                                  <span className="text-buy font-medium">You confirmed</span>
-                                </div>
-                                <span>→</span>
-                                <div className="flex items-center gap-1">
-                                  <CheckCircle2 className="h-3 w-3 text-buy" />
-                                  <span className="text-buy font-medium">Tokens sent</span>
-                                </div>
-                              </div>
-                            </>
-                          ) : isAdCompleted ? (
-                            <p>Your ad was accepted and the deal completed successfully. {ad.tokenAmount} {ad.tokenSymbol} was released to the buyer.</p>
-                          ) : (
-                            <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> was returned to your wallet.</p>
-                          )}
-                        </div>
-                        <a
-                          href={BSCSCAN_CONTRACT}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          View on BscScan
-                        </a>
-                      </div>
-                    );
-                  })()}
 
-                  {/* In Deal status */}
-                  {ad.status === 1 && (() => {
-                    const relatedDeal = deals.find((d) => d.adId === ad.adId);
-                    return (
-                      <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-primary shrink-0" />
-                          <span className="text-sm font-semibold text-primary">Deal In Progress</span>
+                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground text-xs">Total INR</span>
+                            <p className="text-foreground font-medium tabular-nums">₹{ad.inrTotal}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Deal Timeout</span>
+                            <p className="text-foreground text-xs">{formatTimeout(ad.dealTimeout)}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">{isExpired ? "Expired At" : "Expires"}</span>
+                            <p className="text-foreground text-xs">{expiryDate.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground text-xs">Payment</span>
+                            <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
+                          </div>
                         </div>
-                        {relatedDeal && (
-                          <p className="text-xs text-muted-foreground">
-                            Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> accepted your ad.
-                            {relatedDeal.buyerConfirmed ? " Buyer has confirmed payment — check your bank/UPI." : " Waiting for buyer to pay."}
-                          </p>
+
+                        {/* Outcome for completed/cancelled ads */}
+                        {(ad.status === 2 || ad.status === 3) && (() => {
+                          const relatedDeal = deals.find((d) => d.adId === ad.adId);
+                          const isAdCompleted = ad.status === 2;
+                          return (
+                            <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
+                              <div className="flex items-center gap-2">
+                                {isAdCompleted ? <CheckCircle2 className="h-4 w-4 text-buy shrink-0" /> : <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />}
+                                <span className={`text-sm font-semibold ${isAdCompleted ? "text-buy" : "text-muted-foreground"}`}>
+                                  {isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground space-y-1">
+                                {isAdCompleted && relatedDeal ? (
+                                  <>
+                                    <p>Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> paid ₹{relatedDeal.inrAmount}</p>
+                                    <p>You released <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to buyer</p>
+                                  </>
+                                ) : isAdCompleted ? (
+                                  <p>Deal completed. {ad.tokenAmount} {ad.tokenSymbol} released to buyer.</p>
+                                ) : (
+                                  <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> returned to your wallet.</p>
+                                )}
+                              </div>
+                              <a href={BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                                <ExternalLink className="h-3 w-3" /> View on BscScan
+                              </a>
+                            </div>
+                          );
+                        })()}
+
+                        {/* In Deal status */}
+                        {ad.status === 1 && (() => {
+                          const relatedDeal = deals.find((d) => d.adId === ad.adId);
+                          return (
+                            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-primary shrink-0" />
+                                <span className="text-sm font-semibold text-primary">Deal In Progress</span>
+                              </div>
+                              {relatedDeal && (
+                                <p className="text-xs text-muted-foreground">
+                                  Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> accepted your ad.
+                                  {relatedDeal.buyerConfirmed ? " Buyer has confirmed payment — check your bank/UPI." : " Waiting for buyer to pay."}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Actions */}
+                        {ad.status === 0 && (
+                          <div className="mt-3 flex gap-2">
+                            {!isExpired ? (
+                              <Button variant="outline" size="sm" className="text-sell border-sell/30 hover:bg-sell/10" onClick={() => { setPendingAdId(ad.adId); cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any); }} disabled={cancelPending && pendingAdId === ad.adId}>
+                                {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                Cancel Ad
+                              </Button>
+                            ) : (
+                              <Button variant="outline" size="sm" className="text-primary border-primary/30 hover:bg-primary/10" onClick={() => { setPendingAdId(ad.adId); claimExpired({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "claimExpiredAd", args: [BigInt(ad.adId)] } as any); }} disabled={claimPending && pendingAdId === ad.adId}>
+                                {claimPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                                Claim Funds
+                              </Button>
+                            )}
+                          </div>
                         )}
                       </div>
                     );
-                  })()}
-
-                  {/* Actions */}
-                  {(ad.status === 0) && (
-                    <div className="mt-3 flex gap-2">
-                      {!isExpired ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-sell border-sell/30 hover:bg-sell/10"
-                          onClick={() => {
-                            setPendingAdId(ad.adId);
-                            cancelAd({
-                              address: P2P_CONTRACT_ADDRESS,
-                              abi: P2P_ESCROW_ABI,
-                              functionName: "cancelAd",
-                              args: [BigInt(ad.adId)],
-                            } as any);
-                          }}
-                          disabled={cancelPending && pendingAdId === ad.adId}
-                        >
-                          {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                          Cancel Ad
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-primary border-primary/30 hover:bg-primary/10"
-                          onClick={() => {
-                            setPendingAdId(ad.adId);
-                            claimExpired({
-                              address: P2P_CONTRACT_ADDRESS,
-                              abi: P2P_ESCROW_ABI,
-                              functionName: "claimExpiredAd",
-                              args: [BigInt(ad.adId)],
-                            } as any);
-                          }}
-                          disabled={claimPending && pendingAdId === ad.adId}
-                        >
-                          {claimPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                          Claim Funds
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  })}
                 </div>
               );
-            })}
-          </div>
+            })()}
+          </>
         )}
       </main>
 
