@@ -26,19 +26,8 @@ const Index = () => {
   const [minAmount, setMinAmount] = useState("");
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
-  const { deals } = useContractDeals();
 
   const now = Date.now() / 1000;
-
-  const refundedRelistedAdIds = useMemo(
-    () =>
-      new Set(
-        deals
-          .filter((d) => d.status === 3 && !d.buyerConfirmed && !d.sellerConfirmed)
-          .map((d) => d.adId),
-      ),
-    [deals],
-  );
 
   const filteredAds = useMemo(() => {
     return liveAds
