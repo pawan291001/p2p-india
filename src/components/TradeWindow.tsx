@@ -339,16 +339,18 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                   {payPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {payPending ? "Confirming…" : `I've Sent ₹${ad.inrTotal} — Confirm Payment`}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full text-sell border-sell/30"
-                  size="sm"
-                  onClick={handleRaiseDispute}
-                  disabled={isProcessing}
-                >
-                  <AlertTriangle className="h-4 w-4 mr-2" />
-                  Raise Dispute
-                </Button>
+                {timeLeft <= 0 && (
+                  <Button
+                    variant="outline"
+                    className="w-full text-sell border-sell/30"
+                    size="sm"
+                    onClick={handleRaiseDispute}
+                    disabled={isProcessing}
+                  >
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Raise Dispute
+                  </Button>
+                )}
               </div>
             )}
 
