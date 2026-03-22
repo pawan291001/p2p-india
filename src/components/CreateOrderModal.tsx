@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Loader2, Wallet } from "lucide-react";
+import { X, Loader2, Wallet, TrendingUp } from "lucide-react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useBalance } from "wagmi";
 import { parseUnits, formatUnits } from "viem";
 import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
 import { toast } from "sonner";
+import { useBnbPrice } from "@/hooks/useBnbPrice";
 
 interface CreateOrderModalProps {
   open: boolean;
