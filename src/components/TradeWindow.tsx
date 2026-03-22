@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Clock, Shield, CheckCircle2, AlertTriangle, Copy, MessageSquare, Loader2 } from "lucide-react";
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
@@ -35,6 +36,7 @@ const formatTime = (seconds: number) => {
 };
 
 const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<DealStep>("accept");
   const [timeLeft, setTimeLeft] = useState(ad.dealTimeout);
   const [showChat, setShowChat] = useState(false);
@@ -77,18 +79,12 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
     return () => clearInterval(timer);
   }, [step, timeLeft]);
 
-  // After accept confirmed → capture dealId and move to pay step
+  // After accept confirmed → close modal and go to My Deals
   useEffect(() => {
     if (acceptConfirmed) {
-      toast.success("Deal accepted! Escrow locked.");
-      // The dealId that was assigned is the nextDealId we captured before accepting
-      if (nextDealId) {
-        // The deal was created with the nextDealId value at the time of the tx
-        // Since we read it before, it should be correct
-        setDealId(Number(nextDealId));
-      }
-      setStep("pay");
-      setTimeLeft(ad.dealTimeout);
+      toast.success("Deal accepted! Redirecting to My Deals…");
+      onClose();
+      navigate("/my-orders");
     }
   }, [acceptConfirmed]);
 
