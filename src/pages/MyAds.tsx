@@ -78,16 +78,21 @@ const MyAds = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>
             My Ads
           </h1>
-          {isConnected && (
-            <Button onClick={() => setShowCreate(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Post Ad
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            {isConnected && myAds.length > 0 && (
+              <StatusFilter options={adFilterOptions} selected={adFilter} onSelect={setAdFilter} />
+            )}
+            {isConnected && (
+              <Button onClick={() => setShowCreate(true)} className="gap-2 shrink-0">
+                <Plus className="h-4 w-4" />
+                Post Ad
+              </Button>
+            )}
+          </div>
         </div>
 
         {!isConnected ? (
