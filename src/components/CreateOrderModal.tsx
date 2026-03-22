@@ -97,10 +97,27 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const needsApproval = !isBNB && (allowance === undefined || (allowance as bigint) < tokenAmountWei);
 
   // Transactions
-  const { writeContract: approve, data: approveTxHash, isPending: isApproving, reset: resetApprove } = useWriteContract();
+  const { writeContract: approve, data: approveTxHash, isPending: isApproving, reset: resetApprove, error: approveError } = useWriteContract();
   const { isSuccess: approveConfirmed } = useWaitForTransactionReceipt({ hash: approveTxHash });
-  const { writeContract: createAd, data: createTxHash, isPending: isCreating, reset: resetCreate } = useWriteContract();
+  const { writeContract: createAd, data: createTxHash, isPending: isCreating, reset: resetCreate, error: createError } = useWriteContract();
   const { isSuccess: createConfirmed } = useWaitForTransactionReceipt({ hash: createTxHash });
+
+  // Handle tx errors — reset step and show toast
+  useEffect(() => {
+    if (approveError && step === "approving") {
+      const msg = (approveError as any)?.shortMessage || approveError.message || "Approval failed";
+      toast.error(msg.includes("insufficient") ? "Insufficient USDT balance in your wallet" : msg);
+      setStep("form");
+    }
+  }, [approveError]);
+
+  useEffect(() => {
+    if (createError && step === "posting") {
+      const msg = (createError as any)?.shortMessage || createError.message || "Transaction failed";
+      toast.error(msg.includes("insufficient") ? `Insufficient ${crypto} balance in your wallet` : msg);
+      setStep("form");
+    }
+  }, [createError]);
 
   useEffect(() => {
     if (approveConfirmed && step === "approving") {
