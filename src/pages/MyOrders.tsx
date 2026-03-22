@@ -214,18 +214,28 @@ const MyOrders = () => {
             </div>
           </div>
 
-          {isBuyer && (deal.status === 0 || deal.status === 1) && !isTimedOut && (
-            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
-              <p className="text-xs font-semibold text-foreground">Payment Details</p>
-              <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-2">
-                <p className="text-sm font-mono text-foreground break-all">{paymentInfo}</p>
-                <button onClick={() => handleCopy(paymentInfo, deal.dealId)} className="shrink-0 text-primary hover:text-primary/80">
-                  {copied === deal.dealId ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </button>
+          {isBuyer && (deal.status === 0 || deal.status === 1) && !isTimedOut && (() => {
+            const parsed = parsePaymentInfo(paymentInfo);
+            return (
+              <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                <p className="text-xs font-semibold text-foreground">Payment Details</p>
+                {parsed.name && (
+                  <p className="text-xs text-muted-foreground">Pay to: <span className="text-foreground font-medium">{parsed.name}</span> via <span className="text-foreground font-medium">{parsed.method}</span></p>
+                )}
+                <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-2">
+                  <div className="text-sm font-mono text-foreground break-all space-y-0.5">
+                    {parsed.fields.map((f, i) => (
+                      <p key={i}><span className="text-muted-foreground text-xs">{f.label}:</span> {f.value}</p>
+                    ))}
+                  </div>
+                  <button onClick={() => handleCopy(parsed.copyableDetail, deal.dealId)} className="shrink-0 text-primary hover:text-primary/80" title="Copy payment detail">
+                    {copied === deal.dealId ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">Send exactly ₹{deal.inrAmount} to the above details, then confirm payment.</p>
               </div>
-              <p className="text-xs text-muted-foreground">Send exactly ₹{deal.inrAmount} to the above details, then confirm payment.</p>
-            </div>
-          )}
+            );
+          })()}
           {isTimedOut && (
             <div className="mt-3 rounded-lg border border-sell/20 bg-sell/5 p-3">
               <p className="text-sm font-medium text-sell">⏰ Deal expired — time ran out. Cancel to return funds to the seller.</p>
