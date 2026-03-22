@@ -65,7 +65,13 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
   const tokenAmountWei = amount ? parseUnits(amount, 18) : BigInt(0);
-  const pricePerTokenWei = price ? parseUnits(price, 2) : BigInt(0);
+
+  // For BNB: user enters INR per USD rate, we multiply by live BNB/USD price
+  const { bnbPrice, isLoading: bnbPriceLoading } = useBnbPrice(isBNB && open);
+  const effectivePricePerToken = isBNB && bnbPrice && price
+    ? (parseFloat(price) * bnbPrice).toFixed(2)
+    : price;
+  const pricePerTokenWei = effectivePricePerToken ? parseUnits(effectivePricePerToken, 2) : BigInt(0);
 
   // Balances
   const { data: bnbBalance } = useBalance({
