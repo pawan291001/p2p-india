@@ -166,23 +166,46 @@ const DealOutcome = ({
 
         {isResolved && (
           <>
-            <p className="text-muted-foreground">
-              The dispute was reviewed by admin and resolved. Funds have been released to the rightful party.
-            </p>
-            <div className="flex items-center gap-2 pt-1">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-buy" />
-                <span className="text-buy font-medium">Dispute reviewed</span>
-              </div>
-              <ArrowRight className="h-3 w-3 text-muted-foreground" />
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-buy" />
-                <span className="text-buy font-medium">Funds released by admin</span>
-              </div>
-            </div>
-            <p className="text-muted-foreground pt-1">
-              <span className="font-medium text-foreground">{tokenAmount} {tokenSymbol}</span> released from escrow.
-            </p>
+            {(() => {
+              const recipientIsBuyer = resolvedRecipient?.toLowerCase() === buyer.toLowerCase();
+              const recipientIsSeller = resolvedRecipient?.toLowerCase() === seller.toLowerCase();
+              const youReceived = (isBuyer && recipientIsBuyer) || (!isBuyer && recipientIsSeller);
+              const recipientLabel = recipientIsBuyer ? "Buyer" : recipientIsSeller ? "Seller" : "unknown";
+              const recipientAddr = recipientIsBuyer ? buyer : seller;
+
+              return (
+                <>
+                  <p className="text-muted-foreground">
+                    {youReceived
+                      ? `The admin reviewed the dispute and ruled in your favor. You received ${tokenAmount} ${tokenSymbol}.`
+                      : resolvedRecipient
+                      ? `The admin reviewed the dispute and released ${tokenAmount} ${tokenSymbol} to the ${recipientLabel.toLowerCase()} (${shortAddr(recipientAddr)}).`
+                      : "The dispute was reviewed by admin and resolved. Funds have been released to the rightful party."}
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-buy" />
+                      <span className="text-buy font-medium">Dispute reviewed</span>
+                    </div>
+                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                    <div className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-buy" />
+                      <span className="text-buy font-medium">
+                        {youReceived ? "You received funds" : `${recipientLabel} received funds`}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground pt-1">
+                    <span className="font-medium text-foreground">{tokenAmount} {tokenSymbol}</span> released to{" "}
+                    {youReceived ? (
+                      <span className="text-buy font-medium">you</span>
+                    ) : (
+                      <span className="font-mono text-foreground">{shortAddr(recipientAddr)}</span>
+                    )}
+                  </p>
+                </>
+              );
+            })()}
           </>
         )}
       </div>
