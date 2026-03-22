@@ -52,7 +52,27 @@ const MyAds = () => {
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
     : [];
 
-  return (
+  const [adFilter, setAdFilter] = useState("all");
+
+  const now = Date.now() / 1000;
+  const filteredMyAds = myAds.filter((ad) => {
+    if (adFilter === "all") return true;
+    if (adFilter === "live") return ad.status === 0 && ad.adExpiry >= now;
+    if (adFilter === "in-deal") return ad.status === 1;
+    if (adFilter === "completed") return ad.status === 2;
+    if (adFilter === "cancelled") return ad.status === 3;
+    if (adFilter === "expired") return ad.status === 0 && ad.adExpiry < now;
+    return true;
+  });
+
+  const adFilterOptions = [
+    { value: "all", label: "All", count: myAds.length },
+    { value: "live", label: "Live", count: myAds.filter((a) => a.status === 0 && a.adExpiry >= now).length },
+    { value: "in-deal", label: "In Deal", count: myAds.filter((a) => a.status === 1).length },
+    { value: "completed", label: "Completed", count: myAds.filter((a) => a.status === 2).length },
+    { value: "cancelled", label: "Cancelled", count: myAds.filter((a) => a.status === 3).length },
+    { value: "expired", label: "Expired", count: myAds.filter((a) => a.status === 0 && a.adExpiry < now).length },
+  ].filter((o) => o.value === "all" || o.count > 0);
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
