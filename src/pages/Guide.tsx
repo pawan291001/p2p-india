@@ -200,16 +200,6 @@ const Guide = () => (
                 {section.title}
               </h2>
 
-              {section.image && (
-                <div className="rounded-lg overflow-hidden border border-border mb-5">
-                  <img
-                    src={section.image}
-                    alt={section.title}
-                    className="w-full h-auto"
-                    loading="lazy"
-                  />
-                </div>
-              )}
 
               <div className="space-y-3">
                 {section.content.map((para, j) => (
