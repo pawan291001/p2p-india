@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Clock, Timer } from "lucide-react";
+import { Shield, Clock, Timer, TrendingUp } from "lucide-react";
+import { useBnbPrice } from "@/hooks/useBnbPrice";
 
 interface OrderCardProps {
   adId: number;
