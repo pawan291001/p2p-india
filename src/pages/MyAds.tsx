@@ -188,7 +188,7 @@ const MyAds = () => {
                     const statusLabel = isExpired ? "Expired" : st.label;
                     const statusColorClass = isExpired ? "text-muted-foreground" : st.color;
                     const expiryDate = new Date(ad.adExpiry * 1000);
-                    const relatedDeal = deals.find((d) => d.adId === ad.adId && (d.status === 0 || d.status === 1 || d.status === 4));
+                    const relatedDeal = deals.find((d) => d.adId === ad.adId && (d.status === 0 || d.status === 1 || d.status === 4 || d.status === 5));
                     const completedDeal = deals.find((d) => d.adId === ad.adId);
                     const dealTimeLeft = relatedDeal ? relatedDeal.deadline - now : 0;
                     const isDealTimedOut = relatedDeal && dealTimeLeft <= 0 && (relatedDeal.status === 0 || relatedDeal.status === 1);
