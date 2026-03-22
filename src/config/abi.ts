@@ -13,6 +13,7 @@ export const P2P_ESCROW_ABI = [
     { name: "id", type: "uint256" }, { name: "seller", type: "address" }, { name: "token", type: "address" },
     { name: "tokenAmount", type: "uint256" }, { name: "pricePerToken", type: "uint256" },
     { name: "dealTimeout", type: "uint256" }, { name: "adExpiry", type: "uint256" },
+    { name: "adDuration", type: "uint256" },
     { name: "paymentInfo", type: "string" }, { name: "status", type: "uint8" }
   ]}], stateMutability: "view" },
   { type: "function", name: "getDeal", inputs: [{ name: "_dealId", type: "uint256" }], outputs: [{ type: "tuple", components: [
@@ -23,6 +24,7 @@ export const P2P_ESCROW_ABI = [
     { name: "status", type: "uint8" }, { name: "disputeProofBuyer", type: "string" },
     { name: "disputeProofSeller", type: "string" }, { name: "disputeTimestamp", type: "uint256" }
   ]}], stateMutability: "view" },
+  { type: "function", name: "adEscrowBalance", inputs: [{ name: "", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "activeAdCount", inputs: [{ name: "", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "activeDealCountBuyer", inputs: [{ name: "", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "activeDealCountSeller", inputs: [{ name: "", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
@@ -36,6 +38,7 @@ export const P2P_ESCROW_ABI = [
     { name: "id", type: "uint256" }, { name: "seller", type: "address" }, { name: "token", type: "address" },
     { name: "tokenAmount", type: "uint256" }, { name: "pricePerToken", type: "uint256" },
     { name: "dealTimeout", type: "uint256" }, { name: "adExpiry", type: "uint256" },
+    { name: "adDuration", type: "uint256" },
     { name: "paymentInfo", type: "string" }, { name: "status", type: "uint8" }
   ], stateMutability: "view" },
   { type: "function", name: "deals", inputs: [{ name: "", type: "uint256" }], outputs: [
@@ -65,6 +68,8 @@ export const P2P_ESCROW_ABI = [
   { type: "function", name: "sendChat", inputs: [{ name: "_dealId", type: "uint256" }, { name: "_message", type: "string" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setAllowedToken", inputs: [{ name: "_token", type: "address" }, { name: "_allowed", type: "bool" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "clearExpiredProof", inputs: [{ name: "_dealId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "emergencyWithdrawBNB", inputs: [{ name: "_amount", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "emergencyWithdrawToken", inputs: [{ name: "_token", type: "address" }, { name: "_amount", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "transferOwnership", inputs: [{ name: "newOwner", type: "address" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "renounceOwnership", inputs: [], outputs: [], stateMutability: "nonpayable" },
 
@@ -76,6 +81,7 @@ export const P2P_ESCROW_ABI = [
   ]},
   { type: "event", name: "AdCancelled", inputs: [{ name: "adId", type: "uint256", indexed: true }] },
   { type: "event", name: "AdExpired", inputs: [{ name: "adId", type: "uint256", indexed: true }] },
+  { type: "event", name: "AdRelisted", inputs: [{ name: "adId", type: "uint256", indexed: true }, { name: "newExpiry", type: "uint256", indexed: false }] },
   { type: "event", name: "DealCreated", inputs: [
     { name: "dealId", type: "uint256", indexed: true }, { name: "adId", type: "uint256", indexed: true },
     { name: "buyer", type: "address", indexed: true }, { name: "inrAmount", type: "uint256", indexed: false },
@@ -89,6 +95,7 @@ export const P2P_ESCROW_ABI = [
   { type: "event", name: "DisputeResolved", inputs: [{ name: "dealId", type: "uint256", indexed: true }, { name: "recipient", type: "address", indexed: true }] },
   { type: "event", name: "TokenWhitelisted", inputs: [{ name: "token", type: "address", indexed: true }, { name: "allowed", type: "bool", indexed: false }] },
   { type: "event", name: "ChatSent", inputs: [{ name: "dealId", type: "uint256", indexed: true }, { name: "sender", type: "address", indexed: true }] },
+  { type: "event", name: "EmergencyWithdraw", inputs: [{ name: "token", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }] },
   { type: "event", name: "OwnershipTransferred", inputs: [{ name: "previousOwner", type: "address", indexed: true }, { name: "newOwner", type: "address", indexed: true }] },
 
   // ── Errors ──
