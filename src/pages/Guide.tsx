@@ -171,6 +171,9 @@ const Guide = () => (
                 {s.title}
               </a>
             ))}
+            <a href="#walkthrough" className="text-sm text-primary hover:underline py-0.5 font-medium">
+              📖 Live Example — Full Trade Walkthrough
+            </a>
           </div>
         </nav>
       </ScrollReveal>
