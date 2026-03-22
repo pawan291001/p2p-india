@@ -26,12 +26,17 @@ const Footer = () => (
           </ul>
         </div>
 
-        {/* Legal */}
+        {/* Legal & Support */}
         <div>
-          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Legal</h4>
+          <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Legal & Support</h4>
           <ul className="space-y-2">
             <li><Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Terms & Conditions</Link></li>
             <li><Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Privacy Policy</Link></li>
+            <li>
+              <a href="https://t.me/XplorerTobi1" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Telegram Support
+              </a>
+            </li>
           </ul>
         </div>
       </div>
