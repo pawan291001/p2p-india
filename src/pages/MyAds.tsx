@@ -42,8 +42,8 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 
 const MyAds = () => {
   const { address, isConnected } = useAccount();
-  const { ads, isLoading } = useContractAds();
-  const { deals } = useContractDeals();
+  const { ads, isLoading, refetch: refetchAds } = useContractAds();
+  const { deals, refetch: refetchDeals } = useContractDeals();
   const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
   const [chatDealId, setChatDealId] = useState<number | null>(null);
