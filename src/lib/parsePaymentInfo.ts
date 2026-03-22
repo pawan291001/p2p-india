@@ -39,11 +39,11 @@ export function parsePaymentInfo(raw: string): ParsedPayment {
     copyableDetail = detailParts[0] || raw;
   }
 
-  // Build UPI deep link if method is UPI, GPay, or PhonePe
+  // Build UPI deep link if method is UPI, GPay, PhonePe, or Digital Rupee
   let upiLink: string | null = null;
-  const isUpiMethod = ["UPI", "Google Pay", "PhonePe"].includes(method);
+  const isUpiMethod = ["UPI", "Google Pay", "PhonePe", "Digital Rupee"].includes(method);
   if (isUpiMethod) {
-    const upiField = fields.find((f) => f.label === "UPI" || f.label === "Phone/UPI");
+    const upiField = fields.find((f) => f.label === "UPI" || f.label === "Phone/UPI" || f.label === "Wallet/ID");
     if (upiField) {
       upiLink = `upi://pay?pa=${encodeURIComponent(upiField.value)}&pn=${encodeURIComponent(name)}`;
     }
