@@ -450,10 +450,30 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             )}
 
+            {/* BNB Live Price */}
+            {isBNB && (
+              <div className="rounded-lg border border-border bg-surface-2 p-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <TrendingUp className="h-4 w-4 text-buy" />
+                  <span className="text-muted-foreground">Live BNB Price:</span>
+                  {bnbPriceLoading || !bnbPrice ? (
+                    <span className="text-muted-foreground animate-pulse">Fetching…</span>
+                  ) : (
+                    <span className="font-bold text-foreground tabular-nums">${bnbPrice.toFixed(2)}</span>
+                  )}
+                </div>
+                {bnbPrice && amount && parseFloat(amount) > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {amount} BNB ≈ <span className="font-medium text-foreground">${bnbUsdValue?.toFixed(2)}</span> USD
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Price */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">
-                Price per {crypto} (INR)
+                {isBNB ? "INR rate per 1 USD" : `Price per ${crypto} (INR)`}
               </Label>
               <Input
                 type="number"
@@ -463,6 +483,11 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 className="bg-surface-2 border-input"
                 disabled={isProcessing}
               />
+              {isBNB && price && bnbPrice && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Effective: <span className="font-medium text-foreground">₹{(parseFloat(price) * bnbPrice).toFixed(2)}</span> per BNB
+                </p>
+              )}
             </div>
 
             {/* Amount */}
@@ -484,7 +509,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
               <Input
                 type="number"
-                placeholder="e.g. 30"
+                placeholder={isBNB ? "e.g. 0.1" : "e.g. 30"}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className={`bg-surface-2 border-input ${exceedsBalance && amount ? "border-destructive focus-visible:ring-destructive" : ""}`}
@@ -502,6 +527,11 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-center">
                 <span className="text-xs text-muted-foreground">Buyer will pay </span>
                 <span className="text-lg font-bold text-primary">₹{inrTotal}</span>
+                {isBNB && bnbPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {amount} BNB × ${bnbPrice.toFixed(2)} × ₹{price} = ₹{inrTotal}
+                  </p>
+                )}
               </div>
             )}
 
