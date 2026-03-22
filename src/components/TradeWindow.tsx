@@ -315,11 +315,18 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
 
             {step === "pay" && (
               <div className="space-y-4">
-                <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
                   <p className="text-sm font-semibold text-foreground">Payment Details</p>
+                  {parsedPayment.name && (
+                    <p className="text-xs text-muted-foreground">Pay to: <span className="text-foreground font-medium">{parsedPayment.name}</span> via <span className="text-foreground font-medium">{parsedPayment.method}</span></p>
+                  )}
                   <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-3">
-                    <p className="text-sm font-mono text-foreground break-all">{ad.paymentInfo}</p>
-                    <button onClick={handleCopyPaymentInfo} className="shrink-0 text-primary hover:text-primary/80">
+                    <div className="text-sm font-mono text-foreground break-all space-y-1">
+                      {parsedPayment.fields.map((f, i) => (
+                        <p key={i}><span className="text-muted-foreground text-xs">{f.label}:</span> {f.value}</p>
+                      ))}
+                    </div>
+                    <button onClick={handleCopyPaymentInfo} className="shrink-0 text-primary hover:text-primary/80" title="Copy payment detail">
                       {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
