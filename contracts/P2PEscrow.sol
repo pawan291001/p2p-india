@@ -7,32 +7,29 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title P2PEscrow
+ * @title P2PEscrow v3
  * @notice Trustless P2P crypto-to-INR escrow on BNB Smart Chain.
- *         Supports native BNB and BEP-20 USDT only.
+ *         Supports native BNB and whitelisted BEP-20 tokens (USDT).
  *
- * ── Token Rules ──
- * • address(0) = native BNB
- * • Only whitelisted BEP-20 tokens (USDT) are accepted.
+ * ── v3 Changes ──
+ * • Per-ad escrow balance tracking — each ad's funds are isolated.
+ * • Auto re-list on deal timeout — ad goes Live again with fresh timer,
+ *   funds stay locked. Seller can manually cancel to withdraw.
+ * • Ad struct stores original adDuration for re-list timer resets.
+ * • acceptAd verifies adEscrowBalance >= tokenAmount.
+ * • Emergency withdraw guards against draining active escrows.
+ * • New AdRelisted event.
  *
  * ── Flow ──
- * 1. Seller creates ad, depositing BNB or USDT into escrow.
- * 2. Ad stays live until buyer accepts OR ad duration expires.
- * 3. Buyer accepts → deal timer starts.
- *    - Buyer sends INR off-chain, then calls buyerConfirmPayment().
- *    - Once buyer confirms, funds are LOCKED — neither party can cancel.
- *    - Seller verifies receipt, calls sellerConfirmReceived().
- *    - Both confirmations → tokens released to buyer.
- * 4. If buyer does NOT confirm within deal timeout → deal auto-cancels,
- *    ad is also cancelled, and seller reclaims tokens.
- * 5. Dispute → admin resolves by releasing to buyer or seller.
- *
- * ── Audit Notes (v2) ──
- * • cancelTimedOutDeal now CANCELS the ad (no ghost-live ads).
- * • buyerConfirmPayment has nonReentrant.
- * • acceptAd checks seller active deal cap.
- * • cancelTimedOutDeal restricted to deal parties or owner.
- * • Emergency BNB/token withdraw for owner (stuck funds only).
+ * 1. Seller creates ad → tokens locked, adEscrowBalance[adId] set.
+ * 2. Buyer accepts → ad = InDeal, deal timer starts.
+ *    a) Buyer pays INR off-chain, calls buyerConfirmPayment().
+ *    b) Seller verifies, calls sellerConfirmReceived() → tokens to buyer.
+ * 3. If buyer does NOT confirm within timeout → deal cancelled,
+ *    ad goes LIVE again with fresh duration. Funds stay locked.
+ * 4. Seller can cancelAd() anytime when Live → tokens refunded.
+ * 5. Ad expires with no active deal → seller calls claimExpiredAd().
+ * 6. Dispute → admin resolves.
  */
 contract P2PEscrow is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -53,6 +50,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         uint256 pricePerToken;   // INR paise per 1 full token (18 decimals)
         uint256 dealTimeout;
         uint256 adExpiry;
+        uint256 adDuration;      // original duration for re-listing
         string  paymentInfo;     // seller UPI / bank details
         AdStatus status;
     }
@@ -64,7 +62,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         address seller;
         address token;
         uint256 tokenAmount;
-        uint256 inrAmount;       // tokenAmount * pricePerToken (UI divides by decimals)
+        uint256 inrAmount;       // tokenAmount * pricePerToken
         uint256 deadline;
         bool    buyerConfirmed;
         bool    sellerConfirmed;
@@ -92,10 +90,13 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
     uint256[] public allowedDealTimeouts = [15 minutes, 30 minutes, 1 hours, 2 hours];
 
-    mapping(address => bool) public allowedTokens; // whitelisted BEP-20s
+    mapping(address => bool) public allowedTokens;
 
     mapping(uint256 => Ad)   public ads;
     mapping(uint256 => Deal) public deals;
+
+    // Per-ad escrow balance — tracks exact funds locked for each ad
+    mapping(uint256 => uint256) public adEscrowBalance;
 
     mapping(address => uint256) public activeAdCount;
     mapping(address => uint256) public activeDealCountBuyer;
@@ -108,6 +109,7 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     event AdCreated(uint256 indexed adId, address indexed seller, address token, uint256 amount, uint256 pricePerToken);
     event AdCancelled(uint256 indexed adId);
     event AdExpired(uint256 indexed adId);
+    event AdRelisted(uint256 indexed adId, uint256 newExpiry);
     event DealCreated(uint256 indexed dealId, uint256 indexed adId, address indexed buyer, uint256 inrAmount, uint256 deadline);
     event BuyerConfirmedPayment(uint256 indexed dealId);
     event SellerConfirmedReceipt(uint256 indexed dealId);
@@ -154,7 +156,6 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
     /**
      * @notice Create a sell ad. For BNB, send value. For USDT, approve first.
-     * @param _token address(0) for BNB, or whitelisted BEP-20
      */
     function createAd(
         address _token,
@@ -188,10 +189,12 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
             pricePerToken: _pricePerToken,
             dealTimeout: _dealTimeout,
             adExpiry: block.timestamp + _adDuration,
+            adDuration: _adDuration,
             paymentInfo: _paymentInfo,
             status: AdStatus.Live
         });
 
+        adEscrowBalance[adId] = _tokenAmount;
         activeAdCount[msg.sender]++;
         emit AdCreated(adId, msg.sender, _token, _tokenAmount, _pricePerToken);
     }
@@ -204,7 +207,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         a.status = AdStatus.Cancelled;
         activeAdCount[msg.sender]--;
 
-        _transferOut(a.token, a.seller, a.tokenAmount);
+        uint256 escrowed = adEscrowBalance[_adId];
+        adEscrowBalance[_adId] = 0;
+        _transferOut(a.token, a.seller, escrowed);
         emit AdCancelled(_adId);
     }
 
@@ -217,7 +222,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         a.status = AdStatus.Cancelled;
         activeAdCount[msg.sender]--;
 
-        _transferOut(a.token, a.seller, a.tokenAmount);
+        uint256 escrowed = adEscrowBalance[_adId];
+        adEscrowBalance[_adId] = 0;
+        _transferOut(a.token, a.seller, escrowed);
         emit AdExpired(_adId);
     }
 
@@ -232,6 +239,8 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         require(msg.sender != a.seller, "Cannot accept own ad");
         require(activeDealCountBuyer[msg.sender] < MAX_ACTIVE_DEALS, "Max 2 active deals as buyer");
         require(activeDealCountSeller[a.seller] < MAX_ACTIVE_DEALS, "Seller at max active deals");
+        // Safety: verify funds are actually escrowed for this ad
+        require(adEscrowBalance[_adId] >= a.tokenAmount, "Insufficient escrow for ad");
 
         a.status = AdStatus.InDeal;
 
@@ -283,8 +292,10 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         d.sellerConfirmed = true;
         d.status = DealStatus.Completed;
 
-        // Transfer tokens to buyer and finalize
-        _transferOut(d.token, d.buyer, d.tokenAmount);
+        // Transfer from escrow to buyer
+        uint256 escrowed = adEscrowBalance[d.adId];
+        adEscrowBalance[d.adId] = 0;
+        _transferOut(d.token, d.buyer, escrowed);
 
         ads[d.adId].status = AdStatus.Completed;
         activeAdCount[d.seller]--;
@@ -296,11 +307,8 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
     /**
      * @notice Cancel a timed-out deal where buyer never confirmed payment.
-     *         Tokens are returned to seller. Ad is CANCELLED (not re-listed).
-     *
-     *         FIX (v2): Previously this set the ad back to Live, creating a
-     *         ghost ad with no backing funds. Now it properly cancels the ad.
-     *         Seller must create a new ad if they want to re-list.
+     *         v3: Ad goes LIVE again with fresh timer. Funds stay locked.
+     *         Seller can manually cancelAd() to withdraw if they want.
      */
     function cancelTimedOutDeal(uint256 _dealId) external nonReentrant onlyDealPartyOrOwner(_dealId) {
         Deal storage d = deals[_dealId];
@@ -309,17 +317,16 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
 
         d.status = DealStatus.Cancelled;
 
-        // Return tokens to seller
-        _transferOut(d.token, d.seller, d.tokenAmount);
-
-        // Cancel the ad — do NOT re-list it (no funds backing it anymore)
+        // Re-list the ad with fresh timer — funds stay in escrow
         Ad storage a = ads[d.adId];
-        a.status = AdStatus.Cancelled;
-        activeAdCount[d.seller]--;
+        a.status = AdStatus.Live;
+        a.adExpiry = block.timestamp + a.adDuration;
 
+        // Only decrement deal counters, NOT ad counter (ad stays active)
         _decrementDealCounters(d);
+
         emit DealCancelled(_dealId, "Buyer did not pay in time");
-        emit AdCancelled(d.adId);
+        emit AdRelisted(d.adId, a.adExpiry);
     }
 
     // ════════════════════════════════════════════
@@ -359,7 +366,9 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
         d.status = DealStatus.Resolved;
         address recipient = _toSeller ? d.seller : d.buyer;
 
-        _transferOut(d.token, recipient, d.tokenAmount);
+        uint256 escrowed = adEscrowBalance[d.adId];
+        adEscrowBalance[d.adId] = 0;
+        _transferOut(d.token, recipient, escrowed);
 
         ads[d.adId].status = AdStatus.Completed;
         activeAdCount[d.seller]--;
@@ -428,24 +437,26 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
     // ════════════════════════════════════════════
 
     /**
-     * @notice Emergency withdraw stuck BNB (e.g. accidentally sent to contract).
-     *         Only callable by owner.
+     * @notice Emergency withdraw BNB. Cannot drain active escrows.
      */
     function emergencyWithdrawBNB(uint256 _amount) external onlyOwner nonReentrant {
         require(_amount > 0, "Amount must be > 0");
-        require(address(this).balance >= _amount, "Insufficient BNB balance");
+        uint256 totalEscrowed = _totalEscrowedForToken(NATIVE_BNB);
+        require(address(this).balance - totalEscrowed >= _amount, "Would drain active escrows");
         (bool success, ) = payable(owner()).call{value: _amount}("");
         require(success, "BNB transfer failed");
         emit EmergencyWithdraw(NATIVE_BNB, _amount);
     }
 
     /**
-     * @notice Emergency withdraw stuck ERC20 tokens.
-     *         Only callable by owner.
+     * @notice Emergency withdraw ERC20. Cannot drain active escrows.
      */
     function emergencyWithdrawToken(address _token, uint256 _amount) external onlyOwner nonReentrant {
         require(_token != address(0), "Use emergencyWithdrawBNB for BNB");
         require(_amount > 0, "Amount must be > 0");
+        uint256 totalEscrowed = _totalEscrowedForToken(_token);
+        uint256 balance = IERC20(_token).balanceOf(address(this));
+        require(balance - totalEscrowed >= _amount, "Would drain active escrows");
         IERC20(_token).safeTransfer(owner(), _amount);
         emit EmergencyWithdraw(_token, _amount);
     }
@@ -473,6 +484,18 @@ contract P2PEscrow is Ownable, ReentrancyGuard {
             if (allowedDealTimeouts[i] == _t) return true;
         }
         return false;
+    }
+
+    /**
+     * @notice Sum all active escrow balances for a given token.
+     *         Used by emergency withdraw to prevent draining active funds.
+     */
+    function _totalEscrowedForToken(address _token) internal view returns (uint256 total) {
+        for (uint256 i = 1; i < nextAdId; i++) {
+            if (ads[i].token == _token && adEscrowBalance[i] > 0) {
+                total += adEscrowBalance[i];
+            }
+        }
     }
 
     // Accept BNB sent directly
