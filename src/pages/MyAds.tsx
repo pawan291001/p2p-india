@@ -293,13 +293,6 @@ const MyAds = () => {
                             })()}
                           </div>
 
-                          {isRefundedRelisted && (
-                            <div className="mt-3 rounded-lg border border-sell/20 bg-sell/5 p-3">
-                              <p className="text-xs text-sell font-medium">
-                                Funds were already returned for this ad after a timed-out deal. This listing is treated as closed.
-                              </p>
-                            </div>
-                          )}
 
                           {/* In Deal — full seller deal management */}
                           {ad.status === 1 && relatedDeal && (
