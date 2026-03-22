@@ -72,9 +72,21 @@ const OrderCard = ({
 
         {/* Price */}
         <div className="sm:text-right">
-          <div className="text-lg font-bold text-foreground tabular-nums">
-            ₹{pricePerToken} <span className="text-sm font-normal text-muted-foreground">INR</span>
-          </div>
+          {isBNB && inrPerUsd ? (
+            <div>
+              <div className="text-lg font-bold text-foreground tabular-nums">
+                ₹{inrPerUsd} <span className="text-sm font-normal text-muted-foreground">/ USD</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground sm:justify-end">
+                <TrendingUp className="h-3 w-3" />
+                ₹{pricePerToken}/BNB
+              </div>
+            </div>
+          ) : (
+            <div className="text-lg font-bold text-foreground tabular-nums">
+              ₹{pricePerToken} <span className="text-sm font-normal text-muted-foreground">INR</span>
+            </div>
+          )}
         </div>
       </div>
 
