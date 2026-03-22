@@ -410,18 +410,21 @@ const MyAds = () => {
                             const resolvedDeal = deals.find((d) => d.adId === ad.adId && d.status === 5);
                             const displayDeal = resolvedDeal || completedDeal;
                             const isAdCompleted = ad.status === 2;
+                            const isResolved = !!resolvedDeal;
                             return (
                               <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
                                 <div className="flex items-center gap-2">
                                   {isAdCompleted ? <CheckCircle2 className="h-4 w-4 text-buy shrink-0" /> : <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />}
                                   <span className={`text-sm font-semibold ${isAdCompleted ? "text-buy" : "text-muted-foreground"}`}>
-                                    {isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
+                                    {isResolved ? "Dispute Resolved by Admin" : isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
                                   </span>
                                 </div>
                                 <div className="text-xs text-muted-foreground space-y-1">
-                                  {isAdCompleted && completedDeal ? (
+                                  {isResolved && resolvedDeal ? (
+                                    <p>Dispute on Deal #{resolvedDeal.dealId} was resolved by admin. Funds released from escrow.</p>
+                                  ) : isAdCompleted && displayDeal ? (
                                     <>
-                                      <p>Buyer <span className="font-mono text-foreground">{shortAddr(completedDeal.buyer)}</span> paid ₹{completedDeal.inrAmount}</p>
+                                      <p>Buyer <span className="font-mono text-foreground">{shortAddr(displayDeal.buyer)}</span> paid ₹{displayDeal.inrAmount}</p>
                                       <p>You released <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to buyer</p>
                                     </>
                                   ) : isAdCompleted ? (
