@@ -112,6 +112,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (disputeConfirmed) {
       toast.info("Dispute raised. Admin will review.");
+      playAlertChime();
       setStep("disputed");
     }
   }, [disputeConfirmed]);
