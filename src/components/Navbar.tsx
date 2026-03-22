@@ -43,6 +43,11 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
+          <a href="https://t.me/XplorerTobi1" target="_blank" rel="noopener noreferrer">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+          </a>
           <ThemeToggle />
           <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
         </div>
