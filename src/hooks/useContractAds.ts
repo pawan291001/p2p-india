@@ -37,7 +37,7 @@ export function useContractAds() {
     args: [BigInt(i + 1)],
   }));
 
-  const { data: adsData, isLoading: loadingAds } = useReadContracts({
+  const { data: adsData, isLoading: loadingAds, refetch: refetchAds } = useReadContracts({
     contracts: adCalls,
     query: { enabled: adCount > 0, refetchInterval: 10000 },
   });
