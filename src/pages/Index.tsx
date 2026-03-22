@@ -7,6 +7,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FaqSection from "@/components/FaqSection";
+import LandingHero from "@/components/LandingHero";
 import OrderCard from "@/components/OrderCard";
 import CreateOrderModal from "@/components/CreateOrderModal";
 import StatsBar from "@/components/StatsBar";
@@ -47,14 +48,19 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
+      {/* Landing sections for new visitors */}
+      {!isConnected && <LandingHero />}
+
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        {/* Hero */}
+        {/* Section title */}
         <div className="mb-8 animate-fade-up">
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl" style={{ lineHeight: "1.1" }}>
-            P2P Trading
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground max-w-lg">
-            Trade BNB & USDT directly with other users on BNB Smart Chain. Smart contract escrow — no middlemen.
+          <h2 className="text-xl font-bold text-foreground sm:text-2xl" style={{ lineHeight: "1.1" }}>
+            {isConnected ? "P2P Trading" : "Live Ads"}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isConnected
+              ? "Trade BNB & USDT directly with other users. Smart contract escrow — no middlemen."
+              : "Connect your wallet to start trading. Here's what's available right now."}
           </p>
         </div>
 
