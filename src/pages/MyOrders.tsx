@@ -217,6 +217,20 @@ const MyOrders = () => {
                       </div>
                     )}
 
+                    {/* Deal outcome for terminal states */}
+                    <DealOutcome
+                      status={deal.status}
+                      isBuyer={isBuyer}
+                      buyerConfirmed={deal.buyerConfirmed}
+                      sellerConfirmed={deal.sellerConfirmed}
+                      tokenAmount={deal.tokenAmount}
+                      tokenSymbol={deal.tokenSymbol}
+                      inrAmount={deal.inrAmount}
+                      buyer={deal.buyer}
+                      seller={deal.seller}
+                      dealId={deal.dealId}
+                    />
+
                     {/* Action buttons */}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {/* Buyer: confirm payment (if active, not yet confirmed) */}
