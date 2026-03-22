@@ -46,6 +46,10 @@ const OrderCard = ({
   index,
 }: OrderCardProps) => {
   const timeLeftStr = formatTimeLeft(adExpiry);
+  const isBNB = tokenSymbol === "BNB";
+  const { bnbPrice } = useBnbPrice(isBNB);
+  // For BNB ads, derive the INR/USD rate from stored pricePerToken / bnbPrice
+  const inrPerUsd = isBNB && bnbPrice ? (parseFloat(pricePerToken) / bnbPrice).toFixed(2) : null;
 
   return (
     <div
