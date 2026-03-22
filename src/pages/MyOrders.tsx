@@ -11,7 +11,6 @@ import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import ChatPanel from "@/components/ChatPanel";
-import StatusFilter from "@/components/StatusFilter";
 import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
