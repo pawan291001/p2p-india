@@ -89,23 +89,13 @@ const MyAds = () => {
   const relatedDealIds = deals.filter(d => myAdIds.includes(d.adId)).map(d => d.dealId);
   const dealTxMap = useDealTxHashes(relatedDealIds);
 
-  // Contract edge-case: timed-out deal cancellation currently refunds seller but leaves ad status as Live.
-  // We treat those ads as history so they cannot be traded again from UI.
-  const refundedRelistedAdIds = new Set(
-    deals
-      .filter((d) => d.status === 3 && !d.buyerConfirmed && !d.sellerConfirmed)
-      .map((d) => d.adId),
-  );
-
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => {
-    if (refundedRelistedAdIds.has(a.adId)) return false;
     if (a.status === 1) return true; // InDeal always live
     if (a.status === 0 && now <= a.adExpiry) return true; // Live & not expired
     return false;
   });
   const historyAds = sortedAds.filter((a) => {
-    if (refundedRelistedAdIds.has(a.adId)) return true;
     if (a.status === 2 || a.status === 3) return true; // Completed or Cancelled
     if (a.status === 0 && now > a.adExpiry) return true; // Expired
     return false;

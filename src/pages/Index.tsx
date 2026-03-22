@@ -34,7 +34,6 @@ const Index = () => {
       .filter((ad) => {
         if (ad.status !== 0) return false;
         if (ad.adExpiry < now) return false;
-        if (refundedRelistedAdIds.has(ad.adId)) return false;
         if (address && ad.seller.toLowerCase() === address.toLowerCase()) return false;
         const matchesCrypto = ad.tokenSymbol === crypto;
         const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
@@ -43,7 +42,7 @@ const Index = () => {
         return matchesCrypto && matchesSearch && matchesPrice && matchesAmount;
       })
       .sort((a, b) => parseFloat(a.pricePerToken) - parseFloat(b.pricePerToken));
-  }, [liveAds, crypto, search, maxPrice, minAmount, address, now, refundedRelistedAdIds]);
+  }, [liveAds, crypto, search, maxPrice, minAmount, address, now]);
 
   return (
     <div className="min-h-screen bg-background">
