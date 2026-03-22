@@ -21,7 +21,7 @@ const CRYPTOS = [
   { symbol: "BNB", address: NATIVE_BNB },
 ];
 
-const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise"] as const;
+const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise", "COD", "Cash Deposit", "Digital Rupee"] as const;
 type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 const DEAL_TIMEOUTS = [
