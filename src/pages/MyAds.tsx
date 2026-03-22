@@ -90,8 +90,16 @@ const MyAds = () => {
   const dealTxMap = useDealTxHashes(relatedDealIds);
 
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
-  const liveAds = sortedAds.filter((a) => a.status === 0 || a.status === 1);
-  const historyAds = sortedAds.filter((a) => a.status === 2 || a.status === 3);
+  const liveAds = sortedAds.filter((a) => {
+    if (a.status === 1) return true; // InDeal always live
+    if (a.status === 0 && now <= a.adExpiry) return true; // Live & not expired
+    return false;
+  });
+  const historyAds = sortedAds.filter((a) => {
+    if (a.status === 2 || a.status === 3) return true; // Completed or Cancelled
+    if (a.status === 0 && now > a.adExpiry) return true; // Expired
+    return false;
+  });
 
   const [adTab, setAdTab] = useState<"live" | "history">("live");
   const liveCount = liveAds.length;
