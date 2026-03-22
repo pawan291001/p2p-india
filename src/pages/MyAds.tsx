@@ -97,6 +97,7 @@ const MyAds = () => {
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => {
     if (a.status === 1) return true; // InDeal always live
+    if (a.status === 4) return true; // Offline — needs seller action
     if (a.status === 0 && now <= a.adExpiry) return true; // Live & not expired
     return false;
   });
