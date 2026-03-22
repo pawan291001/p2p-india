@@ -67,12 +67,9 @@ const MyOrders = () => {
   useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); setPendingDealId(null); } }, [disputeDone]);
   useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); playAlertChime(); setPendingDealId(null); } }, [cancelDone]);
 
+  // Only show deals where user is the BUYER (accepted deals)
   const myDeals = address
-    ? deals.filter(
-        (d) =>
-          d.buyer.toLowerCase() === address.toLowerCase() ||
-          d.seller.toLowerCase() === address.toLowerCase()
-      )
+    ? deals.filter((d) => d.buyer.toLowerCase() === address.toLowerCase())
     : [];
 
   // Detect counterparty actions via polling changes
