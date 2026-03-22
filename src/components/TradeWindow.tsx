@@ -6,6 +6,7 @@ import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
+import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 import ChatPanel from "./ChatPanel";
 
 type DealStep = "accept" | "pay" | "waiting" | "completed" | "cancelled" | "disputed";
@@ -83,6 +84,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (acceptConfirmed) {
       toast.success("Deal accepted! Redirecting to My Deals…");
+      playSuccessChime();
       onClose();
       navigate("/my-orders");
     }
@@ -92,6 +94,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (payConfirmed) {
       toast.success("Payment confirmed on-chain. Waiting for seller.");
+      playSuccessChime();
       setStep("waiting");
     }
   }, [payConfirmed]);
@@ -100,6 +103,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (sellerConfirmDone) {
       toast.success("Trade completed! Tokens released.");
+      playSuccessChime();
       setStep("completed");
     }
   }, [sellerConfirmDone]);
@@ -108,6 +112,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (disputeConfirmed) {
       toast.info("Dispute raised. Admin will review.");
+      playAlertChime();
       setStep("disputed");
     }
   }, [disputeConfirmed]);

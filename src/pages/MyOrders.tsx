@@ -6,12 +6,13 @@ import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import ChatPanel from "@/components/ChatPanel";
 import StatusFilter from "@/components/StatusFilter";
+import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
@@ -62,10 +63,10 @@ const MyOrders = () => {
   const { writeContract: cancelDeal, data: cancelHash, isPending: cancelPending } = useWriteContract();
   const { isSuccess: cancelDone } = useWaitForTransactionReceipt({ hash: cancelHash });
 
-  useEffect(() => { if (payConfirmed) { toast.success("Payment confirmed on-chain!"); setPendingDealId(null); } }, [payConfirmed]);
-  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); setPendingDealId(null); } }, [sellerDone]);
-  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); setPendingDealId(null); } }, [disputeDone]);
-  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); setPendingDealId(null); } }, [cancelDone]);
+  useEffect(() => { if (payConfirmed) { toast.success("Payment confirmed on-chain!"); playSuccessChime(); setPendingDealId(null); } }, [payConfirmed]);
+  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); setPendingDealId(null); } }, [sellerDone]);
+  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); setPendingDealId(null); } }, [disputeDone]);
+  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); playAlertChime(); setPendingDealId(null); } }, [cancelDone]);
 
   const myDeals = address
     ? deals.filter(
@@ -74,6 +75,38 @@ const MyOrders = () => {
           d.seller.toLowerCase() === address.toLowerCase()
       )
     : [];
+
+  // Detect counterparty actions via polling changes
+  const prevDealsRef = useRef<typeof myDeals>([]);
+  useEffect(() => {
+    const prev = prevDealsRef.current;
+    if (prev.length === 0 || !address) {
+      prevDealsRef.current = myDeals;
+      return;
+    }
+    for (const deal of myDeals) {
+      const old = prev.find((d) => d.dealId === deal.dealId);
+      if (!old) continue;
+      const isBuyer = deal.buyer.toLowerCase() === address.toLowerCase();
+
+      // Counterparty confirmed payment (seller sees buyer confirmed)
+      if (!isBuyer && !old.buyerConfirmed && deal.buyerConfirmed) {
+        toast("💰 Buyer confirmed payment!", { description: `Deal #${deal.dealId} — ₹${deal.inrAmount}. Check your bank/UPI.` });
+        playSuccessChime();
+      }
+      // Counterparty released tokens (buyer sees deal completed)
+      if (isBuyer && old.status !== 2 && deal.status === 2) {
+        toast("🎉 Tokens released!", { description: `Deal #${deal.dealId} — ${deal.tokenAmount} ${deal.tokenSymbol} received!` });
+        playSuccessChime();
+      }
+      // Dispute raised by counterparty
+      if (old.status !== 4 && deal.status === 4) {
+        toast("⚠️ Dispute raised", { description: `Deal #${deal.dealId} — Admin will review.` });
+        playAlertChime();
+      }
+    }
+    prevDealsRef.current = myDeals;
+  }, [myDeals, address]);
 
   const filteredDeals = myDeals.filter((d) => {
     if (statusFilter === "all") return true;
