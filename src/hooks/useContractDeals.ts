@@ -64,10 +64,10 @@ export function useContractDeals() {
 
       if (rawId === undefined || rawTokenAmount === undefined) continue;
 
-      // inrAmount = (pricePerToken * tokenAmount) / 1e18, where pricePerToken has 2 decimals
-      // So inrAmount is in units with 2 decimals
+      // inrAmount = tokenAmount * pricePerToken (no division in contract)
+      // tokenAmount has 18 decimals, pricePerToken has 2 decimals → total 20 decimals
       const inrBigInt = BigInt(String(rawInrAmount));
-      const inrFormatted = formatUnits(inrBigInt, 2);
+      const inrFormatted = formatUnits(inrBigInt, 20);
 
       deals.push({
         dealId: Number(rawId),
