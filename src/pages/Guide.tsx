@@ -69,7 +69,7 @@ const SECTIONS = [
   {
     id: "disputes",
     title: "Step 6 — Disputes & Safety",
-    image: guideDispute,
+    image: null,
     content: [
       "Sometimes things don't go smoothly. A buyer might claim they paid when they didn't, or a seller might not release tokens after receiving payment. The dispute system handles these cases.",
       "The \"Raise Dispute\" button only becomes available after the deal timer expires. This prevents premature disputes and gives both parties enough time to complete the trade.",
