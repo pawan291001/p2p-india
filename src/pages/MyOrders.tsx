@@ -212,7 +212,7 @@ const MyOrders = () => {
             </div>
           </div>
 
-          {isBuyer && (deal.status === 0 || deal.status === 1) && (
+          {isBuyer && (deal.status === 0 || deal.status === 1) && !isTimedOut && (
             <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
               <p className="text-xs font-semibold text-foreground">Payment Details</p>
               <div className="flex items-center justify-between gap-2 rounded-md bg-surface-2 p-2">
@@ -222,6 +222,11 @@ const MyOrders = () => {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">Send exactly ₹{deal.inrAmount} to the above details, then confirm payment.</p>
+            </div>
+          )}
+          {isTimedOut && (
+            <div className="mt-3 rounded-lg border border-sell/20 bg-sell/5 p-3">
+              <p className="text-sm font-medium text-sell">⏰ Deal expired — time ran out. Cancel to return funds to the seller.</p>
             </div>
           )}
 
