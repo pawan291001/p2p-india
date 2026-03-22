@@ -29,6 +29,7 @@ const DealOutcome = ({
   buyer,
   seller,
   dealId,
+  txHash,
 }: DealOutcomeProps) => {
   // Only show for terminal states
   if (status !== 2 && status !== 3 && status !== 4) return null;
