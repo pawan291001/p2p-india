@@ -37,7 +37,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   1: { label: "In Deal", color: "text-primary" },
   2: { label: "Completed", color: "text-muted-foreground" },
   3: { label: "Cancelled", color: "text-sell" },
-  4: { label: "Expired", color: "text-muted-foreground" },
+  4: { label: "Offline", color: "text-yellow-500" },
 };
 
 const MyAds = () => {
