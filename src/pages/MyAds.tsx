@@ -75,6 +75,10 @@ const MyAds = () => {
   const { writeContract: cancelDeal, data: cancelDealHash, isPending: cancelDealPending } = useWriteContract();
   const { isSuccess: cancelDealDone } = useWaitForTransactionReceipt({ hash: cancelDealHash });
 
+  // Relist ad
+  const { writeContract: relistAd, data: relistHash, isPending: relistPending } = useWriteContract();
+  const { isSuccess: relistDone } = useWaitForTransactionReceipt({ hash: relistHash });
+
   useEffect(() => { if (cancelConfirmed) { toast.success("Ad cancelled. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [cancelConfirmed]);
   useEffect(() => { if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [claimConfirmed]);
   useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); refetchAds(); refetchDeals(); } }, [sellerDone]);
