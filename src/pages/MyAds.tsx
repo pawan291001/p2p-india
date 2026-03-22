@@ -346,7 +346,7 @@ const MyAds = () => {
 
                                 {isDealTimedOut && !relatedDeal.buyerConfirmed && (
                                   <div className="rounded-md bg-sell/10 border border-sell/20 p-2 text-xs text-sell font-medium">
-                                    ⏰ Deal expired — buyer didn't pay. Cancel to get your {ad.tokenSymbol} back.
+                                    ⏰ Deal expired — buyer didn't pay. Cancel to put ad offline.
                                   </div>
                                 )}
                                 {isDealTimedOut && relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
