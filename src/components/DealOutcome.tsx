@@ -42,7 +42,7 @@ const DealOutcome = ({
   return (
     <div
       className={`mt-3 rounded-lg border p-3 space-y-2 ${
-        isCompleted
+        isCompleted || isResolved
           ? "border-buy/20 bg-buy/5"
           : isDisputed
           ? "border-sell/20 bg-sell/5"
