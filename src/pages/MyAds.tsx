@@ -327,9 +327,14 @@ const MyAds = () => {
                                   </div>
                                 )}
 
-                                {isDealTimedOut && (
+                                {isDealTimedOut && !relatedDeal.buyerConfirmed && (
                                   <div className="rounded-md bg-sell/10 border border-sell/20 p-2 text-xs text-sell font-medium">
-                                    ⏰ Deal expired — cancel to get your {ad.tokenSymbol} back.
+                                    ⏰ Deal expired — buyer didn't pay. Cancel to get your {ad.tokenSymbol} back.
+                                  </div>
+                                )}
+                                {isDealTimedOut && relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
+                                  <div className="rounded-md bg-primary/10 border border-primary/20 p-2 text-xs text-primary font-medium">
+                                    ⏰ Deal timer expired but buyer confirmed payment. Verify payment and release, or raise a dispute.
                                   </div>
                                 )}
                               </div>
