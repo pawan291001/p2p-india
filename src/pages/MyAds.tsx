@@ -10,6 +10,7 @@ import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import CreateOrderModal from "@/components/CreateOrderModal";
+import StatusFilter from "@/components/StatusFilter";
 
 const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
 
