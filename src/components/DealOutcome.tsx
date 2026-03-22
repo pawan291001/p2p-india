@@ -32,16 +32,17 @@ const DealOutcome = ({
   txHash,
 }: DealOutcomeProps) => {
   // Only show for terminal states
-  if (status !== 2 && status !== 3 && status !== 4) return null;
+  if (status !== 2 && status !== 3 && status !== 4 && status !== 5) return null;
 
   const isCompleted = status === 2;
   const isCancelled = status === 3;
   const isDisputed = status === 4;
+  const isResolved = status === 5;
 
   return (
     <div
       className={`mt-3 rounded-lg border p-3 space-y-2 ${
-        isCompleted
+        isCompleted || isResolved
           ? "border-buy/20 bg-buy/5"
           : isDisputed
           ? "border-sell/20 bg-sell/5"
@@ -50,11 +51,12 @@ const DealOutcome = ({
     >
       {/* Outcome header */}
       <div className="flex items-center gap-2">
-        {isCompleted && <CheckCircle2 className="h-4 w-4 text-buy shrink-0" />}
+        {(isCompleted || isResolved) && <CheckCircle2 className="h-4 w-4 text-buy shrink-0" />}
         {isCancelled && <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />}
         {isDisputed && <AlertTriangle className="h-4 w-4 text-sell shrink-0" />}
-        <span className={`text-sm font-semibold ${isCompleted ? "text-buy" : isDisputed ? "text-sell" : "text-muted-foreground"}`}>
+        <span className={`text-sm font-semibold ${(isCompleted || isResolved) ? "text-buy" : isDisputed ? "text-sell" : "text-muted-foreground"}`}>
           {isCompleted && "Trade Completed Successfully"}
+          {isResolved && "Dispute Resolved"}
           {isCancelled && "Deal Cancelled"}
           {isDisputed && "Under Dispute — Admin Review"}
         </span>
@@ -156,6 +158,28 @@ const DealOutcome = ({
             </div>
             <p className="text-muted-foreground pt-1">
               <span className="font-medium text-foreground">{tokenAmount} {tokenSymbol}</span> held in escrow until admin resolves.
+            </p>
+          </>
+        )}
+
+        {isResolved && (
+          <>
+            <p className="text-muted-foreground">
+              The dispute was reviewed by admin and resolved. Funds have been released to the rightful party.
+            </p>
+            <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-buy" />
+                <span className="text-buy font-medium">Dispute reviewed</span>
+              </div>
+              <ArrowRight className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-buy" />
+                <span className="text-buy font-medium">Funds released by admin</span>
+              </div>
+            </div>
+            <p className="text-muted-foreground pt-1">
+              <span className="font-medium text-foreground">{tokenAmount} {tokenSymbol}</span> released from escrow.
             </p>
           </>
         )}
