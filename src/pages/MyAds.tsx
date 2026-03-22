@@ -341,14 +341,14 @@ const MyAds = () => {
 
                               {/* Seller deal actions */}
                               <div className="flex flex-wrap gap-2">
-                                {isDealTimedOut ? (
+                                {isDealTimedOut && !relatedDeal.buyerConfirmed ? (
                                   <Button variant="sell" size="sm" disabled={isProcessing} onClick={() => {
                                     cancelDeal({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelTimedOutDeal", args: [BigInt(relatedDeal.dealId)] } as any);
                                   }}>
                                     {cancelDealPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                                     Cancel &amp; Reclaim Funds
                                   </Button>
-                                ) : (
+                                ) : isDealTimedOut && relatedDeal.buyerConfirmed ? (
                                   <>
                                     {relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
                                       <Button variant="buy" size="sm" disabled={isProcessing} onClick={() => {
