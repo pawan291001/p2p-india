@@ -224,9 +224,14 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
     }
   };
 
-  const inrTotal = price && amount ? (parseFloat(price) * parseFloat(amount)).toFixed(2) : "0.00";
+  const bnbUsdValue = isBNB && bnbPrice && amount ? (parseFloat(amount) * bnbPrice) : null;
+  const inrTotal = price && amount
+    ? isBNB && bnbPrice
+      ? (parseFloat(price) * parseFloat(amount) * bnbPrice).toFixed(2)
+      : (parseFloat(price) * parseFloat(amount)).toFixed(2)
+    : "0.00";
   const isProcessing = step !== "form";
-  const canSubmit = !!price && !!amount && isPaymentValid() && !isProcessing && !exceedsBalance;
+  const canSubmit = !!price && !!amount && isPaymentValid() && !isProcessing && !exceedsBalance && (!isBNB || bnbPrice !== null);
 
   if (!open) return null;
 
