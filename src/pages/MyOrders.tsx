@@ -25,6 +25,7 @@ const DEAL_STATUS: Record<number, { label: string; color: string }> = {
   2: { label: "Completed", color: "text-buy" },
   3: { label: "Cancelled", color: "text-sell" },
   4: { label: "Disputed", color: "text-sell" },
+  5: { label: "Resolved", color: "text-primary" },
 };
 
 const formatTime = (seconds: number) => {
