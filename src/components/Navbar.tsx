@@ -42,7 +42,8 @@ const Navbar = () => {
           </div>
         </div>
 
-        <div className="hidden md:flex">
+        <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
         </div>
 
