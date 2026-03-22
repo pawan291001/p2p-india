@@ -36,7 +36,7 @@ const SECTIONS = [
   {
     id: "escrow",
     title: "Step 3 — How Escrow Works",
-    image: guideEscrow,
+    image: null,
     content: [
       "When a seller creates an ad, their tokens are immediately transferred from their wallet into the escrow smart contract. This is an on-chain transaction that locks the tokens — the seller cannot withdraw them once the ad is live.",
       "When a buyer accepts a deal, the tokens remain locked. The buyer then sends INR payment directly to the seller through the chosen payment method (UPI, Bank Transfer, etc.).",
