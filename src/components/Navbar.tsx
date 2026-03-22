@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { label: "P2P Trading", href: "/" },
   { label: "My Ads", href: "/my-ads" },
   { label: "My Deals", href: "/my-orders" },
+  { label: "Guide", href: "/guide" },
 ];
 
 const Navbar = () => {
