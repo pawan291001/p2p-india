@@ -63,10 +63,10 @@ const MyOrders = () => {
   const { writeContract: cancelDeal, data: cancelHash, isPending: cancelPending } = useWriteContract();
   const { isSuccess: cancelDone } = useWaitForTransactionReceipt({ hash: cancelHash });
 
-  useEffect(() => { if (payConfirmed) { toast.success("Payment confirmed on-chain!"); setPendingDealId(null); } }, [payConfirmed]);
-  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); setPendingDealId(null); } }, [sellerDone]);
-  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); setPendingDealId(null); } }, [disputeDone]);
-  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); setPendingDealId(null); } }, [cancelDone]);
+  useEffect(() => { if (payConfirmed) { toast.success("Payment confirmed on-chain!"); playSuccessChime(); setPendingDealId(null); } }, [payConfirmed]);
+  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); setPendingDealId(null); } }, [sellerDone]);
+  useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); setPendingDealId(null); } }, [disputeDone]);
+  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); playAlertChime(); setPendingDealId(null); } }, [cancelDone]);
 
   const myDeals = address
     ? deals.filter(
