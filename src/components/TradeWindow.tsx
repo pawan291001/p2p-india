@@ -103,6 +103,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (sellerConfirmDone) {
       toast.success("Trade completed! Tokens released.");
+      playSuccessChime();
       setStep("completed");
     }
   }, [sellerConfirmDone]);
