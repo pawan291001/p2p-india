@@ -1,14 +1,17 @@
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Wallet, Package, Loader2, Plus } from "lucide-react";
+import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
+import { useContractDeals } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import CreateOrderModal from "@/components/CreateOrderModal";
+
+const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
 
 const formatTimeout = (seconds: number) => {
   if (seconds >= 3600) return `${seconds / 3600}h`;
@@ -26,6 +29,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 const MyAds = () => {
   const { address, isConnected } = useAccount();
   const { ads, isLoading } = useContractAds();
+  const { deals } = useContractDeals();
   const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
 
@@ -133,6 +137,86 @@ const MyAds = () => {
                       <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
                     </div>
                   </div>
+
+                  {/* Outcome for completed/cancelled ads */}
+                  {(ad.status === 2 || ad.status === 3) && (() => {
+                    const relatedDeal = deals.find((d) => d.adId === ad.adId);
+                    const isAdCompleted = ad.status === 2;
+                    return (
+                      <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
+                        <div className="flex items-center gap-2">
+                          {isAdCompleted ? (
+                            <CheckCircle2 className="h-4 w-4 text-buy shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          )}
+                          <span className={`text-sm font-semibold ${isAdCompleted ? "text-buy" : "text-muted-foreground"}`}>
+                            {isAdCompleted ? "Deal Completed" : "Ad Cancelled"}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          {isAdCompleted && relatedDeal ? (
+                            <>
+                              <p>
+                                Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> paid ₹{relatedDeal.inrAmount}
+                              </p>
+                              <p>
+                                You released <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> to buyer
+                              </p>
+                              <div className="flex items-center gap-2 pt-1">
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3 text-buy" />
+                                  <span className="text-buy font-medium">Buyer paid</span>
+                                </div>
+                                <span>→</span>
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3 text-buy" />
+                                  <span className="text-buy font-medium">You confirmed</span>
+                                </div>
+                                <span>→</span>
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3 text-buy" />
+                                  <span className="text-buy font-medium">Tokens sent</span>
+                                </div>
+                              </div>
+                            </>
+                          ) : isAdCompleted ? (
+                            <p>Your ad was accepted and the deal completed successfully. {ad.tokenAmount} {ad.tokenSymbol} was released to the buyer.</p>
+                          ) : (
+                            <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> was returned to your wallet.</p>
+                          )}
+                        </div>
+                        <a
+                          href={BSCSCAN_CONTRACT}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          View on BscScan
+                        </a>
+                      </div>
+                    );
+                  })()}
+
+                  {/* In Deal status */}
+                  {ad.status === 1 && (() => {
+                    const relatedDeal = deals.find((d) => d.adId === ad.adId);
+                    return (
+                      <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary shrink-0" />
+                          <span className="text-sm font-semibold text-primary">Deal In Progress</span>
+                        </div>
+                        {relatedDeal && (
+                          <p className="text-xs text-muted-foreground">
+                            Buyer <span className="font-mono text-foreground">{relatedDeal.buyer.slice(0, 6)}…{relatedDeal.buyer.slice(-4)}</span> accepted your ad.
+                            {relatedDeal.buyerConfirmed ? " Buyer has confirmed payment — check your bank/UPI." : " Waiting for buyer to pay."}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Actions */}
                   {(ad.status === 0) && (
