@@ -111,7 +111,7 @@ const SECTIONS = [
       "No KYC Required: Your wallet is your identity. We don't collect personal information, emails, or phone numbers.",
       "On-chain Transparency: Every ad, deal, and dispute is recorded on the blockchain. Anyone can verify the contract activity on BscScan.",
       "Dispute Resolution: A trusted admin resolves disputes fairly. The dispute system is designed so that honest parties are always protected.",
-      "Open Contract: The smart contract address is publicly visible and verifiable: 0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f",
+      "Open Contract: The smart contract address is publicly visible and verifiable: 0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95",
     ],
   },
   {

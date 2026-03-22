@@ -77,7 +77,7 @@ const LandingHero = () => (
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <ConnectButton />
               <a
-                href="https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f"
+                href="https://bscscan.com/address/0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

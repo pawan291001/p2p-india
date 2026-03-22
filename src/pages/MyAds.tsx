@@ -25,7 +25,7 @@ const formatTime = (seconds: number) => {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
-const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
+const BSCSCAN_CONTRACT = "https://bscscan.com/address/0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95";
 
 const formatTimeout = (seconds: number) => {
   if (seconds >= 3600) return `${seconds / 3600}h`;
