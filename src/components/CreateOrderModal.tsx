@@ -164,7 +164,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const isPaymentValid = (): boolean => {
     if (!sellerName.trim() || !selectedMethod) return false;
     if (selectedMethod === "UPI") return !!upiId.trim();
-    if (selectedMethod === "Bank Transfer") return !!bankName.trim() && !!accountNumber.trim() && !!ifscCode.trim();
+    if (selectedMethod === "Bank Transfer" || selectedMethod === "Cash/Bank Deposit") return !!bankName.trim() && !!accountNumber.trim() && !!ifscCode.trim();
     return !!paymentId.trim();
   };
 
