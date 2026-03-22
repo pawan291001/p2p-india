@@ -29,7 +29,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
 const MyAds = () => {
   const { address, isConnected } = useAccount();
   const { ads, isLoading } = useContractAds();
-  const [showCreate, setShowCreate] = useState(false);
+  const { deals } = useContractDeals();
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
 
   const { writeContract: cancelAd, data: cancelHash, isPending: cancelPending } = useWriteContract();
