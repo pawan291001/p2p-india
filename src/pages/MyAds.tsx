@@ -332,12 +332,14 @@ const MyAds = () => {
                                         I Received ₹{relatedDeal.inrAmount} — Release
                                       </Button>
                                     )}
-                                    <Button variant="outline" size="sm" className="text-sell border-sell/30" disabled={isProcessing} onClick={() => {
-                                      raiseDispute({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "raiseDispute", args: [BigInt(relatedDeal.dealId), "Seller dispute"] } as any);
-                                    }}>
-                                      {disputePending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-                                      Dispute
-                                    </Button>
+                                    {isDealTimedOut && (relatedDeal.buyerConfirmed !== relatedDeal.sellerConfirmed) && (
+                                      <Button variant="outline" size="sm" className="text-sell border-sell/30" disabled={isProcessing} onClick={() => {
+                                        raiseDispute({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "raiseDispute", args: [BigInt(relatedDeal.dealId), "Seller dispute"] } as any);
+                                      }}>
+                                        {disputePending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                                        Dispute
+                                      </Button>
+                                    )}
                                   </>
                                 )}
                                 <Button variant="ghost" size="sm" className="text-muted-foreground ml-auto" onClick={() => setChatDealId(showChat ? null : relatedDeal.dealId)}>
