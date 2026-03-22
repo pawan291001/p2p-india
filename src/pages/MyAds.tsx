@@ -42,7 +42,6 @@ const MyAds = () => {
   const { address, isConnected } = useAccount();
   const { ads, isLoading } = useContractAds();
   const { deals } = useContractDeals();
-  const dealTxMap = useDealTxHashes(deals.filter(d => myAds.some(a => a.adId === d.adId)).map(d => d.dealId));
   const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
   const [chatDealId, setChatDealId] = useState<number | null>(null);
