@@ -37,6 +37,7 @@ const MyOrders = () => {
   const [chatDealId, setChatDealId] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Live tick every second for countdown timers
   useEffect(() => {
