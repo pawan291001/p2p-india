@@ -381,6 +381,34 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             )}
 
+            {(selectedMethod === "COD" || selectedMethod === "Cash Deposit") && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Location / Branch Details</Label>
+                <Input
+                  placeholder="e.g. Mumbai, Andheri West branch"
+                  value={paymentId}
+                  onChange={(e) => setPaymentId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={150}
+                />
+              </div>
+            )}
+
+            {selectedMethod === "Digital Rupee" && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Digital Rupee Wallet / ID</Label>
+                <Input
+                  placeholder="e.g. your e₹ wallet ID"
+                  value={paymentId}
+                  onChange={(e) => setPaymentId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={100}
+                />
+              </div>
+            )}
+
             {/* Price */}
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">

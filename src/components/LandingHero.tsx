@@ -27,8 +27,8 @@ const FEATURES = [
   },
   {
     icon: Users,
-    title: "UPI & Bank Transfer",
-    desc: "Pay with GPay, PhonePe, Paytm, or any bank transfer. Sellers pick their preferred method.",
+    title: "Multiple Payment Methods",
+    desc: "UPI, Bank Transfer, COD, Cash Deposit, Digital Rupee, PayPal, Wise — sellers pick their preferred method.",
   },
   {
     icon: Clock,
