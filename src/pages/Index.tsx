@@ -14,6 +14,7 @@ import StatsBar from "@/components/StatsBar";
 import CryptoFilter from "@/components/CryptoFilter";
 import TradeWindow from "@/components/TradeWindow";
 import { useContractAds, LiveAd } from "@/hooks/useContractAds";
+import { useContractDeals } from "@/hooks/useContractDeals";
 
 const Index = () => {
   const { address, isConnected } = useAccount();
