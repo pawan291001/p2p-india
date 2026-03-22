@@ -1,14 +1,17 @@
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Wallet, Package, Loader2, Plus } from "lucide-react";
+import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
+import { useContractDeals } from "@/hooks/useContractDeals";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import CreateOrderModal from "@/components/CreateOrderModal";
+
+const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
 
 const formatTimeout = (seconds: number) => {
   if (seconds >= 3600) return `${seconds / 3600}h`;
