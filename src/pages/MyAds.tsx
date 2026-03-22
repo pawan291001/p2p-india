@@ -364,7 +364,7 @@ const MyAds = () => {
                                     cancelDeal({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelTimedOutDeal", args: [BigInt(relatedDeal.dealId)] } as any);
                                   }}>
                                     {cancelDealPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-                                    Cancel &amp; Reclaim Funds
+                                    Cancel Deal
                                   </Button>
                                 )}
 
