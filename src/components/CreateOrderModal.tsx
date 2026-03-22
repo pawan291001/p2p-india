@@ -258,6 +258,21 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
           <div className="text-center py-8 space-y-3">
             <p className="text-muted-foreground text-sm">Connect your wallet to create an ad</p>
           </div>
+        ) : isWrongNetwork ? (
+          <div className="text-center py-10 space-y-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sell/10">
+              <AlertTriangle className="h-7 w-7 text-sell" />
+            </div>
+            <div>
+              <p className="text-foreground font-semibold">Wrong Network</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                Please switch to <span className="font-semibold text-foreground">BNB Smart Chain</span> to create an ad.
+              </p>
+            </div>
+            <Button onClick={() => switchChain({ chainId: bsc.id })} className="gap-2">
+              Switch to BNB Chain
+            </Button>
+          </div>
         ) : (
           <div className="space-y-4">
             {/* Token */}
