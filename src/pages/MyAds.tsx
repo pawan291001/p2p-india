@@ -395,6 +395,14 @@ const MyAds = () => {
                             );
                           })()}
 
+                          {/* Timeline for deals associated with this ad */}
+                          {completedDeal && dealTxMap[completedDeal.dealId]?.events?.length > 0 && (
+                            <DealTimeline events={dealTxMap[completedDeal.dealId].events} />
+                          )}
+                          {relatedDeal && !completedDeal && dealTxMap[relatedDeal.dealId]?.events?.length > 0 && (
+                            <DealTimeline events={dealTxMap[relatedDeal.dealId].events} />
+                          )}
+
                           {/* Actions for live/expired ads (no deal yet) */}
                           {ad.status === 0 && (
                             <div className="mt-3 space-y-2">
