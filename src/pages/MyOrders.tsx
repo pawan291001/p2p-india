@@ -5,6 +5,7 @@ import DealOutcome from "@/components/DealOutcome";
 import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
+import { useDealTxHashes } from "@/hooks/useDealTxHashes";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
