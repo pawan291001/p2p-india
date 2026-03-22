@@ -327,41 +327,48 @@ const MyAds = () => {
                                   </div>
                                 )}
 
-                                {isDealTimedOut && (
+                                {isDealTimedOut && !relatedDeal.buyerConfirmed && (
                                   <div className="rounded-md bg-sell/10 border border-sell/20 p-2 text-xs text-sell font-medium">
-                                    ⏰ Deal expired — cancel to get your {ad.tokenSymbol} back.
+                                    ⏰ Deal expired — buyer didn't pay. Cancel to get your {ad.tokenSymbol} back.
+                                  </div>
+                                )}
+                                {isDealTimedOut && relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
+                                  <div className="rounded-md bg-primary/10 border border-primary/20 p-2 text-xs text-primary font-medium">
+                                    ⏰ Deal timer expired but buyer confirmed payment. Verify payment and release, or raise a dispute.
                                   </div>
                                 )}
                               </div>
 
                               {/* Seller deal actions */}
                               <div className="flex flex-wrap gap-2">
-                                {isDealTimedOut ? (
+                                {/* Cancel only if timed out AND buyer hasn't confirmed */}
+                                {isDealTimedOut && !relatedDeal.buyerConfirmed && (
                                   <Button variant="sell" size="sm" disabled={isProcessing} onClick={() => {
                                     cancelDeal({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelTimedOutDeal", args: [BigInt(relatedDeal.dealId)] } as any);
                                   }}>
                                     {cancelDealPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
                                     Cancel &amp; Reclaim Funds
                                   </Button>
-                                ) : (
-                                  <>
-                                    {relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
-                                      <Button variant="buy" size="sm" disabled={isProcessing} onClick={() => {
-                                        sellerConfirm({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "sellerConfirmReceived", args: [BigInt(relatedDeal.dealId)] } as any);
-                                      }}>
-                                        {sellerPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
-                                        I Received ₹{relatedDeal.inrAmount} — Release
-                                      </Button>
-                                    )}
-                                    {isDealTimedOut && (relatedDeal.buyerConfirmed !== relatedDeal.sellerConfirmed) && (
-                                      <Button variant="outline" size="sm" className="text-sell border-sell/30" disabled={isProcessing} onClick={() => {
-                                        raiseDispute({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "raiseDispute", args: [BigInt(relatedDeal.dealId), "Seller dispute"] } as any);
-                                      }}>
-                                        {disputePending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-                                        Dispute
-                                      </Button>
-                                    )}
-                                  </>
+                                )}
+
+                                {/* Release button when buyer confirmed */}
+                                {relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
+                                  <Button variant="buy" size="sm" disabled={isProcessing} onClick={() => {
+                                    sellerConfirm({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "sellerConfirmReceived", args: [BigInt(relatedDeal.dealId)] } as any);
+                                  }}>
+                                    {sellerPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                    I Received ₹{relatedDeal.inrAmount} — Release
+                                  </Button>
+                                )}
+
+                                {/* Dispute only after timeout when one confirmed but not the other */}
+                                {isDealTimedOut && (relatedDeal.buyerConfirmed !== relatedDeal.sellerConfirmed) && (
+                                  <Button variant="outline" size="sm" className="text-sell border-sell/30" disabled={isProcessing} onClick={() => {
+                                    raiseDispute({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "raiseDispute", args: [BigInt(relatedDeal.dealId), "Seller dispute"] } as any);
+                                  }}>
+                                    {disputePending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                                    Dispute
+                                  </Button>
                                 )}
                                 <Button variant="ghost" size="sm" className="text-muted-foreground ml-auto" onClick={() => setChatDealId(showChat ? null : relatedDeal.dealId)}>
                                   <MessageSquare className="h-3 w-3 mr-1" />
