@@ -37,7 +37,7 @@ export function useContractDeals() {
     args: [BigInt(i + 1)],
   }));
 
-  const { data: dealsData, isLoading: loadingDeals } = useReadContracts({
+  const { data: dealsData, isLoading: loadingDeals, refetch: refetchDeals } = useReadContracts({
     contracts: dealCalls,
     query: { enabled: dealCount > 0, refetchInterval: 10000 },
   });
