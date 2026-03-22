@@ -233,6 +233,8 @@ const MyOrders = () => {
 
           <DealOutcome status={deal.status} isBuyer={isBuyer} buyerConfirmed={deal.buyerConfirmed} sellerConfirmed={deal.sellerConfirmed} tokenAmount={deal.tokenAmount} tokenSymbol={deal.tokenSymbol} inrAmount={deal.inrAmount} buyer={deal.buyer} seller={deal.seller} dealId={deal.dealId} txHash={dealTxMap[deal.dealId]?.completed || dealTxMap[deal.dealId]?.cancelled || dealTxMap[deal.dealId]?.resolved || dealTxMap[deal.dealId]?.created} />
 
+          <DealTimeline events={dealTxMap[deal.dealId]?.events || []} />
+
           <div className="mt-3 flex flex-wrap gap-2">
             {isTimedOut ? (
               /* After timeout: only show cancel button */
