@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { X, Clock, Shield, CheckCircle2, AlertTriangle, Copy, MessageSquare, Loader2 } from "lucide-react";
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
