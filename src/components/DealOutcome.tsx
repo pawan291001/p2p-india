@@ -11,6 +11,7 @@ interface DealOutcomeProps {
   buyer: string;
   seller: string;
   dealId: number;
+  txHash?: string; // specific transaction hash for BscScan link
 }
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -28,6 +29,7 @@ const DealOutcome = ({
   buyer,
   seller,
   dealId,
+  txHash,
 }: DealOutcomeProps) => {
   // Only show for terminal states
   if (status !== 2 && status !== 3 && status !== 4) return null;
@@ -159,15 +161,15 @@ const DealOutcome = ({
         )}
       </div>
 
-      {/* BscScan link */}
+      {/* BscScan link — specific tx or contract fallback */}
       <a
-        href={BSCSCAN_CONTRACT}
+        href={txHash ? `https://bscscan.com/tx/${txHash}` : BSCSCAN_CONTRACT}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors pt-1"
       >
         <ExternalLink className="h-3 w-3" />
-        View on BscScan
+        {txHash ? `View tx ${txHash.slice(0, 10)}…` : "View on BscScan"}
       </a>
     </div>
   );

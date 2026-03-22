@@ -5,6 +5,7 @@ import DealOutcome from "@/components/DealOutcome";
 import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
+import { useDealTxHashes } from "@/hooks/useDealTxHashes";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
@@ -71,6 +72,8 @@ const MyOrders = () => {
   const myDeals = address
     ? deals.filter((d) => d.buyer.toLowerCase() === address.toLowerCase())
     : [];
+
+  const dealTxMap = useDealTxHashes(myDeals.map((d) => d.dealId));
 
   // Detect counterparty actions via polling changes
   const prevDealsRef = useRef<typeof myDeals>([]);
@@ -227,7 +230,7 @@ const MyOrders = () => {
             </div>
           )}
 
-          <DealOutcome status={deal.status} isBuyer={isBuyer} buyerConfirmed={deal.buyerConfirmed} sellerConfirmed={deal.sellerConfirmed} tokenAmount={deal.tokenAmount} tokenSymbol={deal.tokenSymbol} inrAmount={deal.inrAmount} buyer={deal.buyer} seller={deal.seller} dealId={deal.dealId} />
+          <DealOutcome status={deal.status} isBuyer={isBuyer} buyerConfirmed={deal.buyerConfirmed} sellerConfirmed={deal.sellerConfirmed} tokenAmount={deal.tokenAmount} tokenSymbol={deal.tokenSymbol} inrAmount={deal.inrAmount} buyer={deal.buyer} seller={deal.seller} dealId={deal.dealId} txHash={dealTxMap[deal.dealId]?.completed || dealTxMap[deal.dealId]?.cancelled || dealTxMap[deal.dealId]?.resolved || dealTxMap[deal.dealId]?.created} />
 
           <div className="mt-3 flex flex-wrap gap-2">
             {isTimedOut ? (

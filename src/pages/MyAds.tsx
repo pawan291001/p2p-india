@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import DealOutcome from "@/components/DealOutcome";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
+import { useDealTxHashes } from "@/hooks/useDealTxHashes";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
@@ -81,6 +82,10 @@ const MyAds = () => {
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
     : [];
+
+  const myAdIds = myAds.map(a => a.adId);
+  const relatedDealIds = deals.filter(d => myAdIds.includes(d.adId)).map(d => d.dealId);
+  const dealTxMap = useDealTxHashes(relatedDealIds);
 
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => a.status === 0 || a.status === 1);
@@ -253,9 +258,11 @@ const MyAds = () => {
                                     <Clock className="h-4 w-4 text-primary shrink-0" />
                                     <span className="text-sm font-semibold text-primary">Deal #{relatedDeal.dealId} In Progress</span>
                                   </div>
-                                  <a href={`https://bscscan.com/address/${P2P_CONTRACT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                                    <ExternalLink className="h-3 w-3" /> BscScan
-                                  </a>
+                                  {(() => { const txh = dealTxMap[relatedDeal.dealId]?.created; return (
+                                    <a href={txh ? `https://bscscan.com/tx/${txh}` : `https://bscscan.com/address/${P2P_CONTRACT_ADDRESS}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                                      <ExternalLink className="h-3 w-3" /> {txh ? `tx ${txh.slice(0, 10)}…` : "BscScan"}
+                                    </a>
+                                  ); })()}
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                                   <div>
@@ -366,9 +373,11 @@ const MyAds = () => {
                                     <p>You cancelled this ad. <span className="font-medium text-foreground">{ad.tokenAmount} {ad.tokenSymbol}</span> returned to your wallet.</p>
                                   )}
                                 </div>
-                                <a href={BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                                  <ExternalLink className="h-3 w-3" /> View on BscScan
-                                </a>
+                                {(() => { const txh = completedDeal ? (dealTxMap[completedDeal.dealId]?.completed || dealTxMap[completedDeal.dealId]?.cancelled || dealTxMap[completedDeal.dealId]?.resolved || dealTxMap[completedDeal.dealId]?.created) : undefined; return (
+                                  <a href={txh ? `https://bscscan.com/tx/${txh}` : BSCSCAN_CONTRACT} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                                    <ExternalLink className="h-3 w-3" /> {txh ? `View tx ${txh.slice(0, 10)}…` : "View on BscScan"}
+                                  </a>
+                                ); })()}
                               </div>
                             );
                           })()}
