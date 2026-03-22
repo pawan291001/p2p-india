@@ -110,9 +110,14 @@ const MyOrders = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6" style={{ lineHeight: "1.1" }}>
-          My Deals
-        </h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>
+            My Deals
+          </h1>
+          {isConnected && myDeals.length > 0 && (
+            <StatusFilter options={dealFilterOptions} selected={statusFilter} onSelect={setStatusFilter} />
+          )}
+        </div>
 
         {!isConnected ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
