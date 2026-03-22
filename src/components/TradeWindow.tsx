@@ -6,6 +6,7 @@ import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
+import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 import ChatPanel from "./ChatPanel";
 
 type DealStep = "accept" | "pay" | "waiting" | "completed" | "cancelled" | "disputed";
