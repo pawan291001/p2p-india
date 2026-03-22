@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "What payment methods are supported?",
-    a: "We support UPI (Google Pay, PhonePe, Paytm, etc.) and Bank Transfer (NEFT/IMPS). The seller chooses their preferred method when creating an ad.",
+    a: "We support UPI (Google Pay, PhonePe, Paytm), Bank Transfer (NEFT/IMPS), COD (Cash on Delivery), Cash Deposit, Digital Rupee (e₹), PayPal, and Wise. The seller chooses their preferred method when creating an ad.",
   },
   {
     q: "Are there any fees?",

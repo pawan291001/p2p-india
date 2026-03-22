@@ -21,7 +21,7 @@ const CRYPTOS = [
   { symbol: "BNB", address: NATIVE_BNB },
 ];
 
-const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise"] as const;
+const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise", "COD", "Cash Deposit", "Digital Rupee"] as const;
 type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 const DEAL_TIMEOUTS = [
@@ -150,6 +150,10 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
       parts.push(`Phone/UPI: ${paymentId.trim()}`);
     } else if (selectedMethod === "PayPal" || selectedMethod === "Wise") {
       parts.push(`Email/ID: ${paymentId.trim()}`);
+    } else if (selectedMethod === "COD" || selectedMethod === "Cash Deposit") {
+      parts.push(`Location: ${paymentId.trim()}`);
+    } else if (selectedMethod === "Digital Rupee") {
+      parts.push(`Wallet/ID: ${paymentId.trim()}`);
     }
 
     return parts.join(" | ");
@@ -368,6 +372,34 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
                 <Label className="text-xs text-muted-foreground mb-1.5 block">{selectedMethod} Email or Username</Label>
                 <Input
                   placeholder={`e.g. your@email.com`}
+                  value={paymentId}
+                  onChange={(e) => setPaymentId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={100}
+                />
+              </div>
+            )}
+
+            {(selectedMethod === "COD" || selectedMethod === "Cash Deposit") && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Location / Branch Details</Label>
+                <Input
+                  placeholder="e.g. Mumbai, Andheri West branch"
+                  value={paymentId}
+                  onChange={(e) => setPaymentId(e.target.value)}
+                  className="bg-surface-2 border-input"
+                  disabled={isProcessing}
+                  maxLength={150}
+                />
+              </div>
+            )}
+
+            {selectedMethod === "Digital Rupee" && (
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Digital Rupee Wallet / ID</Label>
+                <Input
+                  placeholder="e.g. your e₹ wallet ID"
                   value={paymentId}
                   onChange={(e) => setPaymentId(e.target.value)}
                   className="bg-surface-2 border-input"
