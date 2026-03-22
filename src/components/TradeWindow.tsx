@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 import ChatPanel from "./ChatPanel";
 import { parsePaymentInfo } from "@/lib/parsePaymentInfo";
+import UpiQrCode from "./UpiQrCode";
 
 type DealStep = "accept" | "pay" | "waiting" | "completed" | "cancelled" | "disputed";
 
