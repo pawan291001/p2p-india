@@ -89,7 +89,8 @@ const SECTIONS = [
     content: [
       "Sellers can cancel their ad at any time if no deal is active. The locked tokens are returned to their wallet.",
       "Buyers can cancel a deal before confirming payment. Once you've clicked \"I Have Paid,\" you cannot cancel — you'll need to wait for the seller or use the dispute system.",
-      "If a deal times out and neither party acts, the tokens stay safely in escrow. The seller can cancel the timed-out deal to reclaim tokens, or either party can raise a dispute.",
+      "If a deal times out because the buyer didn't pay, the ad automatically goes Live again with a fresh timer. The seller's tokens stay safely locked in escrow — ready for the next buyer. No action needed from the seller.",
+      "The seller can always manually cancel their ad (when it's Live) to withdraw their tokens back to their wallet.",
     ],
   },
   {
@@ -111,7 +112,7 @@ const SECTIONS = [
       "No KYC Required: Your wallet is your identity. We don't collect personal information, emails, or phone numbers.",
       "On-chain Transparency: Every ad, deal, and dispute is recorded on the blockchain. Anyone can verify the contract activity on BscScan.",
       "Dispute Resolution: A trusted admin resolves disputes fairly. The dispute system is designed so that honest parties are always protected.",
-      "Open Contract: The smart contract address is publicly visible and verifiable: 0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f",
+      "Open Contract: The smart contract address is publicly visible and verifiable: 0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95",
     ],
   },
   {

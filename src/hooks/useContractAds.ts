@@ -49,7 +49,7 @@ export function useContractAds() {
       if (res.status !== "success" || !res.result) continue;
       const ad = res.result as any;
 
-      // Handle both named and positional access
+      // Handle both named and positional access (v3: adDuration at index 7)
       const id = ad.id !== undefined ? ad.id : ad[0];
       const seller = ad.seller || ad[1];
       const tokenAddr = ad.token || ad[2];
@@ -57,8 +57,9 @@ export function useContractAds() {
       const pricePerToken = ad.pricePerToken !== undefined ? ad.pricePerToken : ad[4];
       const dealTimeout = ad.dealTimeout !== undefined ? ad.dealTimeout : ad[5];
       const adExpiry = ad.adExpiry !== undefined ? ad.adExpiry : ad[6];
-      const paymentInfo = ad.paymentInfo !== undefined ? ad.paymentInfo : ad[7];
-      const status = ad.status !== undefined ? ad.status : ad[8];
+      // v3: adDuration is at index 7, paymentInfo at 8, status at 9
+      const paymentInfo = ad.paymentInfo !== undefined ? ad.paymentInfo : ad[8];
+      const status = ad.status !== undefined ? ad.status : ad[9];
 
       if (id === undefined || tokenAmount === undefined) continue;
 

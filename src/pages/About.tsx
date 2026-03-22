@@ -69,12 +69,12 @@ const About = () => (
           All trades are secured by our escrow contract deployed on BNB Smart Chain mainnet.
         </p>
         <a
-          href="https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f"
+          href="https://bscscan.com/address/0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95"
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-primary hover:underline font-mono break-all"
         >
-          0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f
+          0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95
         </a>
       </div>
 

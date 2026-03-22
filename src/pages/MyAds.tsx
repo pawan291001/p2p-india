@@ -25,7 +25,7 @@ const formatTime = (seconds: number) => {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 };
 
-const BSCSCAN_CONTRACT = "https://bscscan.com/address/0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f";
+const BSCSCAN_CONTRACT = "https://bscscan.com/address/0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95";
 
 const formatTimeout = (seconds: number) => {
   if (seconds >= 3600) return `${seconds / 3600}h`;
@@ -89,23 +89,13 @@ const MyAds = () => {
   const relatedDealIds = deals.filter(d => myAdIds.includes(d.adId)).map(d => d.dealId);
   const dealTxMap = useDealTxHashes(relatedDealIds);
 
-  // Contract edge-case: timed-out deal cancellation currently refunds seller but leaves ad status as Live.
-  // We treat those ads as history so they cannot be traded again from UI.
-  const refundedRelistedAdIds = new Set(
-    deals
-      .filter((d) => d.status === 3 && !d.buyerConfirmed && !d.sellerConfirmed)
-      .map((d) => d.adId),
-  );
-
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => {
-    if (refundedRelistedAdIds.has(a.adId)) return false;
     if (a.status === 1) return true; // InDeal always live
     if (a.status === 0 && now <= a.adExpiry) return true; // Live & not expired
     return false;
   });
   const historyAds = sortedAds.filter((a) => {
-    if (refundedRelistedAdIds.has(a.adId)) return true;
     if (a.status === 2 || a.status === 3) return true; // Completed or Cancelled
     if (a.status === 0 && now > a.adExpiry) return true; // Expired
     return false;
@@ -193,11 +183,10 @@ const MyAds = () => {
                 <div className="space-y-3">
                   {currentAds.map((ad, i) => {
                     const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
-                    const isRefundedRelisted = refundedRelistedAdIds.has(ad.adId);
                     const isExpired = ad.status === 0 && now > ad.adExpiry;
-                    const isLive = ad.status === 0 && !isExpired && !isRefundedRelisted;
-                    const statusLabel = isRefundedRelisted ? "Refunded" : isExpired ? "Expired" : st.label;
-                    const statusColorClass = isRefundedRelisted ? "text-muted-foreground" : isExpired ? "text-muted-foreground" : st.color;
+                    const isLive = ad.status === 0 && !isExpired;
+                    const statusLabel = isExpired ? "Expired" : st.label;
+                    const statusColorClass = isExpired ? "text-muted-foreground" : st.color;
                     const expiryDate = new Date(ad.adExpiry * 1000);
                     const relatedDeal = deals.find((d) => d.adId === ad.adId && (d.status === 0 || d.status === 1 || d.status === 4));
                     const completedDeal = deals.find((d) => d.adId === ad.adId);
@@ -304,13 +293,6 @@ const MyAds = () => {
                             })()}
                           </div>
 
-                          {isRefundedRelisted && (
-                            <div className="mt-3 rounded-lg border border-sell/20 bg-sell/5 p-3">
-                              <p className="text-xs text-sell font-medium">
-                                Funds were already returned for this ad after a timed-out deal. This listing is treated as closed.
-                              </p>
-                            </div>
-                          )}
 
                           {/* In Deal — full seller deal management */}
                           {ad.status === 1 && relatedDeal && (
@@ -463,7 +445,7 @@ const MyAds = () => {
                           )}
 
                           {/* Actions for live/expired ads (no deal yet) */}
-                          {ad.status === 0 && !isRefundedRelisted && (
+                          {ad.status === 0 && (
                             <div className="mt-3 space-y-2">
                               {!isExpired && (
                                 <p className="text-xs text-muted-foreground">
