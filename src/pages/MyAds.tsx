@@ -421,7 +421,22 @@ const MyAds = () => {
                                 </div>
                                 <div className="text-xs text-muted-foreground space-y-1">
                                   {isResolved && resolvedDeal ? (
-                                    <p>Dispute on Deal #{resolvedDeal.dealId} was resolved by admin. Funds released from escrow.</p>
+                                    (() => {
+                                      const recipient = dealTxMap[resolvedDeal.dealId]?.resolvedRecipient;
+                                      const recipientIsBuyer = recipient?.toLowerCase() === resolvedDeal.buyer.toLowerCase();
+                                      const recipientIsSeller = recipient?.toLowerCase() === resolvedDeal.seller.toLowerCase();
+                                      const youReceived = recipientIsSeller; // seller is viewing MyAds
+                                      return (
+                                        <p>
+                                          Dispute on Deal #{resolvedDeal.dealId} resolved by admin.{" "}
+                                          {youReceived
+                                            ? <><span className="font-medium text-buy">You received</span> {ad.tokenAmount} {ad.tokenSymbol} back.</>
+                                            : recipientIsBuyer
+                                            ? <>Buyer <span className="font-mono text-foreground">{shortAddr(resolvedDeal.buyer)}</span> received {ad.tokenAmount} {ad.tokenSymbol}.</>
+                                            : <>Funds released from escrow.</>}
+                                        </p>
+                                      );
+                                    })()
                                   ) : isAdCompleted && displayDeal ? (
                                     <>
                                       <p>Buyer <span className="font-mono text-foreground">{shortAddr(displayDeal.buyer)}</span> paid ₹{displayDeal.inrAmount}</p>

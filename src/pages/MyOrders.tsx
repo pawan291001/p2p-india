@@ -252,7 +252,7 @@ const MyOrders = () => {
             </div>
           )}
 
-          <DealOutcome status={deal.status} isBuyer={isBuyer} buyerConfirmed={deal.buyerConfirmed} sellerConfirmed={deal.sellerConfirmed} tokenAmount={deal.tokenAmount} tokenSymbol={deal.tokenSymbol} inrAmount={deal.inrAmount} buyer={deal.buyer} seller={deal.seller} dealId={deal.dealId} txHash={dealTxMap[deal.dealId]?.completed || dealTxMap[deal.dealId]?.cancelled || dealTxMap[deal.dealId]?.resolved || dealTxMap[deal.dealId]?.created} />
+          <DealOutcome status={deal.status} isBuyer={isBuyer} buyerConfirmed={deal.buyerConfirmed} sellerConfirmed={deal.sellerConfirmed} tokenAmount={deal.tokenAmount} tokenSymbol={deal.tokenSymbol} inrAmount={deal.inrAmount} buyer={deal.buyer} seller={deal.seller} dealId={deal.dealId} txHash={dealTxMap[deal.dealId]?.completed || dealTxMap[deal.dealId]?.cancelled || dealTxMap[deal.dealId]?.resolved || dealTxMap[deal.dealId]?.created} resolvedRecipient={dealTxMap[deal.dealId]?.resolvedRecipient} />
 
           <DealTimeline events={dealTxMap[deal.dealId]?.events || []} />
 

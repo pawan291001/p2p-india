@@ -19,6 +19,7 @@ export interface DealTxInfo {
   cancelled?: string;
   disputed?: string;
   resolved?: string;
+  resolvedRecipient?: string;
   events: DealEvent[];
 }
 
@@ -69,6 +70,10 @@ export function useDealTxHashes(dealIds: number[]): DealTxMap {
           if (!dealIds.includes(dealId)) continue;
           if (!map[dealId]) map[dealId] = { events: [] };
           (map[dealId] as any)[name] = log.transactionHash;
+          // Capture recipient for resolved disputes
+          if (name === "resolved" && (log as any).args?.recipient) {
+            map[dealId].resolvedRecipient = String((log as any).args.recipient);
+          }
           map[dealId].events.push({
             name,
             label,
