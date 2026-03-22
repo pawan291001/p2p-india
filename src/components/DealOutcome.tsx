@@ -51,11 +51,12 @@ const DealOutcome = ({
     >
       {/* Outcome header */}
       <div className="flex items-center gap-2">
-        {isCompleted && <CheckCircle2 className="h-4 w-4 text-buy shrink-0" />}
+        {(isCompleted || isResolved) && <CheckCircle2 className="h-4 w-4 text-buy shrink-0" />}
         {isCancelled && <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />}
         {isDisputed && <AlertTriangle className="h-4 w-4 text-sell shrink-0" />}
-        <span className={`text-sm font-semibold ${isCompleted ? "text-buy" : isDisputed ? "text-sell" : "text-muted-foreground"}`}>
+        <span className={`text-sm font-semibold ${(isCompleted || isResolved) ? "text-buy" : isDisputed ? "text-sell" : "text-muted-foreground"}`}>
           {isCompleted && "Trade Completed Successfully"}
+          {isResolved && "Dispute Resolved"}
           {isCancelled && "Deal Cancelled"}
           {isDisputed && "Under Dispute — Admin Review"}
         </span>
