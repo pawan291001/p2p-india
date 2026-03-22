@@ -73,6 +73,8 @@ const MyOrders = () => {
     ? deals.filter((d) => d.buyer.toLowerCase() === address.toLowerCase())
     : [];
 
+  const dealTxMap = useDealTxHashes(myDeals.map((d) => d.dealId));
+
   // Detect counterparty actions via polling changes
   const prevDealsRef = useRef<typeof myDeals>([]);
   useEffect(() => {
