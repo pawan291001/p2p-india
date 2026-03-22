@@ -86,5 +86,6 @@ export function useContractDeals() {
     }
   }
 
-  return { deals, isLoading: loadingCount || loadingDeals };
+  const refetch = () => { refetchDeals(); };
+  return { deals, isLoading: loadingCount || loadingDeals, refetch };
 }

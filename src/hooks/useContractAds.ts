@@ -86,5 +86,6 @@ export function useContractAds() {
     }
   }
 
-  return { ads, isLoading: loadingCount || loadingAds };
+  const refetch = () => { refetchAds(); };
+  return { ads, isLoading: loadingCount || loadingAds, refetch };
 }
