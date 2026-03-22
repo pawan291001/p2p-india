@@ -13,6 +13,7 @@ import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import { playSuccessChime, playAlertChime } from "@/lib/sounds";
+import { parsePaymentInfo } from "@/lib/parsePaymentInfo";
 import CreateOrderModal from "@/components/CreateOrderModal";
 import ChatPanel from "@/components/ChatPanel";
 
