@@ -24,7 +24,7 @@ export function useContractAds() {
     address: P2P_CONTRACT_ADDRESS,
     abi: P2P_ESCROW_ABI,
     functionName: "nextAdId",
-    query: { refetchInterval: 10000 },
+    query: { refetchInterval: 5000 },
   });
 
   // nextAdId is the next ID to assign, so existing ads are 1..(nextAdId-1)
@@ -39,7 +39,7 @@ export function useContractAds() {
 
   const { data: adsData, isLoading: loadingAds, refetch: refetchAds } = useReadContracts({
     contracts: adCalls,
-    query: { enabled: adCount > 0, refetchInterval: 10000 },
+    query: { enabled: adCount > 0, refetchInterval: 5000 },
   });
 
   const ads: LiveAd[] = [];
