@@ -183,11 +183,10 @@ const MyAds = () => {
                 <div className="space-y-3">
                   {currentAds.map((ad, i) => {
                     const st = STATUS_LABELS[ad.status] || STATUS_LABELS[0];
-                    const isRefundedRelisted = refundedRelistedAdIds.has(ad.adId);
                     const isExpired = ad.status === 0 && now > ad.adExpiry;
-                    const isLive = ad.status === 0 && !isExpired && !isRefundedRelisted;
-                    const statusLabel = isRefundedRelisted ? "Refunded" : isExpired ? "Expired" : st.label;
-                    const statusColorClass = isRefundedRelisted ? "text-muted-foreground" : isExpired ? "text-muted-foreground" : st.color;
+                    const isLive = ad.status === 0 && !isExpired;
+                    const statusLabel = isExpired ? "Expired" : st.label;
+                    const statusColorClass = isExpired ? "text-muted-foreground" : st.color;
                     const expiryDate = new Date(ad.adExpiry * 1000);
                     const relatedDeal = deals.find((d) => d.adId === ad.adId && (d.status === 0 || d.status === 1 || d.status === 4));
                     const completedDeal = deals.find((d) => d.adId === ad.adId);
