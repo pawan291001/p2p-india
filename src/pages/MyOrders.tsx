@@ -108,22 +108,16 @@ const MyOrders = () => {
     prevDealsRef.current = myDeals;
   }, [myDeals, address]);
 
-  const filteredDeals = myDeals.filter((d) => {
-    if (statusFilter === "all") return true;
-    if (statusFilter === "active") return d.status === 0 || d.status === 1;
-    if (statusFilter === "completed") return d.status === 2;
-    if (statusFilter === "cancelled") return d.status === 3;
-    if (statusFilter === "disputed") return d.status === 4;
-    return true;
-  });
+  // Sort newest first and split into sections
+  const sortedDeals = [...myDeals].sort((a, b) => b.dealId - a.dealId);
+  const activeDeals = sortedDeals.filter((d) => d.status === 0 || d.status === 1);
+  const disputedDeals = sortedDeals.filter((d) => d.status === 4);
+  const historyDeals = sortedDeals.filter((d) => d.status === 2 || d.status === 3);
 
-  const dealFilterOptions = [
-    { value: "all", label: "All", count: myDeals.length },
-    { value: "active", label: "Active", count: myDeals.filter((d) => d.status === 0 || d.status === 1).length },
-    { value: "completed", label: "Completed", count: myDeals.filter((d) => d.status === 2).length },
-    { value: "cancelled", label: "Cancelled", count: myDeals.filter((d) => d.status === 3).length },
-    { value: "disputed", label: "Disputed", count: myDeals.filter((d) => d.status === 4).length },
-  ].filter((o) => o.value === "all" || o.count > 0);
+  const [tab, setTab] = useState<"live" | "history">("live");
+
+  const liveCount = activeDeals.length + disputedDeals.length;
+  const historyCount = historyDeals.length;
 
   // Get payment info from associated ad
   const getPaymentInfo = (adId: number) => {
@@ -139,50 +133,13 @@ const MyOrders = () => {
 
   const isProcessing = payPending || sellerPending || disputePending || cancelPending;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <h1 className="text-2xl font-bold text-foreground" style={{ lineHeight: "1.1" }}>
-            My Deals
-          </h1>
-          {isConnected && myDeals.length > 0 && (
-            <StatusFilter options={dealFilterOptions} selected={statusFilter} onSelect={setStatusFilter} />
-          )}
-        </div>
-
-        {!isConnected ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <Wallet className="h-8 w-8 text-primary" />
-            </div>
-            <p className="text-foreground font-semibold mb-1">Connect your wallet</p>
-            <p className="text-muted-foreground text-sm mb-4">Connect to view your deals.</p>
-            <ConnectButton />
-          </div>
-        ) : loadingDeals || loadingAds ? (
-          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm animate-pulse">
-            Loading deals from contract…
-          </div>
-        ) : myDeals.length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-            No deals yet. Accept an ad on the P2P Trading page to start.
-          </div>
-        ) : filteredDeals.length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8 text-center text-muted-foreground text-sm">
-            No {statusFilter} deals found.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredDeals.map((deal, i) => {
-              const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
-              const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
-              const paymentInfo = getPaymentInfo(deal.adId);
-              const timeLeft = deal.deadline - now;
-              const isTimedOut = timeLeft <= 0 && (deal.status === 0 || deal.status === 1);
-              const showChat = chatDealId === deal.dealId;
-              const progress = deal.deadline > 0 ? Math.max(0, Math.min(100, (timeLeft / (deal.deadline - (deal.deadline - 900))) * 100)) : 0;
+  const renderDealCard = (deal: typeof myDeals[0], i: number) => {
+    const ds = DEAL_STATUS[deal.status] || DEAL_STATUS[0];
+    const isBuyer = deal.buyer.toLowerCase() === address!.toLowerCase();
+    const paymentInfo = getPaymentInfo(deal.adId);
+    const timeLeft = deal.deadline - now;
+    const isTimedOut = timeLeft <= 0 && (deal.status === 0 || deal.status === 1);
+    const showChat = chatDealId === deal.dealId;
 
               return (
                 <div
