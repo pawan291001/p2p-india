@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
-import { Plus, Search, Wallet, SlidersHorizontal } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Search, Wallet, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FaqSection from "@/components/FaqSection";
@@ -17,6 +18,7 @@ import { useContractAds, LiveAd } from "@/hooks/useContractAds";
 
 const Index = () => {
   const { address, isConnected } = useAccount();
+  const navigate = useNavigate();
   const [crypto, setCrypto] = useState("USDT");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -24,10 +26,19 @@ const Index = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [maxPrice, setMaxPrice] = useState("");
   const [minAmount, setMinAmount] = useState("");
+  const [expiredBannerDismissed, setExpiredBannerDismissed] = useState(false);
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
 
   const now = Date.now() / 1000;
+
+  // Check for user's expired unclaimed ads
+  const expiredUnclaimedAds = useMemo(() => {
+    if (!address) return [];
+    return liveAds.filter(
+      (ad) => ad.seller.toLowerCase() === address.toLowerCase() && ad.status === 0 && ad.adExpiry < now
+    );
+  }, [liveAds, address, now]);
 
   const filteredAds = useMemo(() => {
     return liveAds
