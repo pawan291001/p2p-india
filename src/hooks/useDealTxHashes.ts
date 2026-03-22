@@ -3,6 +3,14 @@ import { usePublicClient } from "wagmi";
 import { parseAbiItem } from "viem";
 import { P2P_CONTRACT_ADDRESS } from "@/config/wagmi";
 
+export interface DealEvent {
+  name: string;
+  label: string;
+  txHash: string;
+  blockNumber: bigint;
+  timestamp?: number;
+}
+
 export interface DealTxInfo {
   created?: string;
   buyerConfirmed?: string;
@@ -11,20 +19,21 @@ export interface DealTxInfo {
   cancelled?: string;
   disputed?: string;
   resolved?: string;
+  events: DealEvent[];
 }
 
 export interface DealTxMap {
   [dealId: number]: DealTxInfo;
 }
 
-const EVENTS = [
-  { name: "created", abi: parseAbiItem("event DealCreated(uint256 indexed dealId, uint256 indexed adId, address indexed buyer, uint256 inrAmount, uint256 deadline)") },
-  { name: "buyerConfirmed", abi: parseAbiItem("event BuyerConfirmedPayment(uint256 indexed dealId)") },
-  { name: "sellerConfirmed", abi: parseAbiItem("event SellerConfirmedReceipt(uint256 indexed dealId)") },
-  { name: "completed", abi: parseAbiItem("event DealCompleted(uint256 indexed dealId)") },
-  { name: "cancelled", abi: parseAbiItem("event DealCancelled(uint256 indexed dealId, string reason)") },
-  { name: "disputed", abi: parseAbiItem("event DealDisputed(uint256 indexed dealId, address indexed by)") },
-  { name: "resolved", abi: parseAbiItem("event DisputeResolved(uint256 indexed dealId, address indexed recipient)") },
+const EVENT_DEFS = [
+  { name: "created", label: "Deal Created", abi: parseAbiItem("event DealCreated(uint256 indexed dealId, uint256 indexed adId, address indexed buyer, uint256 inrAmount, uint256 deadline)") },
+  { name: "buyerConfirmed", label: "Buyer Confirmed Payment", abi: parseAbiItem("event BuyerConfirmedPayment(uint256 indexed dealId)") },
+  { name: "sellerConfirmed", label: "Seller Confirmed Receipt", abi: parseAbiItem("event SellerConfirmedReceipt(uint256 indexed dealId)") },
+  { name: "completed", label: "Deal Completed", abi: parseAbiItem("event DealCompleted(uint256 indexed dealId)") },
+  { name: "cancelled", label: "Deal Cancelled", abi: parseAbiItem("event DealCancelled(uint256 indexed dealId, string reason)") },
+  { name: "disputed", label: "Dispute Raised", abi: parseAbiItem("event DealDisputed(uint256 indexed dealId, address indexed by)") },
+  { name: "resolved", label: "Dispute Resolved", abi: parseAbiItem("event DisputeResolved(uint256 indexed dealId, address indexed recipient)") },
 ] as const;
 
 export function useDealTxHashes(dealIds: number[]): DealTxMap {
@@ -34,33 +43,66 @@ export function useDealTxHashes(dealIds: number[]): DealTxMap {
   useEffect(() => {
     if (!client || dealIds.length === 0) return;
 
-    const key = dealIds.sort().join(",");
     let cancelled = false;
 
     (async () => {
       const map: DealTxMap = {};
+      const allBlockNumbers = new Set<bigint>();
 
       // Fetch logs for all events in parallel
       const results = await Promise.allSettled(
-        EVENTS.map((evt) =>
+        EVENT_DEFS.map((evt) =>
           client.getLogs({
             address: P2P_CONTRACT_ADDRESS,
             event: evt.abi as any,
             fromBlock: "earliest",
             toBlock: "latest",
-          }).then((logs) => ({ name: evt.name, logs }))
+          }).then((logs) => ({ name: evt.name, label: evt.label, logs }))
         )
       );
 
       for (const res of results) {
         if (res.status !== "fulfilled") continue;
-        const { name, logs } = res.value;
+        const { name, label, logs } = res.value;
         for (const log of logs) {
           const dealId = Number((log as any).args?.dealId);
           if (!dealIds.includes(dealId)) continue;
-          if (!map[dealId]) map[dealId] = {};
+          if (!map[dealId]) map[dealId] = { events: [] };
           (map[dealId] as any)[name] = log.transactionHash;
+          map[dealId].events.push({
+            name,
+            label,
+            txHash: log.transactionHash,
+            blockNumber: log.blockNumber,
+          });
+          allBlockNumbers.add(log.blockNumber);
         }
+      }
+
+      // Fetch block timestamps in parallel (deduplicated)
+      const blockArr = Array.from(allBlockNumbers);
+      const blockTimestamps = new Map<bigint, number>();
+
+      if (blockArr.length > 0) {
+        const blockResults = await Promise.allSettled(
+          blockArr.map((bn) =>
+            client.getBlock({ blockNumber: bn }).then((b) => ({ bn, timestamp: Number(b.timestamp) }))
+          )
+        );
+        for (const br of blockResults) {
+          if (br.status === "fulfilled") {
+            blockTimestamps.set(br.value.bn, br.value.timestamp);
+          }
+        }
+      }
+
+      // Attach timestamps and sort events chronologically
+      for (const dealId of Object.keys(map)) {
+        const info = map[Number(dealId)];
+        for (const evt of info.events) {
+          evt.timestamp = blockTimestamps.get(evt.blockNumber);
+        }
+        info.events.sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
       }
 
       if (!cancelled) setTxMap(map);

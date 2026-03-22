@@ -2,6 +2,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagm
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet, ShoppingCart, Loader2, Copy, CheckCircle2, Clock, AlertTriangle, MessageSquare, X } from "lucide-react";
 import DealOutcome from "@/components/DealOutcome";
+import DealTimeline from "@/components/DealTimeline";
 import Navbar from "@/components/Navbar";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
@@ -231,6 +232,8 @@ const MyOrders = () => {
           )}
 
           <DealOutcome status={deal.status} isBuyer={isBuyer} buyerConfirmed={deal.buyerConfirmed} sellerConfirmed={deal.sellerConfirmed} tokenAmount={deal.tokenAmount} tokenSymbol={deal.tokenSymbol} inrAmount={deal.inrAmount} buyer={deal.buyer} seller={deal.seller} dealId={deal.dealId} txHash={dealTxMap[deal.dealId]?.completed || dealTxMap[deal.dealId]?.cancelled || dealTxMap[deal.dealId]?.resolved || dealTxMap[deal.dealId]?.created} />
+
+          <DealTimeline events={dealTxMap[deal.dealId]?.events || []} />
 
           <div className="mt-3 flex flex-wrap gap-2">
             {isTimedOut ? (

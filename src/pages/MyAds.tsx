@@ -3,6 +3,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock, AlertTriangle, MessageSquare, Copy } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import DealOutcome from "@/components/DealOutcome";
+import DealTimeline from "@/components/DealTimeline";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
 import { useDealTxHashes } from "@/hooks/useDealTxHashes";
@@ -393,6 +394,14 @@ const MyAds = () => {
                               </div>
                             );
                           })()}
+
+                          {/* Timeline for deals associated with this ad */}
+                          {completedDeal && dealTxMap[completedDeal.dealId]?.events?.length > 0 && (
+                            <DealTimeline events={dealTxMap[completedDeal.dealId].events} />
+                          )}
+                          {relatedDeal && !completedDeal && dealTxMap[relatedDeal.dealId]?.events?.length > 0 && (
+                            <DealTimeline events={dealTxMap[relatedDeal.dealId].events} />
+                          )}
 
                           {/* Actions for live/expired ads (no deal yet) */}
                           {ad.status === 0 && (
