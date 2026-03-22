@@ -383,17 +383,44 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             )}
 
-            {(selectedMethod === "COD" || selectedMethod === "Cash Deposit") && (
-              <div>
-                <Label className="text-xs text-muted-foreground mb-1.5 block">Location / Branch Details</Label>
-                <Input
-                  placeholder="e.g. Mumbai, Andheri West branch"
-                  value={paymentId}
-                  onChange={(e) => setPaymentId(e.target.value)}
-                  className="bg-surface-2 border-input"
-                  disabled={isProcessing}
-                  maxLength={150}
-                />
+            {selectedMethod === "Cash/Bank Deposit" && (
+              <div className="space-y-3">
+                <p className="text-[11px] text-muted-foreground bg-surface-2 rounded-md px-2.5 py-1.5">
+                  Buyer will deposit cash at your bank branch or ATM. Provide your bank details below.
+                </p>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Bank Name</Label>
+                  <Input
+                    placeholder="e.g. State Bank of India"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Account Number</Label>
+                  <Input
+                    placeholder="e.g. 1234567890"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={30}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">IFSC Code</Label>
+                  <Input
+                    placeholder="e.g. SBIN0001234"
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={11}
+                  />
+                </div>
               </div>
             )}
 
