@@ -184,8 +184,10 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
     } as any);
   };
 
+  const parsedPayment = parsePaymentInfo(ad.paymentInfo);
+
   const handleCopyPaymentInfo = () => {
-    navigator.clipboard.writeText(ad.paymentInfo);
+    navigator.clipboard.writeText(parsedPayment.copyableDetail);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
