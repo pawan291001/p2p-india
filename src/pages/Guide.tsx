@@ -6,7 +6,6 @@ const SECTIONS = [
   {
     id: "intro",
     title: "What is Crypto P2P?",
-    image: null,
     content: [
       "Crypto P2P is a fully decentralised peer-to-peer trading platform built on BNB Smart Chain. It allows users to buy and sell USDT and BNB directly with each other using Indian Rupees (INR) — without any middlemen, centralised exchanges, or KYC requirements.",
       "Every trade is secured by an on-chain escrow smart contract. The seller's tokens are locked in the contract the moment they create an ad. This means buyers can trade with confidence — the crypto is already held safely before any money changes hands.",
@@ -16,7 +15,6 @@ const SECTIONS = [
   {
     id: "connect",
     title: "Step 1 — Connect Your Wallet",
-    image: null,
     content: [
       "To start trading, you need a crypto wallet that supports BNB Smart Chain. Popular options include MetaMask, Trust Wallet, and Coinbase Wallet.",
       "Click the \"Connect Wallet\" button in the top-right corner of the navbar. A popup will appear showing supported wallets. Select yours, approve the connection, and make sure you're on the BNB Smart Chain network.",
@@ -26,7 +24,6 @@ const SECTIONS = [
   {
     id: "browse",
     title: "Step 2 — Browse Sell Ads",
-    image: null,
     content: [
       "The main P2P Trading page shows all active sell ads from other users. Each ad card displays the seller's wallet address, the token they're selling (USDT or BNB), the price per token in INR, and their preferred payment method.",
       "You can filter ads by cryptocurrency (USDT or BNB) using the filter buttons at the top. Ads are sorted by price so you can quickly find the best deals.",
@@ -36,7 +33,6 @@ const SECTIONS = [
   {
     id: "escrow",
     title: "Step 3 — How Escrow Works",
-    image: null,
     content: [
       "When a seller creates an ad, their tokens are immediately transferred from their wallet into the escrow smart contract. This is an on-chain transaction that locks the tokens — the seller cannot withdraw them once the ad is live.",
       "When a buyer accepts a deal, the tokens remain locked. The buyer then sends INR payment directly to the seller through the chosen payment method (UPI, Bank Transfer, etc.).",
@@ -47,7 +43,6 @@ const SECTIONS = [
   {
     id: "payment",
     title: "Step 4 — Making & Confirming Payment",
-    image: null,
     content: [
       "Once you accept a deal as a buyer, you'll see the seller's payment details — UPI ID, bank account info, or other method-specific details. For UPI payments, a QR code is automatically generated so you can scan and pay instantly.",
       "Send the exact INR amount shown in the deal to the seller's provided payment details. Double-check the amount and account details before sending.",
@@ -58,7 +53,6 @@ const SECTIONS = [
   {
     id: "selling",
     title: "Step 5 — Selling Crypto",
-    image: null,
     content: [
       "To sell crypto, click \"Sell USDT\" or \"Sell BNB\" on the P2P Trading page. A form will appear where you set your price per token (in INR), the amount you want to sell, your preferred payment method, and your payment details.",
       "Supported payment methods include UPI, Bank Transfer, Google Pay, PhonePe, Cash/Bank Deposit, Digital Rupee, PayPal, and Wise. Choose the one that works best for you.",
@@ -69,7 +63,6 @@ const SECTIONS = [
   {
     id: "disputes",
     title: "Step 6 — Disputes & Safety",
-    image: null,
     content: [
       "Sometimes things don't go smoothly. A buyer might claim they paid when they didn't, or a seller might not release tokens after receiving payment. The dispute system handles these cases.",
       "The \"Raise Dispute\" button only becomes available after the deal timer expires. This prevents premature disputes and gives both parties enough time to complete the trade.",
@@ -81,7 +74,6 @@ const SECTIONS = [
   {
     id: "deal-lifecycle",
     title: "Deal Lifecycle — From Start to Finish",
-    image: null,
     content: [
       "1. Seller creates an ad → Tokens locked in escrow.",
       "2. Buyer accepts the deal → Deal timer starts.",
@@ -94,7 +86,6 @@ const SECTIONS = [
   {
     id: "cancel",
     title: "Cancelling Deals & Ads",
-    image: null,
     content: [
       "Sellers can cancel their ad at any time if no deal is active. The locked tokens are returned to their wallet.",
       "Buyers can cancel a deal before confirming payment. Once you've clicked \"I Have Paid,\" you cannot cancel — you'll need to wait for the seller or use the dispute system.",
@@ -104,7 +95,6 @@ const SECTIONS = [
   {
     id: "fees",
     title: "Fees & Limits",
-    image: null,
     content: [
       "Platform fees: Zero. There are no platform fees at all.",
       "Gas fees: You pay a small BNB gas fee for on-chain transactions (creating ads, accepting deals, confirming payments, etc.). This is typically under ₹1.",
@@ -116,7 +106,6 @@ const SECTIONS = [
   {
     id: "security",
     title: "Security & Trust",
-    image: null,
     content: [
       "Smart Contract Escrow: All crypto is held in an audited smart contract on BNB Smart Chain mainnet. No human can access the locked funds — only the contract logic controls releases.",
       "No KYC Required: Your wallet is your identity. We don't collect personal information, emails, or phone numbers.",
@@ -128,7 +117,6 @@ const SECTIONS = [
   {
     id: "tips",
     title: "Tips for Safe Trading",
-    image: null,
     content: [
       "✅ Always double-check payment details before sending INR.",
       "✅ Never send payment outside the deal — only use the details shown in your active deal.",
@@ -143,7 +131,6 @@ const SECTIONS = [
   {
     id: "support",
     title: "Getting Help",
-    image: null,
     content: [
       "If you need help with a trade, dispute, or anything else, reach out on Telegram: @XplorerTobi1",
       "You can also use the support button (chat icon) in the bottom-right corner of any page to quickly get to our Telegram support.",
@@ -200,16 +187,6 @@ const Guide = () => (
                 {section.title}
               </h2>
 
-              {section.image && (
-                <div className="rounded-lg overflow-hidden border border-border mb-5">
-                  <img
-                    src={section.image}
-                    alt={section.title}
-                    className="w-full h-auto"
-                    loading="lazy"
-                  />
-                </div>
-              )}
 
               <div className="space-y-3">
                 {section.content.map((para, j) => (
