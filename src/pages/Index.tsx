@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
-import { Plus, Search, Wallet, SlidersHorizontal } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Search, Wallet, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FaqSection from "@/components/FaqSection";
@@ -17,6 +18,7 @@ import { useContractAds, LiveAd } from "@/hooks/useContractAds";
 
 const Index = () => {
   const { address, isConnected } = useAccount();
+  const navigate = useNavigate();
   const [crypto, setCrypto] = useState("USDT");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -24,10 +26,19 @@ const Index = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [maxPrice, setMaxPrice] = useState("");
   const [minAmount, setMinAmount] = useState("");
+  const [expiredBannerDismissed, setExpiredBannerDismissed] = useState(false);
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
 
   const now = Date.now() / 1000;
+
+  // Check for user's expired unclaimed ads
+  const expiredUnclaimedAds = useMemo(() => {
+    if (!address) return [];
+    return liveAds.filter(
+      (ad) => ad.seller.toLowerCase() === address.toLowerCase() && ad.status === 0 && ad.adExpiry < now
+    );
+  }, [liveAds, address, now]);
 
   const filteredAds = useMemo(() => {
     return liveAds
@@ -63,6 +74,32 @@ const Index = () => {
               : "Connect your wallet to start trading. Here's what's available right now."}
           </p>
         </div>
+
+        {/* Expired funds alert */}
+        {isConnected && expiredUnclaimedAds.length > 0 && !expiredBannerDismissed && (
+          <div className="mb-6 rounded-lg border border-sell/30 bg-sell/5 p-4 animate-fade-up">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sell/10">
+                <AlertTriangle className="h-5 w-5 text-sell" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Unclaimed Expired Funds</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  You have <span className="font-bold text-sell">{expiredUnclaimedAds.length}</span> expired ad{expiredUnclaimedAds.length > 1 ? "s" : ""} with locked funds.
+                  Claim them back from My Ads → Expired tab.
+                </p>
+                <div className="flex gap-2 mt-2.5">
+                  <Button size="sm" variant="sell" onClick={() => navigate("/my-ads")} className="text-xs">
+                    Go to My Ads
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setExpiredBannerDismissed(true)} className="text-xs text-muted-foreground">
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="mb-8">
