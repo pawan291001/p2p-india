@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Search, Wallet } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Search, Wallet, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccount } from "wagmi";
@@ -18,20 +18,28 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [maxPrice, setMaxPrice] = useState("");
+  const [minAmount, setMinAmount] = useState("");
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
 
-  // Only show Live ads (status 0) that haven't expired
   const now = Date.now() / 1000;
-  const filteredAds = liveAds.filter((ad) => {
-    if (ad.status !== 0) return false;
-    if (ad.adExpiry < now) return false;
-    // Hide own ads — you can't buy from yourself
-    if (address && ad.seller.toLowerCase() === address.toLowerCase()) return false;
-    const matchesCrypto = ad.tokenSymbol === crypto;
-    const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
-    return matchesCrypto && matchesSearch;
-  });
+
+  const filteredAds = useMemo(() => {
+    return liveAds
+      .filter((ad) => {
+        if (ad.status !== 0) return false;
+        if (ad.adExpiry < now) return false;
+        if (address && ad.seller.toLowerCase() === address.toLowerCase()) return false;
+        const matchesCrypto = ad.tokenSymbol === crypto;
+        const matchesSearch = !search || ad.seller.toLowerCase().includes(search.toLowerCase());
+        const matchesPrice = !maxPrice || parseFloat(ad.pricePerToken) <= parseFloat(maxPrice);
+        const matchesAmount = !minAmount || parseFloat(ad.tokenAmount) >= parseFloat(minAmount);
+        return matchesCrypto && matchesSearch && matchesPrice && matchesAmount;
+      })
+      .sort((a, b) => parseFloat(a.pricePerToken) - parseFloat(b.pricePerToken));
+  }, [liveAds, crypto, search, maxPrice, minAmount, address, now]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,12 +62,12 @@ const Index = () => {
         </div>
 
         {/* Controls */}
-        <div className="mb-6 space-y-4 animate-fade-up" style={{ animationDelay: "200ms" }}>
+        <div className="mb-6 space-y-3 animate-fade-up" style={{ animationDelay: "200ms" }}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CryptoFilter selected={crypto} onSelect={setCrypto} />
 
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 sm:w-64 sm:flex-none">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-56 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search by address..."
@@ -68,6 +76,14 @@ const Index = () => {
                   className="bg-surface-2 border-input pl-9"
                 />
               </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowFilters(!showFilters)}
+                className={showFilters ? "border-primary text-primary" : ""}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
               <Button
                 onClick={() => setShowCreate(true)}
                 className="gap-2 shrink-0"
@@ -78,6 +94,44 @@ const Index = () => {
               </Button>
             </div>
           </div>
+
+          {/* Filter panel */}
+          {showFilters && (
+            <div className="flex flex-wrap gap-3 rounded-lg border border-border bg-card p-3 animate-fade-up">
+              <div className="flex-1 min-w-[140px]">
+                <label className="text-xs text-muted-foreground mb-1 block">Max Price (₹)</label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 95"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="bg-surface-2 border-input h-8 text-sm"
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="text-xs text-muted-foreground mb-1 block">Min Amount ({crypto})</label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 10"
+                  value={minAmount}
+                  onChange={(e) => setMinAmount(e.target.value)}
+                  className="bg-surface-2 border-input h-8 text-sm"
+                />
+              </div>
+              {(maxPrice || minAmount) && (
+                <div className="flex items-end">
+                  <Button variant="ghost" size="sm" onClick={() => { setMaxPrice(""); setMinAmount(""); }}>
+                    Clear
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sort indicator */}
+          <p className="text-xs text-muted-foreground">
+            Showing {filteredAds.length} ad{filteredAds.length !== 1 ? "s" : ""} · sorted low → high price
+          </p>
         </div>
 
         {/* Connection prompt */}
@@ -114,14 +168,14 @@ const Index = () => {
               <div className="flex flex-col items-center justify-center rounded-lg border border-border bg-card py-16 text-center animate-fade-up">
                 <p className="text-muted-foreground text-sm mb-1">No live ads for {crypto}</p>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Be the first to post a sell ad and start trading.
+                  {maxPrice || minAmount ? "Try adjusting your filters." : "Be the first to post a sell ad and start trading."}
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowCreate(true)}
+                  onClick={() => { setMaxPrice(""); setMinAmount(""); setShowCreate(true); }}
                 >
-                  Create the first ad
+                  {maxPrice || minAmount ? "Clear Filters" : "Create the first ad"}
                 </Button>
               </div>
             )}
