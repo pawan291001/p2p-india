@@ -223,8 +223,8 @@ const MyAds = () => {
                               </div>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                              <span className={`text-xs font-semibold ${isExpired ? "text-muted-foreground" : st.color}`}>
-                                {isExpired ? "Expired" : st.label}
+                              <span className={`text-xs font-semibold ${statusColorClass}`}>
+                                {statusLabel}
                               </span>
                               {/* Ad expiry countdown */}
                               {isLive && (() => {
