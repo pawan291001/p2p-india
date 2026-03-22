@@ -21,7 +21,7 @@ const CRYPTOS = [
   { symbol: "BNB", address: NATIVE_BNB },
 ];
 
-const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise", "COD", "Cash Deposit", "Digital Rupee"] as const;
+const PAYMENT_METHODS = ["UPI", "Bank Transfer", "Google Pay", "PhonePe", "PayPal", "Wise", "Cash/Bank Deposit", "Digital Rupee"] as const;
 type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 const DEAL_TIMEOUTS = [
@@ -150,8 +150,10 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
       parts.push(`Phone/UPI: ${paymentId.trim()}`);
     } else if (selectedMethod === "PayPal" || selectedMethod === "Wise") {
       parts.push(`Email/ID: ${paymentId.trim()}`);
-    } else if (selectedMethod === "COD" || selectedMethod === "Cash Deposit") {
-      parts.push(`Location: ${paymentId.trim()}`);
+    } else if (selectedMethod === "Cash/Bank Deposit") {
+      parts.push(`Bank: ${bankName.trim()}`);
+      parts.push(`A/C: ${accountNumber.trim()}`);
+      parts.push(`IFSC: ${ifscCode.trim()}`);
     } else if (selectedMethod === "Digital Rupee") {
       parts.push(`Wallet/ID: ${paymentId.trim()}`);
     }
@@ -162,7 +164,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const isPaymentValid = (): boolean => {
     if (!sellerName.trim() || !selectedMethod) return false;
     if (selectedMethod === "UPI") return !!upiId.trim();
-    if (selectedMethod === "Bank Transfer") return !!bankName.trim() && !!accountNumber.trim() && !!ifscCode.trim();
+    if (selectedMethod === "Bank Transfer" || selectedMethod === "Cash/Bank Deposit") return !!bankName.trim() && !!accountNumber.trim() && !!ifscCode.trim();
     return !!paymentId.trim();
   };
 
@@ -381,17 +383,44 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             )}
 
-            {(selectedMethod === "COD" || selectedMethod === "Cash Deposit") && (
-              <div>
-                <Label className="text-xs text-muted-foreground mb-1.5 block">Location / Branch Details</Label>
-                <Input
-                  placeholder="e.g. Mumbai, Andheri West branch"
-                  value={paymentId}
-                  onChange={(e) => setPaymentId(e.target.value)}
-                  className="bg-surface-2 border-input"
-                  disabled={isProcessing}
-                  maxLength={150}
-                />
+            {selectedMethod === "Cash/Bank Deposit" && (
+              <div className="space-y-3">
+                <p className="text-[11px] text-muted-foreground bg-surface-2 rounded-md px-2.5 py-1.5">
+                  Buyer will deposit cash at your bank branch or ATM. Provide your bank details below.
+                </p>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Bank Name</Label>
+                  <Input
+                    placeholder="e.g. State Bank of India"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">Account Number</Label>
+                  <Input
+                    placeholder="e.g. 1234567890"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={30}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1.5 block">IFSC Code</Label>
+                  <Input
+                    placeholder="e.g. SBIN0001234"
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value.toUpperCase())}
+                    className="bg-surface-2 border-input"
+                    disabled={isProcessing}
+                    maxLength={11}
+                  />
+                </div>
               </div>
             )}
 
