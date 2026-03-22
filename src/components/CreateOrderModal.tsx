@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, Loader2, Wallet, TrendingUp } from "lucide-react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useBalance } from "wagmi";
+import { X, Loader2, Wallet, TrendingUp, AlertTriangle } from "lucide-react";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useBalance, useSwitchChain } from "wagmi";
+import { bsc } from "wagmi/chains";
 import { parseUnits, formatUnits } from "viem";
 import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
@@ -42,7 +43,9 @@ const AD_DURATIONS = [
 type Step = "form" | "approving" | "posting";
 
 const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const isWrongNetwork = isConnected && chainId !== bsc.id;
   const [crypto, setCrypto] = useState("USDT");
   const [price, setPrice] = useState("");
   const [amount, setAmount] = useState("");
@@ -254,6 +257,21 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
         {!isConnected ? (
           <div className="text-center py-8 space-y-3">
             <p className="text-muted-foreground text-sm">Connect your wallet to create an ad</p>
+          </div>
+        ) : isWrongNetwork ? (
+          <div className="text-center py-10 space-y-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sell/10">
+              <AlertTriangle className="h-7 w-7 text-sell" />
+            </div>
+            <div>
+              <p className="text-foreground font-semibold">Wrong Network</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                Please switch to <span className="font-semibold text-foreground">BNB Smart Chain</span> to create an ad.
+              </p>
+            </div>
+            <Button onClick={() => switchChain({ chainId: bsc.id })} className="gap-2">
+              Switch to BNB Chain
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
