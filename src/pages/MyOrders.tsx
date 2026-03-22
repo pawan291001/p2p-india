@@ -36,8 +36,8 @@ const formatTime = (seconds: number) => {
 
 const MyOrders = () => {
   const { address, isConnected } = useAccount();
-  const { ads, isLoading: loadingAds } = useContractAds();
-  const { deals, isLoading: loadingDeals } = useContractDeals();
+  const { ads, isLoading: loadingAds, refetch: refetchAds } = useContractAds();
+  const { deals, isLoading: loadingDeals, refetch: refetchDeals } = useContractDeals();
   const [chatDealId, setChatDealId] = useState<number | null>(null);
   const [copied, setCopied] = useState<number | null>(null);
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
