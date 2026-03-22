@@ -240,9 +240,14 @@ const MyOrders = () => {
               </div>
             );
           })()}
-          {isTimedOut && (
+          {isTimedOut && !deal.buyerConfirmed && (
             <div className="mt-3 rounded-lg border border-sell/20 bg-sell/5 p-3">
-              <p className="text-sm font-medium text-sell">⏰ Deal expired — time ran out. Cancel to return funds to the seller.</p>
+              <p className="text-sm font-medium text-sell">⏰ Deal expired — buyer didn't pay. Cancel to return funds to the seller.</p>
+            </div>
+          )}
+          {isTimedOut && deal.buyerConfirmed && !deal.sellerConfirmed && (
+            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <p className="text-sm font-medium text-primary">⏰ Timer expired but you confirmed payment. Wait for seller to release, or raise a dispute.</p>
             </div>
           )}
 
