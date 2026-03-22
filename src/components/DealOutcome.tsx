@@ -11,7 +11,8 @@ interface DealOutcomeProps {
   buyer: string;
   seller: string;
   dealId: number;
-  txHash?: string; // specific transaction hash for BscScan link
+  txHash?: string;
+  resolvedRecipient?: string;
 }
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
