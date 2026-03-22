@@ -77,6 +77,22 @@ const About = () => (
           0x0ACFC8034b92FB06F482541BBd7fF692d30B5F3f
         </a>
       </div>
+
+      {/* Support */}
+      <div className="rounded-lg border border-border bg-card p-4 mt-4">
+        <h3 className="text-sm font-medium text-foreground mb-1">Support</h3>
+        <p className="text-xs text-muted-foreground mb-2">
+          Need help with a trade, dispute, or anything else? Reach out on Telegram.
+        </p>
+        <a
+          href="https://t.me/XplorerTobi1"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary hover:underline"
+        >
+          @XplorerTobi1 on Telegram →
+        </a>
+      </div>
     </main>
     <Footer />
   </div>
