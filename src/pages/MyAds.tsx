@@ -406,6 +406,9 @@ const MyAds = () => {
 
                           {/* Outcome for completed/cancelled ads */}
                           {(ad.status === 2 || ad.status === 3) && (() => {
+                            // Also check if there's a resolved deal for this ad
+                            const resolvedDeal = deals.find((d) => d.adId === ad.adId && d.status === 5);
+                            const displayDeal = resolvedDeal || completedDeal;
                             const isAdCompleted = ad.status === 2;
                             return (
                               <div className={`mt-3 rounded-lg border p-3 space-y-2 ${isAdCompleted ? "border-buy/20 bg-buy/5" : "border-border bg-surface-1"}`}>
