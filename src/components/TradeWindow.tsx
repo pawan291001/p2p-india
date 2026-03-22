@@ -79,18 +79,12 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
     return () => clearInterval(timer);
   }, [step, timeLeft]);
 
-  // After accept confirmed → capture dealId and move to pay step
+  // After accept confirmed → close modal and go to My Deals
   useEffect(() => {
     if (acceptConfirmed) {
-      toast.success("Deal accepted! Escrow locked.");
-      // The dealId that was assigned is the nextDealId we captured before accepting
-      if (nextDealId) {
-        // The deal was created with the nextDealId value at the time of the tx
-        // Since we read it before, it should be correct
-        setDealId(Number(nextDealId));
-      }
-      setStep("pay");
-      setTimeLeft(ad.dealTimeout);
+      toast.success("Deal accepted! Redirecting to My Deals…");
+      onClose();
+      navigate("/my-orders");
     }
   }, [acceptConfirmed]);
 
