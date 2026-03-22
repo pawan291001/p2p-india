@@ -95,15 +95,25 @@ const MyAds = () => {
     if (a.status === 0 && now <= a.adExpiry) return true; // Live & not expired
     return false;
   });
+  const expiredAds = sortedAds.filter((a) => {
+    return a.status === 0 && now > a.adExpiry;
+  });
   const historyAds = sortedAds.filter((a) => {
     if (a.status === 2 || a.status === 3) return true; // Completed or Cancelled
-    if (a.status === 0 && now > a.adExpiry) return true; // Expired
     return false;
   });
 
-  const [adTab, setAdTab] = useState<"live" | "history">("live");
+  const [adTab, setAdTab] = useState<"live" | "expired" | "history">("live");
   const liveCount = liveAds.length;
+  const expiredCount = expiredAds.length;
   const historyCount = historyAds.length;
+
+  // Auto-switch to expired tab if user has expired ads and no live
+  useEffect(() => {
+    if (expiredCount > 0 && liveCount === 0 && adTab === "live") {
+      setAdTab("expired");
+    }
+  }, [expiredCount, liveCount]);
 
   const isProcessing = cancelPending || claimPending || sellerPending || disputePending || cancelDealPending;
 
