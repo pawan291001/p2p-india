@@ -1,74 +1,91 @@
 
 
-# Contract Flow Fix: Manual Re-list Instead of Auto Re-list
+# P2PEscrow Contract v3 — Per-Ad Escrow + Auto Re-list
 
-## Current vs Desired Behavior
+## What You Asked For
 
-The current contract **auto-relists** ads when a deal times out. You want the seller to **manually re-list** instead.
+1. **Per-ad fund isolation** — Each ad's USDT/BNB is tracked separately so one ad's funds can never be used for another ad's deal.
+2. **Auto re-list on deal timeout** — When a buyer fails to complete within the deal timeout (e.g. 15 min), instead of refunding the seller and cancelling the ad, the ad goes **Live again** with its original full ad duration reset. The USDT stays locked in the contract.
+3. **Seller can still cancel and get refund** — Seller can cancel the ad manually at any time (when Live) to withdraw their tokens.
+4. **Full audit** of the contract for other issues.
 
-### Desired Flow (your description):
-1. Seller creates ad (100 USDT at 95 INR) → tokens locked, ad is Live
-2. If no one accepts before ad expiry → ad goes offline, seller can claim USDT back
-3. Buyer accepts → ad = InDeal, USDT stays locked, seller **cannot cancel**
-4. If buyer confirms payment → deal stays active even after 15min timeout. Seller must either confirm receipt or dispute
-5. If buyer does NOT confirm within 15min → deal is cancelled, ad goes **offline** (not auto-live). Seller must **manually re-list** the ad to make it live again. Funds stay locked.
-6. Seller can cancel ad **only when Live** (not when InDeal) → gets USDT refund
+## Audit Findings (Current Contract)
 
-### What Needs to Change in the Contract
+1. **Ghost ad bug** — Already fixed in v2 (cancelTimedOutDeal cancels ad). Will be replaced by new re-list logic.
+2. **No per-ad balance tracking** — Contract relies on total contract balance. If emergency withdraw is used carelessly, it could drain escrowed funds. Will fix with per-ad tracking.
+3. **Ad expiry during InDeal** — If ad expires while a deal is active, the deal still works (good), but after timeout the ad gets cancelled. New logic: ad expiry is paused during deals and reset after timeout.
+4. **Double-decrement risk** — `activeAdCount` is decremented in both `sellerConfirmReceived` and `cancelTimedOutDeal`. With re-list logic, we only decrement on final cancel/complete, not on timeout re-list.
+5. **No event for re-list** — Will add `AdRelisted` event.
 
-**`cancelTimedOutDeal`** — Currently auto-relists. Change to: set ad status to a new state or just keep it Live but require seller action. Actually, simplest approach: keep the current auto-relist but add a **separate manual relist function** instead.
+## Key Contract Changes
 
-Wait — re-reading your message more carefully: you said "seller need to call that deal and make it online again." This means:
-
-- `cancelTimedOutDeal` should cancel the deal AND set the ad to **Cancelled/Offline** (not Live)
-- A new function `relistAd(adId)` lets the seller put it back Live with a fresh timer
-- Funds stay locked in escrow during both states
-
-### Contract Changes
-
-**1. New ad status: `Offline`**
+### 1. Add per-ad escrow balance tracking
+```solidity
+mapping(uint256 => uint256) public adEscrowBalance;
 ```
-enum AdStatus { Live, InDeal, Completed, Cancelled, Offline }
+Set on `createAd`, checked on `acceptAd`, cleared on final release/cancel/refund.
+
+### 2. Store original ad duration in Ad struct
+```solidity
+struct Ad {
+    ...
+    uint256 adDuration;  // NEW: original duration for re-listing
+    ...
+}
 ```
-`Offline` = deal timed out, funds still locked, seller can relist or cancel.
 
-**2. Update `cancelTimedOutDeal`**
-- Set ad status to `Offline` instead of `Live`
-- Funds stay locked (no transfer)
-- Emit event
+### 3. New `cancelTimedOutDeal` — Re-list instead of refund
+```
+When deal times out (buyer didn't confirm):
+  - Deal status → Cancelled
+  - Ad status → Live (back on marketplace)
+  - Ad expiry → block.timestamp + ad.adDuration (fresh timer)
+  - USDT stays in contract (adEscrowBalance unchanged)
+  - Decrement deal counters only (NOT ad counter)
+```
 
-**3. New function: `relistAd(uint256 _adId)`**
-- Only seller can call
-- Requires ad status == `Offline`
-- Sets status back to `Live` with fresh `adDuration` timer
-- Emits `AdRelisted`
+### 4. Seller manual cancel still refunds
+`cancelAd` unchanged — seller gets tokens back, ad cancelled, escrow balance cleared.
 
-**4. Update `cancelAd`**
-- Allow cancellation when status is `Live` OR `Offline`
-- Refunds escrowed tokens
+### 5. `claimExpiredAd` still refunds on true expiry
+When ad duration fully expires with no active deal, seller reclaims.
 
-**5. Update `claimExpiredAd`**
-- Allow claim when status is `Live` OR `Offline` (for expired + offline ads)
+### 6. Safety checks
+- `acceptAd` verifies `adEscrowBalance[adId] >= a.tokenAmount`
+- `sellerConfirmReceived` transfers from escrow balance, zeroes it
+- `resolveDispute` transfers from escrow balance, zeroes it
+- Emergency withdraw checks against total escrowed amount to prevent draining active escrows
 
-### UI Changes
+### 7. New event
+```solidity
+event AdRelisted(uint256 indexed adId, uint256 newExpiry);
+```
 
-**`src/pages/MyAds.tsx`**
-- Show "Re-list" button for ads with status `Offline` (status 4)
-- Show "Cancel & Withdraw" button for `Offline` ads
-- Add status label for Offline state
+## Full Flow After Changes
 
-**`src/pages/Index.tsx`**
-- Offline ads (status 4) should NOT appear in the marketplace (only Live = 0)
+```text
+Seller creates ad (100 USDT, 24h duration, 15min deal timeout)
+  → USDT locked, adEscrowBalance[adId] = 100 USDT
+  → Ad is Live for 24 hours
 
-**`src/config/abi.ts`**
-- Add `relistAd` function to ABI
+Buyer A accepts → Ad = InDeal, deal timer = 15 min
+  Buyer A fails to pay in 15 min → Deal cancelled
+  → Ad goes Live AGAIN with fresh 24h timer
+  → USDT stays locked in contract
 
-**`src/hooks/useContractAds.ts`**
-- No change needed (already reads status correctly)
+Buyer B accepts → Ad = InDeal, deal timer = 15 min
+  Buyer B pays, seller confirms → USDT released to Buyer B
+  → Ad = Completed, escrow balance = 0
 
-### Files to Change
-1. `contracts/P2PEscrow.sol` — Add Offline status, relistAd function, update cancelTimedOutDeal
-2. `src/config/abi.ts` — Add relistAd to ABI
-3. `src/pages/MyAds.tsx` — Add Re-list and Cancel buttons for Offline ads
-4. `src/pages/Index.tsx` — Ensure Offline ads are filtered out
+OR: Seller cancels ad (when Live) → USDT refunded, ad = Cancelled
+```
+
+## Files to Change
+
+- **`contracts/P2PEscrow.sol`** — Full rewrite with all changes above. You redeploy this.
+- After redeployment, you give the new contract address and I update `src/config/wagmi.ts` and `src/config/abi.ts`.
+
+## What Won't Change
+- ABI structure stays compatible (same function names/signatures, just new behavior)
+- UI code mostly unchanged — the `refundedRelistedAdIds` workaround in Index.tsx can be removed since the contract now handles it properly
 

@@ -9,9 +9,6 @@ export const P2P_ESCROW_ABI = [
   { type: "function", name: "MIN_AD_DURATION", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "MAX_AD_DURATION", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "PROOF_RETENTION", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "totalEscrowedBNB", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "totalEscrowedUSDT", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "usdtAddress", inputs: [], outputs: [{ type: "address" }], stateMutability: "view" },
   { type: "function", name: "getAd", inputs: [{ name: "_adId", type: "uint256" }], outputs: [{ type: "tuple", components: [
     { name: "id", type: "uint256" }, { name: "seller", type: "address" }, { name: "token", type: "address" },
     { name: "tokenAmount", type: "uint256" }, { name: "pricePerToken", type: "uint256" },
@@ -61,7 +58,6 @@ export const P2P_ESCROW_ABI = [
   ], outputs: [], stateMutability: "payable" },
   { type: "function", name: "cancelAd", inputs: [{ name: "_adId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "claimExpiredAd", inputs: [{ name: "_adId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
-  { type: "function", name: "relistAd", inputs: [{ name: "_adId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "acceptAd", inputs: [{ name: "_adId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "buyerConfirmPayment", inputs: [{ name: "_dealId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "sellerConfirmReceived", inputs: [{ name: "_dealId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
@@ -85,7 +81,6 @@ export const P2P_ESCROW_ABI = [
   ]},
   { type: "event", name: "AdCancelled", inputs: [{ name: "adId", type: "uint256", indexed: true }] },
   { type: "event", name: "AdExpired", inputs: [{ name: "adId", type: "uint256", indexed: true }] },
-  { type: "event", name: "AdOffline", inputs: [{ name: "adId", type: "uint256", indexed: true }] },
   { type: "event", name: "AdRelisted", inputs: [{ name: "adId", type: "uint256", indexed: true }, { name: "newExpiry", type: "uint256", indexed: false }] },
   { type: "event", name: "DealCreated", inputs: [
     { name: "dealId", type: "uint256", indexed: true }, { name: "adId", type: "uint256", indexed: true },

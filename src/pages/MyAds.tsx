@@ -37,7 +37,7 @@ const STATUS_LABELS: Record<number, { label: string; color: string }> = {
   1: { label: "In Deal", color: "text-primary" },
   2: { label: "Completed", color: "text-muted-foreground" },
   3: { label: "Cancelled", color: "text-sell" },
-  4: { label: "Offline", color: "text-yellow-500" },
+  4: { label: "Expired", color: "text-muted-foreground" },
 };
 
 const MyAds = () => {
@@ -75,16 +75,11 @@ const MyAds = () => {
   const { writeContract: cancelDeal, data: cancelDealHash, isPending: cancelDealPending } = useWriteContract();
   const { isSuccess: cancelDealDone } = useWaitForTransactionReceipt({ hash: cancelDealHash });
 
-  // Relist ad
-  const { writeContract: relistAd, data: relistHash, isPending: relistPending } = useWriteContract();
-  const { isSuccess: relistDone } = useWaitForTransactionReceipt({ hash: relistHash });
-
   useEffect(() => { if (cancelConfirmed) { toast.success("Ad cancelled. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [cancelConfirmed]);
   useEffect(() => { if (claimConfirmed) { toast.success("Expired ad claimed. Funds returned."); setPendingAdId(null); refetchAds(); refetchDeals(); } }, [claimConfirmed]);
   useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); refetchAds(); refetchDeals(); } }, [sellerDone]);
   useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); refetchAds(); refetchDeals(); } }, [disputeDone]);
-  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Ad is now offline. Re-list to go live again."); playAlertChime(); refetchAds(); refetchDeals(); } }, [cancelDealDone]);
-  useEffect(() => { if (relistDone) { toast.success("Ad is live again!"); playSuccessChime(); refetchAds(); refetchDeals(); } }, [relistDone]);
+  useEffect(() => { if (cancelDealDone) { toast.success("Deal cancelled. Funds returned to your wallet."); playAlertChime(); refetchAds(); refetchDeals(); } }, [cancelDealDone]);
 
   const myAds = address
     ? ads.filter((ad) => ad.seller.toLowerCase() === address.toLowerCase())
@@ -97,7 +92,6 @@ const MyAds = () => {
   const sortedAds = [...myAds].sort((a, b) => b.adId - a.adId);
   const liveAds = sortedAds.filter((a) => {
     if (a.status === 1) return true; // InDeal always live
-    if (a.status === 4) return true; // Offline — needs seller action
     if (a.status === 0 && now <= a.adExpiry) return true; // Live & not expired
     return false;
   });
@@ -111,7 +105,7 @@ const MyAds = () => {
   const liveCount = liveAds.length;
   const historyCount = historyAds.length;
 
-  const isProcessing = cancelPending || claimPending || sellerPending || disputePending || cancelDealPending || relistPending;
+  const isProcessing = cancelPending || claimPending || sellerPending || disputePending || cancelDealPending;
 
   const handleCopy = (text: string, id: number) => {
     navigator.clipboard.writeText(text);
@@ -346,7 +340,7 @@ const MyAds = () => {
 
                                 {isDealTimedOut && !relatedDeal.buyerConfirmed && (
                                   <div className="rounded-md bg-sell/10 border border-sell/20 p-2 text-xs text-sell font-medium">
-                                    ⏰ Deal expired — buyer didn't pay. Cancel to put ad offline.
+                                    ⏰ Deal expired — buyer didn't pay. Cancel to get your {ad.tokenSymbol} back.
                                   </div>
                                 )}
                                 {isDealTimedOut && relatedDeal.buyerConfirmed && !relatedDeal.sellerConfirmed && (
@@ -364,7 +358,7 @@ const MyAds = () => {
                                     cancelDeal({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelTimedOutDeal", args: [BigInt(relatedDeal.dealId)] } as any);
                                   }}>
                                     {cancelDealPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
-                                    Cancel Deal
+                                    Cancel &amp; Reclaim Funds
                                   </Button>
                                 )}
 
@@ -475,31 +469,6 @@ const MyAds = () => {
                                     Claim Funds Back
                                   </Button>
                                 )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Actions for Offline ads — seller must re-list or cancel */}
-                          {ad.status === 4 && (
-                            <div className="mt-3 space-y-2">
-                              <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 p-2 text-xs text-yellow-600 dark:text-yellow-400 font-medium">
-                                ⏸️ Ad is offline after a timed-out deal. Your <span className="font-semibold">{ad.tokenAmount} {ad.tokenSymbol}</span> is still locked in escrow. Re-list to go live again, or cancel to withdraw.
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="buy" size="sm" disabled={isProcessing} onClick={() => {
-                                  setPendingAdId(ad.adId);
-                                  relistAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "relistAd", args: [BigInt(ad.adId)] } as any);
-                                }}>
-                                  {relistPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <CheckCircle2 className="h-3 w-3 mr-1" />}
-                                  Re-list Ad
-                                </Button>
-                                <Button variant="sell" size="sm" disabled={isProcessing} onClick={() => {
-                                  setPendingAdId(ad.adId);
-                                  cancelAd({ address: P2P_CONTRACT_ADDRESS, abi: P2P_ESCROW_ABI, functionName: "cancelAd", args: [BigInt(ad.adId)] } as any);
-                                }}>
-                                  {cancelPending && pendingAdId === ad.adId ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
-                                  Cancel &amp; Withdraw
-                                </Button>
                               </div>
                             </div>
                           )}
