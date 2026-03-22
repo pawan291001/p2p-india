@@ -257,10 +257,30 @@ const MyAds = () => {
                               <span className="text-muted-foreground text-xs">{isExpired ? "Expired At" : "Expires"}</span>
                               <p className="text-foreground text-xs">{expiryDate.toLocaleString()}</p>
                             </div>
-                            <div>
-                              <span className="text-muted-foreground text-xs">Payment</span>
-                              <p className="text-foreground text-xs truncate">{ad.paymentInfo}</p>
-                            </div>
+                            {(() => {
+                              const parsed = parsePaymentInfo(ad.paymentInfo);
+                              return (
+                                <div className="col-span-2 sm:col-span-4 mt-1">
+                                  <span className="text-muted-foreground text-xs">Payment</span>
+                                  <div className="mt-1 rounded-md bg-surface-2 p-2 flex items-start justify-between gap-2">
+                                    <div className="text-xs text-foreground space-y-0.5">
+                                      {parsed.name && <p><span className="text-muted-foreground">Name:</span> {parsed.name}</p>}
+                                      {parsed.method && <p><span className="text-muted-foreground">Method:</span> {parsed.method}</p>}
+                                      {parsed.fields.map((f, i) => (
+                                        <p key={i}><span className="text-muted-foreground">{f.label}:</span> <span className="font-mono">{f.value}</span></p>
+                                      ))}
+                                    </div>
+                                    <button
+                                      onClick={() => handleCopy(parsed.copyableDetail, ad.adId + 10000)}
+                                      className="shrink-0 text-primary hover:text-primary/80 mt-0.5"
+                                      title="Copy payment detail"
+                                    >
+                                      {copied === ad.adId + 10000 ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           {/* In Deal — full seller deal management */}
