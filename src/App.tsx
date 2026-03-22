@@ -11,6 +11,7 @@ import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import SupportButton from "@/components/SupportButton";
 
 const App = () => (
   <WalletProvider>
@@ -29,6 +30,7 @@ const App = () => (
            <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      <SupportButton />
     </TooltipProvider>
   </WalletProvider>
 );
