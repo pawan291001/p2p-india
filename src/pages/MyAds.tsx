@@ -3,6 +3,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock, AlertTriangle, MessageSquare, Copy } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import DealOutcome from "@/components/DealOutcome";
+import DealTimeline from "@/components/DealTimeline";
 import { useContractAds } from "@/hooks/useContractAds";
 import { useContractDeals } from "@/hooks/useContractDeals";
 import { useDealTxHashes } from "@/hooks/useDealTxHashes";
