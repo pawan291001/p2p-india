@@ -1,11 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScrollReveal from "@/components/ScrollReveal";
-import guideWallet from "@/assets/guide-connect-wallet.jpg";
-import guideBrowse from "@/assets/guide-browse-ads.jpg";
-import guideEscrow from "@/assets/guide-escrow.jpg";
-import guidePayment from "@/assets/guide-payment.jpg";
-import guideDispute from "@/assets/guide-dispute.jpg";
 
 const SECTIONS = [
   {
@@ -21,7 +16,7 @@ const SECTIONS = [
   {
     id: "connect",
     title: "Step 1 — Connect Your Wallet",
-    image: guideWallet,
+    image: null,
     content: [
       "To start trading, you need a crypto wallet that supports BNB Smart Chain. Popular options include MetaMask, Trust Wallet, and Coinbase Wallet.",
       "Click the \"Connect Wallet\" button in the top-right corner of the navbar. A popup will appear showing supported wallets. Select yours, approve the connection, and make sure you're on the BNB Smart Chain network.",
@@ -31,7 +26,7 @@ const SECTIONS = [
   {
     id: "browse",
     title: "Step 2 — Browse Sell Ads",
-    image: guideBrowse,
+    image: null,
     content: [
       "The main P2P Trading page shows all active sell ads from other users. Each ad card displays the seller's wallet address, the token they're selling (USDT or BNB), the price per token in INR, and their preferred payment method.",
       "You can filter ads by cryptocurrency (USDT or BNB) using the filter buttons at the top. Ads are sorted by price so you can quickly find the best deals.",
@@ -41,7 +36,7 @@ const SECTIONS = [
   {
     id: "escrow",
     title: "Step 3 — How Escrow Works",
-    image: guideEscrow,
+    image: null,
     content: [
       "When a seller creates an ad, their tokens are immediately transferred from their wallet into the escrow smart contract. This is an on-chain transaction that locks the tokens — the seller cannot withdraw them once the ad is live.",
       "When a buyer accepts a deal, the tokens remain locked. The buyer then sends INR payment directly to the seller through the chosen payment method (UPI, Bank Transfer, etc.).",
@@ -52,7 +47,7 @@ const SECTIONS = [
   {
     id: "payment",
     title: "Step 4 — Making & Confirming Payment",
-    image: guidePayment,
+    image: null,
     content: [
       "Once you accept a deal as a buyer, you'll see the seller's payment details — UPI ID, bank account info, or other method-specific details. For UPI payments, a QR code is automatically generated so you can scan and pay instantly.",
       "Send the exact INR amount shown in the deal to the seller's provided payment details. Double-check the amount and account details before sending.",
@@ -74,7 +69,7 @@ const SECTIONS = [
   {
     id: "disputes",
     title: "Step 6 — Disputes & Safety",
-    image: guideDispute,
+    image: null,
     content: [
       "Sometimes things don't go smoothly. A buyer might claim they paid when they didn't, or a seller might not release tokens after receiving payment. The dispute system handles these cases.",
       "The \"Raise Dispute\" button only becomes available after the deal timer expires. This prevents premature disputes and gives both parties enough time to complete the trade.",
