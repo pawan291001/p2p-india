@@ -94,6 +94,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   useEffect(() => {
     if (payConfirmed) {
       toast.success("Payment confirmed on-chain. Waiting for seller.");
+      playSuccessChime();
       setStep("waiting");
     }
   }, [payConfirmed]);
