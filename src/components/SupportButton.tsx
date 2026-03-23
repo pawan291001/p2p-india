@@ -7,7 +7,7 @@ const SupportButton = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 safe-bottom" style={{ bottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}>
       {open && (
         <div className="animate-fade-up rounded-xl border border-border bg-card shadow-xl p-4 w-72">
           <p className="text-sm font-semibold text-foreground mb-1">Need Help?</p>
