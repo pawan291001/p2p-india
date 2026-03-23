@@ -202,7 +202,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
       <div className="relative flex w-full sm:mx-4 sm:max-w-2xl flex-col rounded-t-xl sm:rounded-xl border border-border bg-card shadow-2xl animate-fade-up max-h-[95vh] sm:max-h-[90vh] overflow-hidden safe-bottom">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold text-foreground">
