@@ -117,7 +117,7 @@ const OrderCard = ({
           <Clock className="h-3.5 w-3.5" />
           <span>{formatTimeout(dealTimeout)} payment window</span>
         </div>
-        <Button variant="buy" size="sm" onClick={onTrade}>
+        <Button variant="buy" size="sm" onClick={onTrade} className="min-h-[44px] min-w-[80px] text-sm">
           Buy {tokenSymbol}
         </Button>
       </div>

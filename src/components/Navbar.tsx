@@ -17,11 +17,11 @@ const Navbar = () => {
   const location = useLocation();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-surface-1/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
-            <img src="/favicon.png" alt="Crypto P2P" className="h-7 w-7" />
+    <nav className="sticky top-0 z-50 border-b border-border bg-surface-1/80 backdrop-blur-xl safe-top">
+      <div className="mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6 safe-x">
+        <div className="flex items-center gap-6 sm:gap-8">
+          <Link to="/" className="flex items-center gap-2 text-lg sm:text-xl font-bold tracking-tight text-primary">
+            <img src="/favicon.png" alt="Crypto P2P" className="h-6 w-6 sm:h-7 sm:w-7" />
             Crypto P2P
           </Link>
           <div className="hidden items-center gap-1 md:flex">
@@ -54,7 +54,7 @@ const Navbar = () => {
         </div>
 
         <button
-          className="md:hidden text-foreground"
+          className="md:hidden text-foreground p-2 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           {mobileOpen ? <X /> : <Menu />}
@@ -62,29 +62,31 @@ const Navbar = () => {
       </div>
 
       {mobileOpen && (
-        <div className="border-t border-border bg-surface-1 px-4 pb-4 pt-2 md:hidden animate-fade-in">
-          <div className="flex flex-col gap-2">
+        <div className="border-t border-border bg-surface-1 px-4 pb-6 pt-3 md:hidden animate-fade-in safe-x safe-bottom">
+          <div className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className={`justify-start ${
-                    location.pathname === link.href ? "text-foreground" : "text-muted-foreground"
+                  size="lg"
+                  className={`w-full justify-start min-h-[48px] text-base ${
+                    location.pathname === link.href ? "text-foreground bg-accent" : "text-muted-foreground"
                   }`}
                 >
                   {link.label}
                 </Button>
               </Link>
             ))}
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-3 pt-3 border-t border-border flex items-center gap-3">
               <a href="https://t.me/XplorerTobi1" target="_blank" rel="noopener noreferrer">
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px] text-muted-foreground hover:text-foreground">
                   <MessageCircle className="h-5 w-5" />
                 </Button>
               </a>
               <ThemeToggle />
-              <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
+              <div className="ml-auto">
+                <ConnectButton chainStatus="icon" accountStatus="address" showBalance={false} />
+              </div>
             </div>
           </div>
         </div>
