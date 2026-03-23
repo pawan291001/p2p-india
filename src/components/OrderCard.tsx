@@ -53,7 +53,7 @@ const OrderCard = ({
 
   return (
     <div
-      className="group rounded-lg border border-border bg-card p-4 sm:p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.15)] animate-fade-up"
+      className="group rounded-lg border border-border bg-card p-4 sm:p-5 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_24px_-6px_hsl(var(--primary)/0.15)] animate-fade-up active:scale-[0.99]"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -117,7 +117,7 @@ const OrderCard = ({
           <Clock className="h-3.5 w-3.5" />
           <span>{formatTimeout(dealTimeout)} payment window</span>
         </div>
-        <Button variant="buy" size="sm" onClick={onTrade}>
+        <Button variant="buy" size="sm" onClick={onTrade} className="min-h-[44px] min-w-[80px] text-sm">
           Buy {tokenSymbol}
         </Button>
       </div>

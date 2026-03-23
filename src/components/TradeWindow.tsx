@@ -199,10 +199,10 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
   const isProcessing = acceptPending || payPending || sellerPending || disputePending || cancelPending;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative mx-4 flex w-full max-w-2xl flex-col rounded-xl border border-border bg-card shadow-2xl animate-fade-up max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
+      <div className="relative flex w-full sm:mx-4 sm:max-w-2xl flex-col rounded-t-xl sm:rounded-xl border border-border bg-card shadow-2xl animate-fade-up max-h-[95vh] sm:max-h-[90vh] overflow-hidden safe-bottom">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-primary" />
             <h2 className="text-lg font-bold text-foreground">
@@ -232,7 +232,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Main Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
             {/* Timer bar */}
             {(step === "pay" || step === "waiting") && (
               <div className="space-y-2">
@@ -308,7 +308,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                   <p className="text-xs text-muted-foreground mb-1">Seller's address</p>
                   <p className="text-sm font-mono text-foreground break-all">{ad.seller}</p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleAcceptDeal} disabled={isProcessing}>
+                <Button variant="buy" className="w-full min-h-[48px]" size="lg" onClick={handleAcceptDeal} disabled={isProcessing}>
                   {acceptPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {acceptPending ? "Confirm in wallet…" : "Accept Deal — Lock Escrow"}
                 </Button>
@@ -339,7 +339,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                     Send exactly ₹{ad.inrTotal} to the above details. After payment, click confirm below.
                   </p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isProcessing}>
+                <Button variant="buy" className="w-full min-h-[48px]" size="lg" onClick={handleConfirmPayment} disabled={isProcessing}>
                   {payPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {payPending ? "Confirming…" : `I've Sent ₹${ad.inrTotal} — Confirm Payment`}
                 </Button>
@@ -390,7 +390,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                     Verify the payment in your bank/UPI. Only confirm if you've received the full amount.
                   </p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleSellerConfirm} disabled={isProcessing}>
+                <Button variant="buy" className="w-full min-h-[48px]" size="lg" onClick={handleSellerConfirm} disabled={isProcessing}>
                   {sellerPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
                   {sellerPending ? "Confirming…" : `I Received ₹${ad.inrTotal} — Release Tokens`}
                 </Button>

@@ -112,6 +112,17 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
+  }
+
+  /* Safe area insets for notched devices */
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 
@@ -163,4 +174,24 @@
 
 .animate-fade-in {
   animation: fade-in 0.5s ease-out both;
+}
+
+/* Mobile touch & scroll optimizations */
+@layer utilities {
+  .touch-action-manipulation {
+    touch-action: manipulation;
+  }
+}
+
+/* Ensure inputs don't zoom on iOS */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth scrolling for the whole app */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
