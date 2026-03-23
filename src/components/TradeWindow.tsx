@@ -232,7 +232,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Main Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
             {/* Timer bar */}
             {(step === "pay" || step === "waiting") && (
               <div className="space-y-2">
