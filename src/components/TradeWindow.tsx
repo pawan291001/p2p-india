@@ -308,7 +308,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                   <p className="text-xs text-muted-foreground mb-1">Seller's address</p>
                   <p className="text-sm font-mono text-foreground break-all">{ad.seller}</p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleAcceptDeal} disabled={isProcessing}>
+                <Button variant="buy" className="w-full min-h-[48px]" size="lg" onClick={handleAcceptDeal} disabled={isProcessing}>
                   {acceptPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {acceptPending ? "Confirm in wallet…" : "Accept Deal — Lock Escrow"}
                 </Button>
