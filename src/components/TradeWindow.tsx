@@ -339,7 +339,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                     Send exactly ₹{ad.inrTotal} to the above details. After payment, click confirm below.
                   </p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isProcessing}>
+                <Button variant="buy" className="w-full min-h-[48px]" size="lg" onClick={handleConfirmPayment} disabled={isProcessing}>
                   {payPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {payPending ? "Confirming…" : `I've Sent ₹${ad.inrTotal} — Confirm Payment`}
                 </Button>
