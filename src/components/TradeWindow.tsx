@@ -390,7 +390,7 @@ const TradeWindow = ({ ad, userAddress, onClose }: TradeWindowProps) => {
                     Verify the payment in your bank/UPI. Only confirm if you've received the full amount.
                   </p>
                 </div>
-                <Button variant="buy" className="w-full" size="lg" onClick={handleSellerConfirm} disabled={isProcessing}>
+                <Button variant="buy" className="w-full min-h-[48px]" size="lg" onClick={handleSellerConfirm} disabled={isProcessing}>
                   {sellerPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
                   {sellerPending ? "Confirming…" : `I Received ₹${ad.inrTotal} — Release Tokens`}
                 </Button>

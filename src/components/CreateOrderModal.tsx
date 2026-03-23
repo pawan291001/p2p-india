@@ -239,9 +239,9 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/80 backdrop-blur-sm animate-fade-in">
       <div
-        className="relative mx-4 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-2xl animate-fade-up"
+        className="relative w-full sm:mx-4 sm:w-full max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-t-xl sm:rounded-xl border border-border bg-card p-5 sm:p-6 shadow-2xl animate-fade-up safe-bottom"
         onClick={(e) => e.stopPropagation()}
       >
         <button
