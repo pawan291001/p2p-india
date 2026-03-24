@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Wallet, SlidersHorizontal, AlertTriangle } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Plus, Search, Wallet, SlidersHorizontal, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccount } from "wagmi";
