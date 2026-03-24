@@ -31,6 +31,15 @@ const Index = () => {
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
 
+  const handleRefresh = useCallback(async () => {
+    await refetchAds();
+    await new Promise((r) => setTimeout(r, 600));
+  }, [refetchAds]);
+
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
+
   const now = Date.now() / 1000;
 
   // Check for user's expired unclaimed ads
