@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Wallet, SlidersHorizontal, AlertTriangle } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { Plus, Search, Wallet, SlidersHorizontal, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccount } from "wagmi";
@@ -15,6 +15,7 @@ import StatsBar from "@/components/StatsBar";
 import CryptoFilter from "@/components/CryptoFilter";
 import TradeWindow from "@/components/TradeWindow";
 import { useContractAds, LiveAd } from "@/hooks/useContractAds";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 
 const Index = () => {
   const { address, isConnected } = useAccount();
@@ -29,6 +30,15 @@ const Index = () => {
   const [expiredBannerDismissed, setExpiredBannerDismissed] = useState(false);
 
   const { ads: liveAds, isLoading, refetch: refetchAds } = useContractAds();
+
+  const handleRefresh = useCallback(async () => {
+    await refetchAds();
+    await new Promise((r) => setTimeout(r, 600));
+  }, [refetchAds]);
+
+  const { containerRef, pullDistance, isRefreshing } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
 
   const now = Date.now() / 1000;
 
@@ -56,7 +66,26 @@ const Index = () => {
   }, [liveAds, crypto, search, maxPrice, minAmount, address, now]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background overflow-auto">
+      {/* Pull-to-refresh indicator */}
+      {(pullDistance > 0 || isRefreshing) && (
+        <div
+          className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
+          style={{ height: pullDistance > 0 ? pullDistance : isRefreshing ? 48 : 0 }}
+        >
+          <RefreshCw
+            className={`h-5 w-5 text-primary transition-transform duration-200 ${
+              isRefreshing ? "animate-spin" : ""
+            }`}
+            style={{
+              transform: isRefreshing
+                ? undefined
+                : `rotate(${Math.min(pullDistance * 3, 360)}deg)`,
+              opacity: Math.min(pullDistance / 60, 1),
+            }}
+          />
+        </div>
+      )}
       <Navbar />
 
       {/* Landing sections for new visitors */}
