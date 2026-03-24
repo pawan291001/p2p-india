@@ -66,7 +66,26 @@ const Index = () => {
   }, [liveAds, crypto, search, maxPrice, minAmount, address, now]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div ref={containerRef} className="min-h-screen bg-background overflow-auto">
+      {/* Pull-to-refresh indicator */}
+      {(pullDistance > 0 || isRefreshing) && (
+        <div
+          className="flex items-center justify-center overflow-hidden transition-[height] duration-200 ease-out"
+          style={{ height: pullDistance > 0 ? pullDistance : isRefreshing ? 48 : 0 }}
+        >
+          <RefreshCw
+            className={`h-5 w-5 text-primary transition-transform duration-200 ${
+              isRefreshing ? "animate-spin" : ""
+            }`}
+            style={{
+              transform: isRefreshing
+                ? undefined
+                : `rotate(${Math.min(pullDistance * 3, 360)}deg)`,
+              opacity: Math.min(pullDistance / 60, 1),
+            }}
+          />
+        </div>
+      )}
       <Navbar />
 
       {/* Landing sections for new visitors */}
