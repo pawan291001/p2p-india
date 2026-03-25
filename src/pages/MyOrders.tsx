@@ -69,9 +69,9 @@ const MyOrders = () => {
   const { isSuccess: cancelDone } = useWaitForTransactionReceipt({ hash: cancelHash });
 
   useEffect(() => { if (payConfirmed) { toast.success("Payment confirmed on-chain!"); playSuccessChime(); setPendingDealId(null); refetchAds(); refetchDeals(); } }, [payConfirmed]);
-  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); setPendingDealId(null); refetchAds(); refetchDeals(); } }, [sellerDone]);
+  useEffect(() => { if (sellerDone) { toast.success("Tokens released! Trade completed."); playSuccessChime(); setPendingDealId(null); refetchAds(); refetchDeals(); if (pendingDealId) cleanupDealAttachments(pendingDealId); } }, [sellerDone]);
   useEffect(() => { if (disputeDone) { toast.info("Dispute raised. Admin will review."); playAlertChime(); setPendingDealId(null); refetchAds(); refetchDeals(); } }, [disputeDone]);
-  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); playAlertChime(); setPendingDealId(null); refetchAds(); refetchDeals(); } }, [cancelDone]);
+  useEffect(() => { if (cancelDone) { toast.success("Deal cancelled. Funds returned."); playAlertChime(); setPendingDealId(null); refetchAds(); refetchDeals(); if (pendingDealId) cleanupDealAttachments(pendingDealId); } }, [cancelDone]);
 
   // Only show deals where user is the BUYER (accepted deals)
   const myDeals = address
