@@ -1,20 +1,14 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Loader2, Image as ImageIcon, Video, X, Play } from "lucide-react";
+import { Send, Loader2, Image as ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-interface ChatMessage {
-  id: string;
-  deal_id: number;
-  sender_address: string;
-  message: string | null;
-  attachment_url: string | null;
-  attachment_type: string | null;
-  created_at: string;
-  isOwn: boolean;
-}
+import { useChatMessages } from "@/hooks/useChatMessages";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import MessageBubble from "@/components/chat/MessageBubble";
+import TypingIndicator from "@/components/chat/TypingIndicator";
+import MediaPreview from "@/components/chat/MediaPreview";
 
 interface ChatPanelProps {
   dealId: number;
@@ -24,7 +18,6 @@ interface ChatPanelProps {
 }
 
 const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false }: ChatPanelProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -32,69 +25,13 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch messages
-  const fetchMessages = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("deal_messages")
-      .select("*")
-      .eq("deal_id", dealId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Failed to fetch messages:", error);
-      return;
-    }
-
-    setMessages(
-      (data || []).map((msg: any) => ({
-        ...msg,
-        isOwn: msg.sender_address.toLowerCase() === userAddress.toLowerCase(),
-      }))
-    );
-  }, [dealId, userAddress]);
-
-  // Initial fetch
-  useEffect(() => {
-    fetchMessages();
-  }, [fetchMessages]);
-
-  // Real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel(`deal-chat-${dealId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "deal_messages",
-          filter: `deal_id=eq.${dealId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as any;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [
-              ...prev,
-              {
-                ...newMsg,
-                isOwn: newMsg.sender_address.toLowerCase() === userAddress.toLowerCase(),
-              },
-            ];
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [dealId, userAddress]);
+  const { messages } = useChatMessages(dealId, userAddress);
+  const { isPartnerTyping, sendTyping, stopTyping } = useTypingIndicator(dealId, userAddress);
 
   // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages.length, isPartnerTyping]);
 
   // Cleanup when deal closes
   useEffect(() => {
@@ -118,10 +55,10 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
     }
   }, [onDealClosed, dealId]);
 
-  // Send text message
   const handleSend = async () => {
     if (!input.trim() || readOnly || sending) return;
     setSending(true);
+    stopTyping();
     const text = input.trim();
     setInput("");
 
@@ -138,7 +75,6 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
     setSending(false);
   };
 
-  // Upload file
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || readOnly) return;
@@ -163,7 +99,6 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Upload failed");
 
-      // Insert message with attachment
       const { error } = await supabase.from("deal_messages").insert({
         deal_id: dealId,
         sender_address: userAddress,
@@ -187,7 +122,12 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
     }
   };
 
-  const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    if (e.target.value.trim()) {
+      sendTyping();
+    }
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -209,51 +149,13 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
           </div>
         )}
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex flex-col ${msg.isOwn ? "items-end" : "items-start"}`}>
-            {/* Attachment */}
-            {msg.attachment_url && (
-              <div
-                className={`max-w-[85%] rounded-lg overflow-hidden mb-1 cursor-pointer ${
-                  msg.isOwn ? "bg-primary/10" : "bg-surface-3"
-                }`}
-                onClick={() =>
-                  setPreviewFile({ url: msg.attachment_url!, type: msg.attachment_type || "image" })
-                }
-              >
-                {msg.attachment_type === "video" ? (
-                  <div className="relative w-48 h-32 bg-black/20 flex items-center justify-center">
-                    <video src={msg.attachment_url} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Play className="h-8 w-8 text-white/80" />
-                    </div>
-                  </div>
-                ) : (
-                  <img
-                    src={msg.attachment_url}
-                    alt="Attachment"
-                    className="max-w-48 max-h-48 object-cover"
-                    loading="lazy"
-                  />
-                )}
-              </div>
-            )}
-            {/* Text */}
-            {msg.message && (
-              <div
-                className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                  msg.isOwn
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-surface-3 text-foreground"
-                }`}
-              >
-                {msg.message}
-              </div>
-            )}
-            <span className="text-[10px] text-muted-foreground mt-0.5 px-1">
-              {shortAddr(msg.sender_address)}
-            </span>
-          </div>
+          <MessageBubble
+            key={msg.id}
+            msg={msg}
+            onPreview={(url, type) => setPreviewFile({ url, type })}
+          />
         ))}
+        {isPartnerTyping && <TypingIndicator />}
         <div ref={bottomRef} />
       </div>
 
@@ -284,10 +186,10 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
             </Button>
             <Input
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="bg-surface-2 border-input text-sm"
+              className="bg-muted/50 border-input text-sm"
               maxLength={500}
             />
             <Button
@@ -304,35 +206,11 @@ const ChatPanel = ({ dealId, userAddress, readOnly = false, onDealClosed = false
 
       {/* Full-screen preview */}
       {previewFile && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setPreviewFile(null)}
-        >
-          <Button
-            size="icon"
-            variant="ghost"
-            className="absolute top-4 right-4 text-white hover:bg-white/20"
-            onClick={() => setPreviewFile(null)}
-          >
-            <X className="h-6 w-6" />
-          </Button>
-          {previewFile.type === "video" ? (
-            <video
-              src={previewFile.url}
-              controls
-              autoPlay
-              className="max-w-full max-h-full rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : (
-            <img
-              src={previewFile.url}
-              alt="Preview"
-              className="max-w-full max-h-full object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
-        </div>
+        <MediaPreview
+          url={previewFile.url}
+          type={previewFile.type}
+          onClose={() => setPreviewFile(null)}
+        />
       )}
     </div>
   );
