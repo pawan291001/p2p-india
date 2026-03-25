@@ -22,6 +22,7 @@ export type Database = {
           deal_id: number
           id: string
           message: string | null
+          read_at: string | null
           sender_address: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           deal_id: number
           id?: string
           message?: string | null
+          read_at?: string | null
           sender_address: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           deal_id?: number
           id?: string
           message?: string | null
+          read_at?: string | null
           sender_address?: string
         }
         Relationships: []

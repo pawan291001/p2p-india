@@ -1,0 +1,1 @@
+ALTER TABLE public.deal_messages ADD COLUMN read_at TIMESTAMPTZ DEFAULT NULL;
