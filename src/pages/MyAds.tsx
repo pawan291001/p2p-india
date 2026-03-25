@@ -1,6 +1,7 @@
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet, Package, Loader2, Plus, CheckCircle2, XCircle, ExternalLink, Clock, AlertTriangle, MessageSquare, Copy } from "lucide-react";
+import { cleanupDealAttachments } from "@/lib/dealCleanup";
 import Navbar from "@/components/Navbar";
 import DealOutcome from "@/components/DealOutcome";
 import DealTimeline from "@/components/DealTimeline";
