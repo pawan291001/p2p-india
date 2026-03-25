@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deal_messages: {
+        Row: {
+          attachment_type: string | null
+          attachment_url: string | null
+          created_at: string
+          deal_id: number
+          id: string
+          message: string | null
+          sender_address: string
+        }
+        Insert: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          deal_id: number
+          id?: string
+          message?: string | null
+          sender_address: string
+        }
+        Update: {
+          attachment_type?: string | null
+          attachment_url?: string | null
+          created_at?: string
+          deal_id?: number
+          id?: string
+          message?: string | null
+          sender_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
