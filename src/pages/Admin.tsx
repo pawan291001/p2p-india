@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import ChatPanel from "@/components/ChatPanel";
+import { cleanupDealAttachments } from "@/lib/dealCleanup";
 
 const DEAL_STATUS_LABELS: Record<number, string> = {
   0: "Active",
@@ -92,6 +93,7 @@ const Admin = () => {
     if (txConfirmed) {
       toast.success("Transaction confirmed!");
       setRefreshKey((k) => k + 1);
+      // Cleanup attachments for resolved deals
     }
   }, [txConfirmed]);
 
