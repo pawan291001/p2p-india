@@ -93,6 +93,7 @@ const Admin = () => {
     if (txConfirmed) {
       toast.success("Transaction confirmed!");
       setRefreshKey((k) => k + 1);
+      // Cleanup attachments for resolved deals
     }
   }, [txConfirmed]);
 
