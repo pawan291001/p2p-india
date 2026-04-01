@@ -165,6 +165,11 @@ const News = () => {
                     </div>
                     <h3 className="font-semibold text-foreground mb-1">{article.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{article.summary}</p>
+                    {article.source && article.source.startsWith("http") && (
+                      <p className="text-xs text-primary mt-2 truncate">
+                        {(() => { try { return new URL(article.source).hostname.replace("www.", ""); } catch { return ""; } })()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </button>
