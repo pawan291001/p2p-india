@@ -27,7 +27,7 @@ const About = () => (
         About Crypto P2P
       </h1>
       <p className="text-muted-foreground text-sm mb-10 max-w-xl">
-        A fully decentralised peer-to-peer trading platform built on BNB Smart Chain. Buy and sell crypto directly — secured by smart contract escrow.
+        A fully decentralised peer-to-peer marketplace built on BNB Smart Chain. Transfer crypto directly between users — secured by smart contract escrow.
       </p>
 
       {/* Features */}
