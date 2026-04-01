@@ -18,6 +18,14 @@ const NAV_LINKS = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { address } = useAccount();
+  const unreadCount = useGlobalUnreadCount(address);
+
+  const navLinks = NAV_LINKS.map((link) =>
+    link.href === "/my-orders" && unreadCount > 0
+      ? { ...link, badge: unreadCount }
+      : link
+  );
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-surface-1/80 backdrop-blur-xl safe-top">
