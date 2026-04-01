@@ -56,15 +56,16 @@ export function useChatMessages(dealId: number, userAddress: string) {
         },
         (payload) => {
           const newMsg = payload.new as any;
+          const isOwn = newMsg.sender_address.toLowerCase() === userAddress.toLowerCase();
+
+          // Play notification sound for incoming partner messages
+          if (!isOwn) {
+            playChatNotification();
+          }
+
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [
-              ...prev,
-              {
-                ...newMsg,
-                isOwn: newMsg.sender_address.toLowerCase() === userAddress.toLowerCase(),
-              },
-            ];
+            return [...prev, { ...newMsg, isOwn }];
           });
         }
       )
