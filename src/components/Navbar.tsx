@@ -3,7 +3,9 @@ import { Menu, X, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link, useLocation } from "react-router-dom";
+import { useAccount } from "wagmi";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useGlobalUnreadCount } from "@/hooks/useGlobalUnreadCount";
 
 const NAV_LINKS = [
   { label: "P2P Trading", href: "/" },
