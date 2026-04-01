@@ -99,7 +99,7 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="mt-3 pt-3 border-t border-border flex items-center gap-3">
-              <a href="https://t.me/XplorerTobi1" target="_blank" rel="noopener noreferrer">
+              <a href="https://t.me/Tobi3811" target="_blank" rel="noopener noreferrer">
                 <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px] text-muted-foreground hover:text-foreground">
                   <MessageCircle className="h-5 w-5" />
                 </Button>
