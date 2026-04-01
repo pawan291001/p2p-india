@@ -80,6 +80,7 @@ const MyOrders = () => {
     : [];
 
   const dealTxMap = useDealTxHashes(myDeals.map((d) => d.dealId));
+  const unreadCounts = useUnreadCounts(myDeals.map((d) => d.dealId), address || "");
 
   // Detect counterparty actions via polling changes
   const prevDealsRef = useRef<typeof myDeals>([]);
