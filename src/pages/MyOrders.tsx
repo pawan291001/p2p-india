@@ -17,6 +17,7 @@ import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import ChatPanel from "@/components/ChatPanel";
 import { playSuccessChime, playAlertChime } from "@/lib/sounds";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
@@ -79,6 +80,7 @@ const MyOrders = () => {
     : [];
 
   const dealTxMap = useDealTxHashes(myDeals.map((d) => d.dealId));
+  const unreadCounts = useUnreadCounts(myDeals.map((d) => d.dealId), address || "");
 
   // Detect counterparty actions via polling changes
   const prevDealsRef = useRef<typeof myDeals>([]);
@@ -290,9 +292,14 @@ const MyOrders = () => {
               </Button>
             )}
             {(deal.status === 0 || deal.status === 1 || deal.status === 4) && (
-              <Button variant="ghost" size="sm" className="text-muted-foreground ml-auto" onClick={() => setChatDealId(showChat ? null : deal.dealId)}>
+              <Button variant="ghost" size="sm" className="text-muted-foreground ml-auto relative" onClick={() => setChatDealId(showChat ? null : deal.dealId)}>
                 <MessageSquare className="h-3 w-3 mr-1" />
                 {showChat ? "Hide Chat" : "Chat"}
+                {!showChat && (unreadCounts[deal.dealId] || 0) > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sell px-1 text-[10px] font-bold text-white">
+                    {unreadCounts[deal.dealId]}
+                  </span>
+                )}
               </Button>
             )}
           </div>
