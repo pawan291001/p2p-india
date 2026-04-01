@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -27,6 +26,45 @@ interface RssArticle {
   source: string;
 }
 
+function extractTag(xml: string, tag: string): string {
+  // Handle CDATA sections
+  const cdataRe = new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></${tag}>`, "i");
+  const cdataMatch = xml.match(cdataRe);
+  if (cdataMatch) return cdataMatch[1].trim();
+
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i");
+  const match = xml.match(re);
+  return match ? match[1].trim() : "";
+}
+
+function parseRssItems(xml: string): Array<{ title: string; link: string; pubDate: string; description: string }> {
+  const items: Array<{ title: string; link: string; pubDate: string; description: string }> = [];
+  const itemRegex = /<item[\s>]([\s\S]*?)<\/item>/gi;
+  let match;
+
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const itemXml = match[1];
+    const title = extractTag(itemXml, "title");
+    let link = extractTag(itemXml, "link");
+    // Some feeds put link as self-closing or empty — try guid as fallback
+    if (!link || link.length < 5) {
+      link = extractTag(itemXml, "guid");
+    }
+    const pubDate = extractTag(itemXml, "pubDate");
+    const description = extractTag(itemXml, "description");
+
+    if (title) {
+      items.push({ title, link, pubDate, description });
+    }
+  }
+
+  return items;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").replace(/&[a-z]+;/gi, " ").replace(/&#\d+;/g, " ").replace(/\s+/g, " ").trim();
+}
+
 async function fetchRssFeed(feedUrl: string, sourceName: string): Promise<RssArticle[]> {
   try {
     const controller = new AbortController();
@@ -43,25 +81,22 @@ async function fetchRssFeed(feedUrl: string, sourceName: string): Promise<RssArt
     }
 
     const xml = await res.text();
-    const doc = new DOMParser().parseFromString(xml, "text/xml");
-    if (!doc) return [];
-
-    const items = doc.querySelectorAll("item");
+    const items = parseRssItems(xml);
     const articles: RssArticle[] = [];
     const cutoff = Date.now() - TWO_HOURS_MS;
 
     for (const item of items) {
-      const title = item.querySelector("title")?.textContent?.trim() || "";
-      const link = item.querySelector("link")?.textContent?.trim() || "";
-      const pubDateStr = item.querySelector("pubDate")?.textContent?.trim() || "";
-      const description = item.querySelector("description")?.textContent?.trim() || "";
-
-      if (!title || !pubDateStr) continue;
-
-      const pubDate = new Date(pubDateStr);
+      if (!item.pubDate) continue;
+      const pubDate = new Date(item.pubDate);
       if (isNaN(pubDate.getTime()) || pubDate.getTime() < cutoff) continue;
 
-      articles.push({ title, link, pubDate: pubDate.toISOString(), description, source: sourceName });
+      articles.push({
+        title: stripHtml(item.title),
+        link: item.link,
+        pubDate: pubDate.toISOString(),
+        description: item.description,
+        source: sourceName,
+      });
     }
 
     console.log(`${sourceName}: found ${articles.length} recent articles`);
@@ -70,10 +105,6 @@ async function fetchRssFeed(feedUrl: string, sourceName: string): Promise<RssArt
     console.error(`RSS error for ${sourceName}:`, e instanceof Error ? e.message : e);
     return [];
   }
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
 }
 
 serve(async (req) => {
@@ -109,6 +140,7 @@ serve(async (req) => {
       RSS_FEEDS.map((f) => fetchRssFeed(f.url, f.name))
     );
     const allArticles = feedResults.flat();
+    console.log(`Total RSS articles found (last 2h): ${allArticles.length}`);
 
     // 4. Deduplicate
     const newArticles = allArticles.filter(
@@ -123,7 +155,7 @@ serve(async (req) => {
       );
     }
 
-    // 5. Take top 5 most recent, use AI to categorize and summarize
+    // 5. Take top 5 most recent
     const top = newArticles
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
       .slice(0, 5);
@@ -131,9 +163,8 @@ serve(async (req) => {
     let rows: any[];
 
     if (LOVABLE_API_KEY) {
-      // Use AI to categorize and generate clean summaries
       const articleList = top.map((a, i) =>
-        `${i + 1}. Title: ${a.title}\nSource: ${a.source}\nDescription: ${stripHtml(a.description).slice(0, 500)}`
+        `${i + 1}. Title: ${a.title}\nSource: ${a.source}\nURL: ${a.link}\nDescription: ${stripHtml(a.description).slice(0, 500)}`
       ).join("\n\n");
 
       try {
@@ -151,10 +182,10 @@ serve(async (req) => {
                 content: `You categorize and summarize crypto news articles. For each article, return:
 - "category": one of "bitcoin", "ethereum", "defi", "regulation", "market", "technology", "security", "general"
 - "summary": 1-2 sentence summary (max 200 chars)
-- "content": 2-3 paragraph expanded article based on the description provided
+- "content": 2-3 paragraph expanded summary based on the description
 
-Return a JSON array with objects in the same order as input. Each object: {"category": "...", "summary": "...", "content": "..."}.
-Return ONLY the JSON array.`,
+Return a JSON array in same order as input. Each object: {"category":"...","summary":"...","content":"..."}.
+Return ONLY the JSON array, no markdown.`,
               },
               { role: "user", content: articleList },
             ],
@@ -177,7 +208,7 @@ Return ONLY the JSON array.`,
             published_at: a.pubDate,
           }));
         } else {
-          console.error("AI categorization failed, using raw data:", aiRes.status);
+          console.error("AI categorization failed:", aiRes.status);
           rows = top.map((a) => ({
             title: a.title,
             summary: stripHtml(a.description).slice(0, 200),
@@ -201,7 +232,6 @@ Return ONLY the JSON array.`,
         }));
       }
     } else {
-      // No AI key, store raw
       rows = top.map((a) => ({
         title: a.title,
         summary: stripHtml(a.description).slice(0, 200),
@@ -224,7 +254,7 @@ Return ONLY the JSON array.`,
 
     console.log(`Saved ${rows.length} real news articles from RSS feeds`);
     return new Response(
-      JSON.stringify({ success: true, count: rows.length, sources: top.map((a) => a.source) }),
+      JSON.stringify({ success: true, count: rows.length, sources: top.map((a) => `${a.source}: ${a.title}`) }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
