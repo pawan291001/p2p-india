@@ -159,24 +159,19 @@ Return ONLY a JSON array with 3-5 articles. No markdown code blocks.`
       );
     }
 
-    // Build source string from URLs — prefer article-specific, fall back to all Perplexity citations
-    const allCitationsStr = citations.length > 0 ? citations.join(",") : "Web Search";
+    // Always use Perplexity citations as source — these are the real sources
+    const allCitationsStr = citations.length > 0 ? citations.filter((c: string) => c.startsWith("http")).join(",") : "Web Search";
+    console.log("Using source string:", allCitationsStr);
 
-    const rows = newArticles.map((a: any) => {
-      const sourceUrls = a.source_urls || [];
-      const validUrls = sourceUrls.filter((u: string) => typeof u === "string" && u.startsWith("http"));
-      const sourceText = validUrls.length > 0 ? validUrls.join(",") : allCitationsStr;
-
-      return {
-        title: a.title,
-        summary: a.summary,
-        content: a.content,
-        category: a.category || "general",
-        source: sourceText,
-        image_url: null,
-        published_at: new Date().toISOString(),
-      };
-    });
+    const rows = newArticles.map((a: any) => ({
+      title: a.title,
+      summary: a.summary,
+      content: a.content,
+      category: a.category || "general",
+      source: allCitationsStr,
+      image_url: null,
+      published_at: new Date().toISOString(),
+    }));
 
     const { error: insertError } = await supabase.from("crypto_news").insert(rows);
 
