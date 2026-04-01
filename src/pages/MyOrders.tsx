@@ -17,6 +17,7 @@ import { P2P_ESCROW_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import ChatPanel from "@/components/ChatPanel";
 import { playSuccessChime, playAlertChime } from "@/lib/sounds";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 
