@@ -66,7 +66,7 @@ const About = () => (
       <div className="rounded-lg border border-border bg-card p-4">
         <h3 className="text-sm font-medium text-foreground mb-1">Smart Contract</h3>
         <p className="text-xs text-muted-foreground mb-2">
-          All trades are secured by our escrow contract deployed on BNB Smart Chain mainnet.
+          All transfers are secured by our escrow contract deployed on BNB Smart Chain mainnet.
         </p>
         <a
           href="https://bscscan.com/address/0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95"
