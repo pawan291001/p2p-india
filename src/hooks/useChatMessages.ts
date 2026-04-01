@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { playChatNotification } from "@/lib/sounds";
 
 export interface ChatMessage {
   id: string;
