@@ -16,7 +16,7 @@ const SECTIONS = [
     id: "connect",
     title: "Step 1 — Connect Your Wallet",
     content: [
-      "To start trading, you need a crypto wallet that supports BNB Smart Chain. Popular options include MetaMask, Trust Wallet, and Coinbase Wallet.",
+      "To get started, you need a crypto wallet that supports BNB Smart Chain. Popular options include MetaMask, Trust Wallet, and Coinbase Wallet.",
       "Click the \"Connect Wallet\" button in the top-right corner of the navbar. A popup will appear showing supported wallets. Select yours, approve the connection, and make sure you're on the BNB Smart Chain network.",
       "Your wallet address acts as your identity on the platform — no account creation, email, or password needed.",
     ],
