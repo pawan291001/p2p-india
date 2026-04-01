@@ -85,12 +85,12 @@ const About = () => (
           Need help with a trade, dispute, or anything else? Reach out on Telegram.
         </p>
         <a
-          href="https://t.me/XplorerTobi1"
+          href="https://t.me/Tobi3811"
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-primary hover:underline"
         >
-          @XplorerTobi1 on Telegram →
+          @Tobi3811 on Telegram →
         </a>
       </div>
     </main>

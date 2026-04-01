@@ -133,7 +133,7 @@ const SECTIONS = [
     id: "support",
     title: "Getting Help",
     content: [
-      "If you need help with a trade, dispute, or anything else, reach out on Telegram: @XplorerTobi1",
+      "If you need help with a trade, dispute, or anything else, reach out on Telegram: @Tobi3811",
       "You can also use the support button (chat icon) in the bottom-right corner of any page to quickly get to our Telegram support.",
       "For general questions, check the FAQ section on the homepage — it covers the most common questions about the platform.",
     ],
