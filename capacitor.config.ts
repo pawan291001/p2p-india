@@ -1,9 +1,22 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.e7ff8c4233b54f2c8dd4523bfb485052',
-  appName: 'Crypto P2P',
-  webDir: 'dist'
+  appId: 'com.cryptop2p.india',
+  appName: 'Crypto P2P India',
+  webDir: 'dist',
+  android: {
+    buildOptions: {
+      signingType: 'apksigner',
+    },
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#1a1d24',
+      showSpinner: false,
+      androidScaleType: 'CENTER_CROP',
+    },
+  },
 };
 
 export default config;
