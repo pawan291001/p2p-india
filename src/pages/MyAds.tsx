@@ -17,6 +17,7 @@ import { playSuccessChime, playAlertChime } from "@/lib/sounds";
 import { parsePaymentInfo } from "@/lib/parsePaymentInfo";
 import CreateOrderModal from "@/components/CreateOrderModal";
 import ChatPanel from "@/components/ChatPanel";
+import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 
 const shortAddr = (addr: string) => `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 const formatTime = (seconds: number) => {
