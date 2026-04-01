@@ -1,4 +1,4 @@
-import { TrendingUp, ShieldCheck, Wallet, BarChart3, Clock } from "lucide-react";
+import { TrendingUp, ShieldCheck, Wallet, BarChart3, Clock, CheckCircle2 } from "lucide-react";
 import { useAccount, useBalance, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 import { USDT_ADDRESS } from "@/config/wagmi";
@@ -23,7 +23,7 @@ const StatsBar = () => {
   const usdtFormatted = usdtRaw ? parseFloat(formatUnits(usdtRaw as bigint, 18)).toFixed(2) : "0";
 
   // Calculate volumes from completed deals (status 2 = completed)
-  const { totalVolume, volume24h } = useMemo(() => {
+  const { totalVolume, volume24h, completedCount } = useMemo(() => {
     const completedDeals = deals.filter((d) => d.status === 2);
     const now = Math.floor(Date.now() / 1000);
     const oneDayAgo = now - 24 * 60 * 60;
@@ -40,7 +40,7 @@ const StatsBar = () => {
       }
     }
 
-    return { totalVolume: total, volume24h: last24h };
+    return { totalVolume: total, volume24h: last24h, completedCount: completedDeals.length };
   }, [deals]);
 
   const formatINR = (val: number) => {
@@ -62,6 +62,11 @@ const StatsBar = () => {
       value: isConnected ? `${usdtFormatted} USDT` : "—",
     },
     {
+      icon: CheckCircle2,
+      label: "Completed Deals",
+      value: `${completedCount}`,
+    },
+    {
       icon: BarChart3,
       label: "Total Volume",
       value: formatINR(totalVolume),
@@ -74,7 +79,7 @@ const StatsBar = () => {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {stats.map((stat, i) => (
         <div
           key={stat.label}
