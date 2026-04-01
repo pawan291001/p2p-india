@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Newspaper, Clock, ArrowLeft, RefreshCw } from "lucide-react";
+import { Newspaper, Clock, ArrowLeft, RefreshCw, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
