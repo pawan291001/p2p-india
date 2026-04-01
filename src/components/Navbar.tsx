@@ -8,7 +8,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useGlobalUnreadCount } from "@/hooks/useGlobalUnreadCount";
 
 const NAV_LINKS = [
-  { label: "P2P Trading", href: "/" },
+  { label: "P2P Marketplace", href: "/" },
   { label: "My Ads", href: "/my-ads" },
   { label: "My Deals", href: "/my-orders" },
   { label: "Guide", href: "/guide" },

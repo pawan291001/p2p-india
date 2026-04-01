@@ -82,7 +82,7 @@ const About = () => (
       <div className="rounded-lg border border-border bg-card p-4 mt-4">
         <h3 className="text-sm font-medium text-foreground mb-1">Support</h3>
         <p className="text-xs text-muted-foreground mb-2">
-          Need help with a trade, dispute, or anything else? Reach out on Telegram.
+          Need help with a deal, dispute, or anything else? Reach out on Telegram.
         </p>
         <a
           href="https://t.me/Tobi3811"

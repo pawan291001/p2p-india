@@ -65,7 +65,7 @@ const FAQS = [
   },
   {
     q: "Do I need KYC to use Crypto P2P?",
-    a: "No. Crypto P2P is fully decentralised and does not require any KYC, identity verification, or account creation. Just connect your wallet and start trading.",
+    a: "No. Crypto P2P is fully decentralised and does not require any KYC, identity verification, or account creation. Just connect your wallet and start using the marketplace.",
   },
   {
     q: "What if I send payment to the wrong account?",

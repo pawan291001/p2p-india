@@ -27,8 +27,8 @@ const NewsSection = () => {
             <Newspaper className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground sm:text-2xl">Crypto Daily News</h2>
-            <p className="text-sm text-muted-foreground">AI-powered updates every hour</p>
+            <h2 className="text-xl font-bold text-foreground sm:text-2xl">Crypto News</h2>
+            <p className="text-sm text-muted-foreground">For informational purposes only · Updated hourly</p>
           </div>
         </div>
         <Link to="/news">

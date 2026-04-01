@@ -123,7 +123,7 @@ const SECTIONS = [
       "✅ Never send payment outside the deal — only use the details shown in your active deal.",
       "✅ Complete trades within the deal timeout to avoid issues.",
       "✅ Take screenshots of your payment as evidence in case of disputes.",
-      "✅ Start with small amounts if you're new to P2P trading.",
+      "✅ Start with small amounts if you're new to P2P transfers.",
       "❌ Don't trust anyone asking you to cancel a deal after you've already paid.",
       "❌ Don't send crypto directly — always use the platform's escrow system.",
       "❌ Don't share your wallet private key with anyone.",

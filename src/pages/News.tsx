@@ -120,7 +120,7 @@ const News = () => {
             <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Crypto News</h1>
           </div>
           <p className="text-sm text-muted-foreground ml-[52px]">
-            AI-powered crypto news updated every hour
+            For informational purposes only — not financial advice
           </p>
         </div>
 

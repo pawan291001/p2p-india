@@ -19,7 +19,7 @@ const Footer = () => (
         <div>
           <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Platform</h4>
           <ul className="space-y-2">
-            <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">P2P Trading</Link></li>
+            <li><Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">P2P Marketplace</Link></li>
             <li><Link to="/my-ads" className="text-sm text-muted-foreground hover:text-foreground transition-colors">My Ads</Link></li>
             <li><Link to="/my-orders" className="text-sm text-muted-foreground hover:text-foreground transition-colors">My Deals</Link></li>
             <li><Link to="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">About</Link></li>
