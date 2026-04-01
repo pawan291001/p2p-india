@@ -69,27 +69,29 @@ const News = () => {
             ))}
           </div>
 
-          {/* Source links */}
-          {selectedArticle.source && selectedArticle.source !== "Web Search" && (
+          {/* Sources */}
+          {selectedArticle.source && selectedArticle.source !== "Crypto News Aggregator" && (
             <div className="mt-8 pt-6 border-t border-border">
               <h4 className="text-sm font-semibold text-foreground mb-3">Sources</h4>
-              <div className="flex flex-col gap-2">
-                {selectedArticle.source.split(",").map((url, i) => {
-                  const trimmed = url.trim();
-                  if (!trimmed.startsWith("http")) return null;
-                  let domain = "";
-                  try { domain = new URL(trimmed).hostname.replace("www.", ""); } catch { domain = trimmed; }
+              <div className="flex flex-wrap gap-2">
+                {selectedArticle.source.split(",").map((src, i) => {
+                  const trimmed = src.trim();
+                  if (!trimmed) return null;
+                  const isUrl = trimmed.startsWith("http");
+                  if (isUrl) {
+                    let domain = trimmed;
+                    try { domain = new URL(trimmed).hostname.replace("www.", ""); } catch {}
+                    return (
+                      <a key={i} href={trimmed} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-primary hover:bg-muted transition-colors">
+                        <ExternalLink className="h-3 w-3" />{domain}
+                      </a>
+                    );
+                  }
                   return (
-                    <a
-                      key={i}
-                      href={trimmed}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm text-primary hover:underline truncate"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{domain}</span>
-                    </a>
+                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+                      {trimmed}
+                    </span>
                   );
                 })}
               </div>
