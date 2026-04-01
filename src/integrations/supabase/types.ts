@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      crypto_news: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          published_at: string
+          source: string | null
+          summary: string
+          title: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string
+          source?: string | null
+          summary: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string
+          source?: string | null
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
       deal_messages: {
         Row: {
           attachment_type: string | null
