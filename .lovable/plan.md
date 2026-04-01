@@ -1,91 +1,64 @@
 
 
-# P2PEscrow Contract v3 — Per-Ad Escrow + Auto Re-list
+# Real-Time Crypto News from Live Sources
 
-## What You Asked For
+## Problem
+Current system uses AI to generate news, which can hallucinate. You want real, verified news from the last 2-4 hours only, with automatic cleanup of articles older than 4 days.
 
-1. **Per-ad fund isolation** — Each ad's USDT/BNB is tracked separately so one ad's funds can never be used for another ad's deal.
-2. **Auto re-list on deal timeout** — When a buyer fails to complete within the deal timeout (e.g. 15 min), instead of refunding the seller and cancelling the ad, the ad goes **Live again** with its original full ad duration reset. The USDT stays locked in the contract.
-3. **Seller can still cancel and get refund** — Seller can cancel the ad manually at any time (when Live) to withdraw their tokens.
-4. **Full audit** of the contract for other issues.
+## Strategy: Free RSS Feeds + AI Processing
 
-## Audit Findings (Current Contract)
+We'll scrape **free public RSS feeds** from major crypto news outlets (no API key needed), then use Lovable AI to categorize and summarize them.
 
-1. **Ghost ad bug** — Already fixed in v2 (cancelTimedOutDeal cancels ad). Will be replaced by new re-list logic.
-2. **No per-ad balance tracking** — Contract relies on total contract balance. If emergency withdraw is used carelessly, it could drain escrowed funds. Will fix with per-ad tracking.
-3. **Ad expiry during InDeal** — If ad expires while a deal is active, the deal still works (good), but after timeout the ad gets cancelled. New logic: ad expiry is paused during deals and reset after timeout.
-4. **Double-decrement risk** — `activeAdCount` is decremented in both `sellerConfirmReceived` and `cancelTimedOutDeal`. With re-list logic, we only decrement on final cancel/complete, not on timeout re-list.
-5. **No event for re-list** — Will add `AdRelisted` event.
+### Data Sources (all free, no auth required)
+- **CoinDesk** RSS: `https://www.coindesk.com/arc/outboundfeeds/rss/`
+- **CoinTelegraph** RSS: `https://cointelegraph.com/rss`
+- **Bitcoin Magazine** RSS: `https://bitcoinmagazine.com/feed`
+- **Decrypt** RSS: `https://decrypt.co/feed`
+- **The Block** RSS: `https://www.theblock.co/rss.xml`
 
-## Key Contract Changes
+These cover hacks, scams, regulatory actions, market moves, whale activity, and all major crypto events.
 
-### 1. Add per-ad escrow balance tracking
-```solidity
-mapping(uint256 => uint256) public adEscrowBalance;
-```
-Set on `createAd`, checked on `acceptAd`, cleared on final release/cancel/refund.
+## Changes
 
-### 2. Store original ad duration in Ad struct
-```solidity
-struct Ad {
-    ...
-    uint256 adDuration;  // NEW: original duration for re-listing
-    ...
-}
-```
+### 1. Rewrite `generate-crypto-news` Edge Function
+- Fetch RSS feeds from 5+ crypto news sources using native `fetch` (RSS is public XML)
+- Parse XML to extract articles published in the **last 2 hours only**
+- Skip any article older than 2 hours
+- Use Lovable AI (Gemini Flash) to categorize each article and generate a clean summary
+- Store the **original source URL** as a clickable link
+- Deduplicate against existing titles in the database
 
-### 3. New `cancelTimedOutDeal` — Re-list instead of refund
-```
-When deal times out (buyer didn't confirm):
-  - Deal status → Cancelled
-  - Ad status → Live (back on marketplace)
-  - Ad expiry → block.timestamp + ad.adDuration (fresh timer)
-  - USDT stays in contract (adEscrowBalance unchanged)
-  - Decrement deal counters only (NOT ad counter)
-```
+### 2. Add Auto-Cleanup of Old Articles
+- Before inserting new articles, delete all articles with `published_at` older than 4 days
+- This keeps the feed fresh and the database clean
 
-### 4. Seller manual cancel still refunds
-`cancelAd` unchanged — seller gets tokens back, ad cancelled, escrow balance cleared.
+### 3. Update News UI
+- Show the original source link prominently on each article card
+- Add a "freshness" indicator (e.g., "2 hours ago" badge)
+- Filter out any article older than 1 day from the frontend display as a safety net
 
-### 5. `claimExpiredAd` still refunds on true expiry
-When ad duration fully expires with no active deal, seller reclaims.
+### 4. Update `useCryptoNews` Hook
+- Add a date filter to only fetch articles from the last 24 hours
+- Keep realtime subscription for instant updates
 
-### 6. Safety checks
-- `acceptAd` verifies `adEscrowBalance[adId] >= a.tokenAmount`
-- `sellerConfirmReceived` transfers from escrow balance, zeroes it
-- `resolveDispute` transfers from escrow balance, zeroes it
-- Emergency withdraw checks against total escrowed amount to prevent draining active escrows
-
-### 7. New event
-```solidity
-event AdRelisted(uint256 indexed adId, uint256 newExpiry);
-```
-
-## Full Flow After Changes
+## Technical Details
 
 ```text
-Seller creates ad (100 USDT, 24h duration, 15min deal timeout)
-  → USDT locked, adEscrowBalance[adId] = 100 USDT
-  → Ad is Live for 24 hours
-
-Buyer A accepts → Ad = InDeal, deal timer = 15 min
-  Buyer A fails to pay in 15 min → Deal cancelled
-  → Ad goes Live AGAIN with fresh 24h timer
-  → USDT stays locked in contract
-
-Buyer B accepts → Ad = InDeal, deal timer = 15 min
-  Buyer B pays, seller confirms → USDT released to Buyer B
-  → Ad = Completed, escrow balance = 0
-
-OR: Seller cancels ad (when Live) → USDT refunded, ad = Cancelled
+Flow:
+RSS Feeds (free) → Edge Function fetches XML → Parse articles from last 2h
+  → Lovable AI categorizes + summarizes → Insert to crypto_news table
+  → Delete articles older than 4 days → Frontend shows fresh news only
 ```
 
-## Files to Change
+- RSS parsing: Use a lightweight XML parser (`DOMParser` available in Deno)
+- No new API keys needed — RSS feeds are public
+- Each article stores the real source URL in the `source` column
+- Cron job continues running every hour
 
-- **`contracts/P2PEscrow.sol`** — Full rewrite with all changes above. You redeploy this.
-- After redeployment, you give the new contract address and I update `src/config/wagmi.ts` and `src/config/abi.ts`.
-
-## What Won't Change
-- ABI structure stays compatible (same function names/signatures, just new behavior)
-- UI code mostly unchanged — the `refundedRelistedAdIds` workaround in Index.tsx can be removed since the contract now handles it properly
+### Files to modify:
+- `supabase/functions/generate-crypto-news/index.ts` — complete rewrite for RSS scraping
+- `src/hooks/useCryptoNews.ts` — add 24h filter
+- `src/pages/News.tsx` — add source link buttons
+- `src/components/NewsSection.tsx` — minor freshness indicator
+- Database migration: cleanup old articles via the edge function (no schema changes needed)
 
