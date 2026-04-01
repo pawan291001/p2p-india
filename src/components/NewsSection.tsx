@@ -71,9 +71,16 @@ const NewsSection = () => {
               <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                 {article.summary}
               </p>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                {formatDistanceToNow(new Date(article.published_at), { addSuffix: true })}
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  {formatDistanceToNow(new Date(article.published_at), { addSuffix: true })}
+                </div>
+                {article.source && article.source.startsWith("http") && (
+                  <span className="text-primary truncate max-w-[120px]">
+                    {(() => { try { return new URL(article.source).hostname.replace("www.", ""); } catch { return "Source"; } })()}
+                  </span>
+                )}
               </div>
             </Link>
           ))}

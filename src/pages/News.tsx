@@ -69,27 +69,31 @@ const News = () => {
             ))}
           </div>
 
-          {/* Sources */}
-          {selectedArticle.source && selectedArticle.source !== "Crypto News Aggregator" && (
+          {/* Source link */}
+          {selectedArticle.source && selectedArticle.source.startsWith("http") && (
+            <div className="mt-8 pt-6 border-t border-border">
+              <a
+                href={selectedArticle.source}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Read full article on {(() => { try { return new URL(selectedArticle.source).hostname.replace("www.", ""); } catch { return "source"; } })()}
+              </a>
+            </div>
+          )}
+
+          {/* Legacy comma-separated sources */}
+          {selectedArticle.source && !selectedArticle.source.startsWith("http") && selectedArticle.source !== "Crypto News Aggregator" && (
             <div className="mt-8 pt-6 border-t border-border">
               <h4 className="text-sm font-semibold text-foreground mb-3">Sources</h4>
               <div className="flex flex-wrap gap-2">
                 {selectedArticle.source.split(",").map((src, i) => {
                   const trimmed = src.trim();
                   if (!trimmed) return null;
-                  const isUrl = trimmed.startsWith("http");
-                  if (isUrl) {
-                    let domain = trimmed;
-                    try { domain = new URL(trimmed).hostname.replace("www.", ""); } catch {}
-                    return (
-                      <a key={i} href={trimmed} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-primary hover:bg-muted transition-colors">
-                        <ExternalLink className="h-3 w-3" />{domain}
-                      </a>
-                    );
-                  }
                   return (
-                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+                    <span key={i} className="inline-flex items-center rounded-full border border-border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
                       {trimmed}
                     </span>
                   );
@@ -165,6 +169,11 @@ const News = () => {
                     </div>
                     <h3 className="font-semibold text-foreground mb-1">{article.title}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-2">{article.summary}</p>
+                    {article.source && article.source.startsWith("http") && (
+                      <p className="text-xs text-primary mt-2 truncate">
+                        {(() => { try { return new URL(article.source).hostname.replace("www.", ""); } catch { return ""; } })()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </button>

@@ -17,18 +17,20 @@ export function useCryptoNews(limit = 6) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchArticles = async () => {
+      // Only fetch articles from the last 24 hours
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data } = await supabase
         .from("crypto_news")
         .select("*")
+        .gte("published_at", since)
         .order("published_at", { ascending: false })
         .limit(limit);
       setArticles((data as NewsArticle[]) || []);
       setIsLoading(false);
     };
-    fetch();
+    fetchArticles();
 
-    // Realtime subscription for new articles
     const channel = supabase
       .channel("crypto-news-updates")
       .on(
