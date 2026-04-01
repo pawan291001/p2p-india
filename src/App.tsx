@@ -11,6 +11,7 @@ import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Guide from "./pages/Guide";
+import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 import SupportButton from "@/components/SupportButton";
 
