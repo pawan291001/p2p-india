@@ -3,7 +3,9 @@ import { Menu, X, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Link, useLocation } from "react-router-dom";
+import { useAccount } from "wagmi";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useGlobalUnreadCount } from "@/hooks/useGlobalUnreadCount";
 
 const NAV_LINKS = [
   { label: "P2P Trading", href: "/" },
@@ -16,6 +18,14 @@ const NAV_LINKS = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { address } = useAccount();
+  const unreadCount = useGlobalUnreadCount(address);
+
+  const navLinks = NAV_LINKS.map((link) =>
+    link.href === "/my-orders" && unreadCount > 0
+      ? { ...link, badge: unreadCount }
+      : link
+  );
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-surface-1/80 backdrop-blur-xl safe-top">
@@ -26,18 +36,23 @@ const Navbar = () => {
             Crypto P2P
           </Link>
           <div className="hidden items-center gap-1 md:flex">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link key={link.href} to={link.href}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={
+                  className={`relative ${
                     location.pathname === link.href
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
-                  }
+                  }`}
                 >
                   {link.label}
+                  {"badge" in link && (link as any).badge > 0 && (
+                    <span className="absolute -top-0.5 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                      {(link as any).badge > 99 ? "99+" : (link as any).badge}
+                    </span>
+                  )}
                 </Button>
               </Link>
             ))}
@@ -65,16 +80,21 @@ const Navbar = () => {
       {mobileOpen && (
         <div className="border-t border-border bg-surface-1 px-4 pb-6 pt-3 md:hidden animate-fade-in safe-x safe-bottom">
           <div className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}>
                 <Button
                   variant="ghost"
                   size="lg"
-                  className={`w-full justify-start min-h-[48px] text-base ${
+                  className={`w-full justify-start min-h-[48px] text-base relative ${
                     location.pathname === link.href ? "text-foreground bg-accent" : "text-muted-foreground"
                   }`}
                 >
                   {link.label}
+                  {"badge" in link && (link as any).badge > 0 && (
+                    <span className="ml-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold text-destructive-foreground">
+                      {(link as any).badge > 99 ? "99+" : (link as any).badge}
+                    </span>
+                  )}
                 </Button>
               </Link>
             ))}
