@@ -23,24 +23,26 @@ const StatsBar = () => {
   const usdtFormatted = usdtRaw ? parseFloat(formatUnits(usdtRaw as bigint, 18)).toFixed(2) : "0";
 
   // Calculate volumes from completed deals (status 2 = completed)
-  const { totalVolume, volume24h, completedCount } = useMemo(() => {
+  const { totalVolume, volume24h, completedCount, totalUsdtVolume } = useMemo(() => {
     const completedDeals = deals.filter((d) => d.status === 2);
     const now = Math.floor(Date.now() / 1000);
     const oneDayAgo = now - 24 * 60 * 60;
 
     let total = 0;
     let last24h = 0;
+    let totalUsdt = 0;
 
     for (const deal of completedDeals) {
       const inr = parseFloat(deal.inrAmount) || 0;
+      const usdt = parseFloat(deal.tokenAmount) || 0;
       total += inr;
-      // Use deadline as a proxy for completion time (deadline is set when deal was created)
+      totalUsdt += usdt;
       if (deal.deadline > oneDayAgo || deal.deadline > now - 48 * 60 * 60) {
         last24h += inr;
       }
     }
 
-    return { totalVolume: total, volume24h: last24h, completedCount: completedDeals.length };
+    return { totalVolume: total, volume24h: last24h, completedCount: completedDeals.length, totalUsdtVolume: totalUsdt };
   }, [deals]);
 
   const formatINR = (val: number) => {
@@ -48,6 +50,12 @@ const StatsBar = () => {
     if (val >= 100000) return `₹${(val / 100000).toFixed(2)} L`;
     if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
     return `₹${val.toFixed(0)}`;
+  };
+
+  const formatUSDT = (val: number) => {
+    if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
+    if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
+    return `$${val.toFixed(2)}`;
   };
 
   const stats = [
@@ -68,8 +76,13 @@ const StatsBar = () => {
     },
     {
       icon: BarChart3,
-      label: "Total Volume",
+      label: "Volume (INR)",
       value: formatINR(totalVolume),
+    },
+    {
+      icon: TrendingUp,
+      label: "Volume (USDT)",
+      value: formatUSDT(totalUsdtVolume),
     },
     {
       icon: Clock,
@@ -79,7 +92,7 @@ const StatsBar = () => {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {stats.map((stat, i) => (
         <div
           key={stat.label}
