@@ -258,6 +258,7 @@ const Index = () => {
         )}
       </main>
 
+      <NewsSection />
       <FaqSection />
       <Footer />
 

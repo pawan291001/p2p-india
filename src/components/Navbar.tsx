@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { label: "My Ads", href: "/my-ads" },
   { label: "My Deals", href: "/my-orders" },
   { label: "Guide", href: "/guide" },
+  { label: "News", href: "/news" },
 ];
 
 const Navbar = () => {
