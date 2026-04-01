@@ -11,7 +11,7 @@ const Footer = () => (
             Crypto P2P
           </Link>
           <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
-            Decentralised peer-to-peer crypto trading on BNB Smart Chain. Zero fees, smart contract escrow, no middlemen.
+            Decentralised peer-to-peer crypto marketplace on BNB Smart Chain. Zero fees, smart contract escrow, no middlemen.
           </p>
         </div>
 
