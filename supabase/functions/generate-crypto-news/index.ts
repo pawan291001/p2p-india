@@ -13,6 +13,9 @@ serve(async (req) => {
   }
 
   try {
+    const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
+    if (!PERPLEXITY_API_KEY) throw new Error("PERPLEXITY_API_KEY not configured");
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -27,80 +30,150 @@ serve(async (req) => {
       .select("title")
       .gte("published_at", since);
 
-    const existingTitles = (existing || []).map((r: any) => r.title).join(", ");
+    const existingTitles = (existing || []).map((r: any) => r.title);
 
-    const prompt = `You are a crypto news journalist. Generate 3 NEW and UNIQUE crypto news articles about the latest developments in cryptocurrency, blockchain, DeFi, Bitcoin, Ethereum, BNB, and related topics.
+    // Step 1: Use Perplexity to search for REAL crypto news
+    const searchResponse = await fetch("https://api.perplexity.ai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "sonar",
+        messages: [
+          {
+            role: "system",
+            content: "You are a crypto news researcher. Find the latest breaking cryptocurrency news from the last few hours. Focus on major events: hacks, scams, security breaches, major price movements (pumps/dumps), regulatory actions, protocol bugs, exchange issues, whale movements, major partnerships, and any significant market-moving events. Report ONLY real, verified news."
+          },
+          {
+            role: "user",
+            content: `Find the top 5 most important and recent cryptocurrency news stories from the last few hours. Include news about Bitcoin, Ethereum, BNB, DeFi hacks, scams, major dumps/pumps, regulatory news, security vulnerabilities, and any breaking crypto events from X/Twitter, CoinDesk, CoinTelegraph, The Block, Decrypt, or other major crypto sources.
 
-${existingTitles ? `IMPORTANT: Do NOT repeat these existing titles: ${existingTitles}` : ""}
+${existingTitles.length > 0 ? `DO NOT repeat any of these stories we already have: ${existingTitles.join(" | ")}` : ""}
 
-Each article should be current, realistic, and informative. Return a JSON array with exactly 3 objects, each having:
-- "title": catchy headline (max 100 chars)
-- "summary": 1-2 sentence summary (max 200 chars)
-- "content": full article (300-500 words, with paragraphs)
-- "category": one of "bitcoin", "ethereum", "defi", "regulation", "market", "technology", "nft", "general"
+For each story provide:
+1. The exact headline
+2. A detailed summary (2-3 sentences)
+3. The full story details (3-5 paragraphs)
+4. Category: one of "bitcoin", "ethereum", "defi", "regulation", "market", "technology", "security", "general"
 
-Return ONLY the JSON array, no other text.`;
+Return ONLY factual news that actually happened. Do not make up or fabricate any news.`
+          }
+        ],
+        search_recency_filter: "day",
+      }),
+    });
 
-    const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: "You are a crypto news content generator. Always return valid JSON arrays." },
-            { role: "user", content: prompt },
-          ],
-        }),
-      }
-    );
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errText);
-      return new Response(JSON.stringify({ error: "AI gateway error", status: aiResponse.status }), {
+    if (!searchResponse.ok) {
+      const errText = await searchResponse.text();
+      console.error("Perplexity error:", searchResponse.status, errText);
+      return new Response(JSON.stringify({ error: "Search API error", status: searchResponse.status }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const aiData = await aiResponse.json();
-    let content = aiData.choices?.[0]?.message?.content || "";
+    const searchData = await searchResponse.json();
+    const newsContent = searchData.choices?.[0]?.message?.content || "";
+    const citations = searchData.citations || [];
 
-    // Clean markdown code blocks if present
+    console.log("Perplexity citations:", JSON.stringify(citations));
+    console.log("Raw news content length:", newsContent.length);
+
+    // Step 2: Use Lovable AI to structure the news into JSON
+    const structureResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          {
+            role: "system",
+            content: "You convert news articles into structured JSON. Return ONLY a valid JSON array, no markdown formatting."
+          },
+          {
+            role: "user",
+            content: `Convert the following real crypto news into a JSON array. Each object must have:
+- "title": the headline (max 120 chars)
+- "summary": 1-2 sentence summary (max 250 chars)
+- "content": full article text with multiple paragraphs separated by newlines
+- "category": one of "bitcoin", "ethereum", "defi", "regulation", "market", "technology", "security", "general"
+- "source_urls": array of source URLs related to this news
+
+Here are source URLs found by the search (assign relevant ones to each article):
+${citations.map((c: string, i: number) => `[${i + 1}] ${c}`).join("\n")}
+
+Here is the news content:
+${newsContent}
+
+Return ONLY a JSON array with 3-5 articles. No markdown code blocks.`
+          }
+        ],
+      }),
+    });
+
+    if (!structureResponse.ok) {
+      const errText = await structureResponse.text();
+      console.error("AI gateway error:", structureResponse.status, errText);
+      return new Response(JSON.stringify({ error: "AI structuring error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const structureData = await structureResponse.json();
+    let content = structureData.choices?.[0]?.message?.content || "";
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
     let articles: any[];
     try {
       articles = JSON.parse(content);
     } catch {
-      console.error("Failed to parse AI response:", content);
-      return new Response(JSON.stringify({ error: "Failed to parse AI response" }), {
+      console.error("Failed to parse:", content.substring(0, 500));
+      return new Response(JSON.stringify({ error: "Failed to parse articles" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (!Array.isArray(articles) || articles.length === 0) {
-      return new Response(JSON.stringify({ error: "No articles generated" }), {
+      return new Response(JSON.stringify({ error: "No articles parsed" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Insert articles
-    const rows = articles.map((a: any) => ({
-      title: a.title,
-      summary: a.summary,
-      content: a.content,
-      category: a.category || "general",
-      source: "AI Generated",
-      published_at: new Date().toISOString(),
-    }));
+    // Filter out duplicates
+    const newArticles = articles.filter(
+      (a: any) => !existingTitles.some((t: string) => t.toLowerCase() === a.title?.toLowerCase())
+    );
+
+    if (newArticles.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, count: 0, message: "No new unique articles" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Build source string from URLs
+    const rows = newArticles.map((a: any) => {
+      const sourceUrls = a.source_urls || [];
+      const sourceText = sourceUrls.length > 0 ? sourceUrls.join(",") : (citations.length > 0 ? citations.slice(0, 2).join(",") : "Web Search");
+
+      return {
+        title: a.title,
+        summary: a.summary,
+        content: a.content,
+        category: a.category || "general",
+        source: sourceText,
+        image_url: null,
+        published_at: new Date().toISOString(),
+      };
+    });
 
     const { error: insertError } = await supabase.from("crypto_news").insert(rows);
 
