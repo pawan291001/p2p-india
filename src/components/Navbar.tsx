@@ -80,16 +80,21 @@ const Navbar = () => {
       {mobileOpen && (
         <div className="border-t border-border bg-surface-1 px-4 pb-6 pt-3 md:hidden animate-fade-in safe-x safe-bottom">
           <div className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}>
                 <Button
                   variant="ghost"
                   size="lg"
-                  className={`w-full justify-start min-h-[48px] text-base ${
+                  className={`w-full justify-start min-h-[48px] text-base relative ${
                     location.pathname === link.href ? "text-foreground bg-accent" : "text-muted-foreground"
                   }`}
                 >
                   {link.label}
+                  {"badge" in link && (link as any).badge > 0 && (
+                    <span className="ml-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-bold text-destructive-foreground">
+                      {(link as any).badge > 99 ? "99+" : (link as any).badge}
+                    </span>
+                  )}
                 </Button>
               </Link>
             ))}
