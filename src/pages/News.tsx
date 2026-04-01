@@ -61,8 +61,6 @@ const News = () => {
               <Clock className="h-3.5 w-3.5" />
               {format(new Date(selectedArticle.published_at), "MMM d, yyyy · h:mm a")}
             </div>
-            <span>·</span>
-            <span>{selectedArticle.source}</span>
           </div>
 
           <div className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 leading-relaxed">
@@ -70,6 +68,33 @@ const News = () => {
               <p key={i} className="mb-4">{p}</p>
             ))}
           </div>
+
+          {/* Source links */}
+          {selectedArticle.source && selectedArticle.source !== "Web Search" && (
+            <div className="mt-8 pt-6 border-t border-border">
+              <h4 className="text-sm font-semibold text-foreground mb-3">Sources</h4>
+              <div className="flex flex-col gap-2">
+                {selectedArticle.source.split(",").map((url, i) => {
+                  const trimmed = url.trim();
+                  if (!trimmed.startsWith("http")) return null;
+                  let domain = "";
+                  try { domain = new URL(trimmed).hostname.replace("www.", ""); } catch { domain = trimmed; }
+                  return (
+                    <a
+                      key={i}
+                      href={trimmed}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline truncate"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{domain}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </main>
         <Footer />
       </div>
