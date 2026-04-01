@@ -14,10 +14,12 @@ import Guide from "./pages/Guide";
 import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 import SupportButton from "@/components/SupportButton";
+import DisclaimerModal from "@/components/DisclaimerModal";
 
 const App = () => (
   <WalletProvider>
     <TooltipProvider>
+      <DisclaimerModal />
       <Toaster />
       <Sonner />
       <BrowserRouter>
