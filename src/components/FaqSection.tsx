@@ -9,7 +9,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 const FAQS = [
   {
     q: "What is Crypto P2P?",
-    a: "Crypto P2P is a decentralised peer-to-peer trading platform on BNB Smart Chain. It lets you buy and sell USDT & BNB directly with other users — no middlemen, no centralised exchange.",
+    a: "Crypto P2P is a decentralised peer-to-peer marketplace on BNB Smart Chain. It lets you transfer USDT & BNB directly with other users — no middlemen, no centralised intermediary.",
   },
   {
     q: "How does the escrow smart contract work?",
@@ -65,7 +65,7 @@ const FAQS = [
   },
   {
     q: "Do I need KYC to use Crypto P2P?",
-    a: "No. Crypto P2P is fully decentralised and does not require any KYC, identity verification, or account creation. Just connect your wallet and start trading.",
+    a: "No. Crypto P2P is fully decentralised and does not require any KYC, identity verification, or account creation. Just connect your wallet and start using the marketplace.",
   },
   {
     q: "What if I send payment to the wrong account?",

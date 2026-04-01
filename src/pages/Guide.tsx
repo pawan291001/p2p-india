@@ -7,8 +7,8 @@ const SECTIONS = [
     id: "intro",
     title: "What is Crypto P2P?",
     content: [
-      "Crypto P2P is a fully decentralised peer-to-peer trading platform built on BNB Smart Chain. It allows users to buy and sell USDT and BNB directly with each other using Indian Rupees (INR) — without any middlemen, centralised exchanges, or KYC requirements.",
-      "Every trade is secured by an on-chain escrow smart contract. The seller's tokens are locked in the contract the moment they create an ad. This means buyers can trade with confidence — the crypto is already held safely before any money changes hands.",
+      "Crypto P2P is a fully decentralised peer-to-peer marketplace built on BNB Smart Chain. It allows users to transfer USDT and BNB directly with each other using Indian Rupees (INR) — without any middlemen or centralised intermediaries.",
+      "Every transfer is secured by an on-chain escrow smart contract. The seller's tokens are locked in the contract the moment they create an ad. This means buyers can proceed with confidence — the crypto is already held safely before any money changes hands.",
       "There are zero platform fees. The only cost is the tiny BNB gas fee for on-chain transactions, which is usually under ₹1.",
     ],
   },
@@ -16,7 +16,7 @@ const SECTIONS = [
     id: "connect",
     title: "Step 1 — Connect Your Wallet",
     content: [
-      "To start trading, you need a crypto wallet that supports BNB Smart Chain. Popular options include MetaMask, Trust Wallet, and Coinbase Wallet.",
+      "To get started, you need a crypto wallet that supports BNB Smart Chain. Popular options include MetaMask, Trust Wallet, and Coinbase Wallet.",
       "Click the \"Connect Wallet\" button in the top-right corner of the navbar. A popup will appear showing supported wallets. Select yours, approve the connection, and make sure you're on the BNB Smart Chain network.",
       "Your wallet address acts as your identity on the platform — no account creation, email, or password needed.",
     ],
@@ -123,7 +123,7 @@ const SECTIONS = [
       "✅ Never send payment outside the deal — only use the details shown in your active deal.",
       "✅ Complete trades within the deal timeout to avoid issues.",
       "✅ Take screenshots of your payment as evidence in case of disputes.",
-      "✅ Start with small amounts if you're new to P2P trading.",
+      "✅ Start with small amounts if you're new to P2P transfers.",
       "❌ Don't trust anyone asking you to cancel a deal after you've already paid.",
       "❌ Don't send crypto directly — always use the platform's escrow system.",
       "❌ Don't share your wallet private key with anyone.",

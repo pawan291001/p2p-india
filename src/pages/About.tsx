@@ -5,7 +5,7 @@ import { Shield, Zap, Users, Lock, ArrowLeftRight, Clock } from "lucide-react";
 const FEATURES = [
   { icon: Lock, title: "Escrow Protection", desc: "Seller tokens are locked in an audited smart contract. Funds only release when both parties confirm the trade." },
   { icon: Zap, title: "Zero Fees", desc: "No platform fees at all. You only pay the tiny BNB gas fee (usually under $0.01) for on-chain transactions." },
-  { icon: ArrowLeftRight, title: "Direct P2P Trading", desc: "Trade USDT and BNB directly with other users. No centralised exchange, no KYC, no withdrawal limits." },
+  { icon: ArrowLeftRight, title: "Direct P2P Transfers", desc: "Transfer USDT and BNB directly wallet-to-wallet. Fully decentralised marketplace with no intermediaries." },
   { icon: Users, title: "Indian Payment Methods", desc: "Pay with UPI (GPay, PhonePe, Paytm) or Bank Transfer (NEFT/IMPS). Sellers choose their preferred method." },
   { icon: Clock, title: "Timed Deals", desc: "Every deal has a countdown. If the buyer doesn't pay in time, the seller reclaims their tokens automatically." },
   { icon: Shield, title: "Dispute Resolution", desc: "If something goes wrong, either party can raise an on-chain dispute. An admin reviews and resolves it fairly." },
@@ -27,7 +27,7 @@ const About = () => (
         About Crypto P2P
       </h1>
       <p className="text-muted-foreground text-sm mb-10 max-w-xl">
-        A fully decentralised peer-to-peer trading platform built on BNB Smart Chain. Buy and sell crypto directly — secured by smart contract escrow.
+        A fully decentralised peer-to-peer marketplace built on BNB Smart Chain. Transfer crypto directly between users — secured by smart contract escrow.
       </p>
 
       {/* Features */}
@@ -66,7 +66,7 @@ const About = () => (
       <div className="rounded-lg border border-border bg-card p-4">
         <h3 className="text-sm font-medium text-foreground mb-1">Smart Contract</h3>
         <p className="text-xs text-muted-foreground mb-2">
-          All trades are secured by our escrow contract deployed on BNB Smart Chain mainnet.
+          All transfers are secured by our escrow contract deployed on BNB Smart Chain mainnet.
         </p>
         <a
           href="https://bscscan.com/address/0xd79ef02e1F64EF4368b942020129bd0Bc7da0d95"
@@ -82,7 +82,7 @@ const About = () => (
       <div className="rounded-lg border border-border bg-card p-4 mt-4">
         <h3 className="text-sm font-medium text-foreground mb-1">Support</h3>
         <p className="text-xs text-muted-foreground mb-2">
-          Need help with a trade, dispute, or anything else? Reach out on Telegram.
+          Need help with a deal, dispute, or anything else? Reach out on Telegram.
         </p>
         <a
           href="https://t.me/Tobi3811"
