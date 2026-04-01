@@ -5,7 +5,7 @@ import { Shield, Zap, Users, Lock, ArrowLeftRight, Clock } from "lucide-react";
 const FEATURES = [
   { icon: Lock, title: "Escrow Protection", desc: "Seller tokens are locked in an audited smart contract. Funds only release when both parties confirm the trade." },
   { icon: Zap, title: "Zero Fees", desc: "No platform fees at all. You only pay the tiny BNB gas fee (usually under $0.01) for on-chain transactions." },
-  { icon: ArrowLeftRight, title: "Direct P2P Trading", desc: "Trade USDT and BNB directly with other users. No centralised exchange, no KYC, no withdrawal limits." },
+  { icon: ArrowLeftRight, title: "Direct P2P Transfers", desc: "Transfer USDT and BNB directly wallet-to-wallet. Fully decentralised marketplace with no intermediaries." },
   { icon: Users, title: "Indian Payment Methods", desc: "Pay with UPI (GPay, PhonePe, Paytm) or Bank Transfer (NEFT/IMPS). Sellers choose their preferred method." },
   { icon: Clock, title: "Timed Deals", desc: "Every deal has a countdown. If the buyer doesn't pay in time, the seller reclaims their tokens automatically." },
   { icon: Shield, title: "Dispute Resolution", desc: "If something goes wrong, either party can raise an on-chain dispute. An admin reviews and resolves it fairly." },
