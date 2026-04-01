@@ -40,7 +40,7 @@ const StatsBar = () => {
       }
     }
 
-    return { totalVolume: total, volume24h: last24h };
+    return { totalVolume: total, volume24h: last24h, completedCount: completedDeals.length };
   }, [deals]);
 
   const formatINR = (val: number) => {
