@@ -439,9 +439,14 @@ const MyAds = () => {
                                 <span className="text-sm font-semibold text-sell">Deal #{relatedDeal.dealId} Disputed</span>
                               </div>
                               <p className="text-xs text-muted-foreground">Admin is reviewing. Funds are locked in escrow.</p>
-                              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setChatDealId(showChat ? null : relatedDeal.dealId)}>
+                              <Button variant="ghost" size="sm" className="text-muted-foreground relative" onClick={() => setChatDealId(showChat ? null : relatedDeal.dealId)}>
                                 <MessageSquare className="h-3 w-3 mr-1" />
                                 {showChat ? "Hide Chat" : "Chat"}
+                                {!showChat && (unreadCounts[relatedDeal.dealId] || 0) > 0 && (
+                                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sell px-1 text-[10px] font-bold text-white">
+                                    {unreadCounts[relatedDeal.dealId]}
+                                  </span>
+                                )}
                               </Button>
                             </div>
                           )}
