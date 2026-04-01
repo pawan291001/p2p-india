@@ -46,6 +46,8 @@ const MyAds = () => {
   const { address, isConnected } = useAccount();
   const { ads, isLoading, refetch: refetchAds } = useContractAds();
   const { deals, refetch: refetchDeals } = useContractDeals();
+  const activeDealIds = deals.filter(d => d.status === 0 || d.status === 1 || d.status === 4).map(d => d.dealId);
+  const unreadCounts = useUnreadCounts(activeDealIds, address || "");
   const [showCreate, setShowCreate] = useState(false);
   const [pendingAdId, setPendingAdId] = useState<number | null>(null);
   const [chatDealId, setChatDealId] = useState<number | null>(null);
