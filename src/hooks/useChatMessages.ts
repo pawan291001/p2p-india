@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { playChatNotification } from "@/lib/sounds";
 
 export interface ChatMessage {
   id: string;
@@ -55,15 +56,16 @@ export function useChatMessages(dealId: number, userAddress: string) {
         },
         (payload) => {
           const newMsg = payload.new as any;
+          const isOwn = newMsg.sender_address.toLowerCase() === userAddress.toLowerCase();
+
+          // Play notification sound for incoming partner messages
+          if (!isOwn) {
+            playChatNotification();
+          }
+
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [
-              ...prev,
-              {
-                ...newMsg,
-                isOwn: newMsg.sender_address.toLowerCase() === userAddress.toLowerCase(),
-              },
-            ];
+            return [...prev, { ...newMsg, isOwn }];
           });
         }
       )

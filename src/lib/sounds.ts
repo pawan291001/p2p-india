@@ -55,3 +55,26 @@ export function playAlertChime() {
   osc.start(now);
   osc.stop(now + 0.55);
 }
+
+export function playChatNotification() {
+  const c = getCtx();
+  if (!c) return;
+  if (c.state === "suspended") c.resume();
+
+  const now = c.currentTime;
+
+  // Soft two-note "ding-dong" for incoming chat
+  const notes = [880, 698.46]; // A5 → F5 (descending, friendly)
+  notes.forEach((freq, i) => {
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, now + i * 0.15);
+    gain.gain.linearRampToValueAtTime(0.15, now + i * 0.15 + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.3);
+    osc.connect(gain).connect(c.destination);
+    osc.start(now + i * 0.15);
+    osc.stop(now + i * 0.15 + 0.35);
+  });
+}
