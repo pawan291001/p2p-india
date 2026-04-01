@@ -7,7 +7,7 @@ const SECTIONS = [
     id: "intro",
     title: "What is Crypto P2P?",
     content: [
-      "Crypto P2P is a fully decentralised peer-to-peer trading platform built on BNB Smart Chain. It allows users to buy and sell USDT and BNB directly with each other using Indian Rupees (INR) — without any middlemen, centralised exchanges, or KYC requirements.",
+      "Crypto P2P is a fully decentralised peer-to-peer marketplace built on BNB Smart Chain. It allows users to transfer USDT and BNB directly with each other using Indian Rupees (INR) — without any middlemen or centralised intermediaries.",
       "Every trade is secured by an on-chain escrow smart contract. The seller's tokens are locked in the contract the moment they create an ad. This means buyers can trade with confidence — the crypto is already held safely before any money changes hands.",
       "There are zero platform fees. The only cost is the tiny BNB gas fee for on-chain transactions, which is usually under ₹1.",
     ],
