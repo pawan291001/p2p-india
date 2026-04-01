@@ -22,8 +22,8 @@ const FEATURES = [
   },
   {
     icon: ArrowLeftRight,
-    title: "Direct P2P Trades",
-    desc: "Trade USDT and BNB directly wallet-to-wallet. No centralised exchange, no KYC, no limits.",
+    title: "Direct P2P Transfers",
+    desc: "Transfer USDT and BNB directly wallet-to-wallet. No centralised intermediary, fully decentralised.",
   },
   {
     icon: Users,
