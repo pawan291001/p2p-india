@@ -1,4 +1,4 @@
-import { TrendingUp, ShieldCheck, Wallet, BarChart3, Clock } from "lucide-react";
+import { TrendingUp, ShieldCheck, Wallet, BarChart3, Clock, CheckCircle2 } from "lucide-react";
 import { useAccount, useBalance, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 import { USDT_ADDRESS } from "@/config/wagmi";
