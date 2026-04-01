@@ -65,14 +65,14 @@ const LandingHero = () => (
               className="text-3xl font-extrabold text-foreground sm:text-5xl tracking-tight"
               style={{ lineHeight: "1.08", textWrap: "balance" }}
             >
-              Trade Crypto
-              <span className="text-primary"> Peer-to-Peer</span>
+              P2P Crypto
+              <span className="text-primary"> Marketplace</span>
               <br />
               with Zero Fees
             </h1>
             <p className="mt-5 text-base text-muted-foreground max-w-lg leading-relaxed" style={{ textWrap: "pretty" }}>
-              Buy and sell USDT & BNB directly with other users on BNB Smart Chain.
-              Smart contract escrow protects every trade — no middlemen, no risks.
+              Connect with other users to transfer USDT & BNB on BNB Smart Chain.
+              Smart contract escrow secures every deal — no middlemen, fully on-chain.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <ConnectButton />
