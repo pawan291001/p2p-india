@@ -36,18 +36,23 @@ const Navbar = () => {
             Crypto P2P
           </Link>
           <div className="hidden items-center gap-1 md:flex">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link key={link.href} to={link.href}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={
+                  className={`relative ${
                     location.pathname === link.href
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
-                  }
+                  }`}
                 >
                   {link.label}
+                  {"badge" in link && (link as any).badge > 0 && (
+                    <span className="absolute -top-0.5 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                      {(link as any).badge > 99 ? "99+" : (link as any).badge}
+                    </span>
+                  )}
                 </Button>
               </Link>
             ))}
