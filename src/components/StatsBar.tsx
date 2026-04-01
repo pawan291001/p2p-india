@@ -23,7 +23,7 @@ const StatsBar = () => {
   const usdtFormatted = usdtRaw ? parseFloat(formatUnits(usdtRaw as bigint, 18)).toFixed(2) : "0";
 
   // Calculate volumes from completed deals (status 2 = completed)
-  const { totalVolume, volume24h } = useMemo(() => {
+  const { totalVolume, volume24h, completedCount } = useMemo(() => {
     const completedDeals = deals.filter((d) => d.status === 2);
     const now = Math.floor(Date.now() / 1000);
     const oneDayAgo = now - 24 * 60 * 60;
