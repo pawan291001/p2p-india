@@ -113,7 +113,7 @@ const LandingHero = () => (
           Why Crypto P2P?
         </h2>
         <p className="text-sm text-muted-foreground text-center mb-10 max-w-md mx-auto">
-          Everything you need for safe, fast, fee-free crypto trading in India.
+          Everything you need for safe, fast, fee-free P2P crypto transfers.
         </p>
       </ScrollReveal>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
