@@ -52,6 +52,12 @@ const StatsBar = () => {
     return `₹${val.toFixed(0)}`;
   };
 
+  const formatUSDT = (val: number) => {
+    if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
+    if (val >= 1000) return `$${(val / 1000).toFixed(1)}K`;
+    return `$${val.toFixed(2)}`;
+  };
+
   const stats = [
     {
       icon: Wallet,
@@ -70,8 +76,13 @@ const StatsBar = () => {
     },
     {
       icon: BarChart3,
-      label: "Total Volume",
+      label: "Volume (INR)",
       value: formatINR(totalVolume),
+    },
+    {
+      icon: TrendingUp,
+      label: "Volume (USDT)",
+      value: formatUSDT(totalUsdtVolume),
     },
     {
       icon: Clock,
@@ -81,7 +92,7 @@ const StatsBar = () => {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {stats.map((stat, i) => (
         <div
           key={stat.label}
