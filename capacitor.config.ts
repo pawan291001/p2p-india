@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'p2p-india',
   webDir: 'dist',
   server: {
-    url: "https://e7ff8c42-33b5-4f2c-8dd4-523bfb485052.lovableproject.com?forceHideBadge=true",
+    url: "https://p2p-india.lovable.app",
     cleartext: true
   }
 };
