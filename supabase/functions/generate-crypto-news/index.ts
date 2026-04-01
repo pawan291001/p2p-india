@@ -159,10 +159,13 @@ Return ONLY a JSON array with 3-5 articles. No markdown code blocks.`
       );
     }
 
-    // Build source string from URLs
+    // Build source string from URLs — prefer article-specific, fall back to all Perplexity citations
+    const allCitationsStr = citations.length > 0 ? citations.join(",") : "Web Search";
+
     const rows = newArticles.map((a: any) => {
       const sourceUrls = a.source_urls || [];
-      const sourceText = sourceUrls.length > 0 ? sourceUrls.join(",") : (citations.length > 0 ? citations.slice(0, 2).join(",") : "Web Search");
+      const validUrls = sourceUrls.filter((u: string) => typeof u === "string" && u.startsWith("http"));
+      const sourceText = validUrls.length > 0 ? validUrls.join(",") : allCitationsStr;
 
       return {
         title: a.title,
