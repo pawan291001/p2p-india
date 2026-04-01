@@ -62,6 +62,11 @@ const StatsBar = () => {
       value: isConnected ? `${usdtFormatted} USDT` : "—",
     },
     {
+      icon: CheckCircle2,
+      label: "Completed Deals",
+      value: `${completedCount}`,
+    },
+    {
       icon: BarChart3,
       label: "Total Volume",
       value: formatINR(totalVolume),
