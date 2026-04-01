@@ -20,49 +20,70 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get existing titles from last 24h to avoid duplicates
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // Get existing titles from last 48h to avoid duplicates
+    const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
     const { data: existing } = await supabase
       .from("crypto_news")
       .select("title")
       .gte("published_at", since);
 
-    const existingTitles = (existing || []).map((r: any) => r.title).join(", ");
+    const existingTitles = (existing || []).map((r: any) => r.title);
 
-    const prompt = `You are a crypto news journalist. Generate 3 NEW and UNIQUE crypto news articles about the latest developments in cryptocurrency, blockchain, DeFi, Bitcoin, Ethereum, BNB, and related topics.
+    // Use Lovable AI with a model that has recent knowledge
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are a crypto news journalist with access to real-time information. Your job is to report ONLY real, factual cryptocurrency news that has actually happened recently. 
 
-${existingTitles ? `IMPORTANT: Do NOT repeat these existing titles: ${existingTitles}` : ""}
+CRITICAL RULES:
+- Report ONLY real events you are confident actually happened
+- Include specific details: names, amounts, dates, protocols involved
+- Focus on: hacks, exploits, scams, major price movements, regulatory actions, exchange issues, protocol bugs, whale movements, significant partnerships, token launches, airdrops, court cases, SEC actions
+- Each article MUST include real source references (e.g., "Source: CoinDesk", "Source: @whale_alert on X", "Source: The Block")
+- Do NOT fabricate or hallucinate any news
+- If unsure about something, skip it
 
-Each article should be current, realistic, and informative. Return a JSON array with exactly 3 objects, each having:
-- "title": catchy headline (max 100 chars)
-- "summary": 1-2 sentence summary (max 200 chars)
-- "content": full article (300-500 words, with paragraphs)
-- "category": one of "bitcoin", "ethereum", "defi", "regulation", "market", "technology", "nft", "general"
+Return a JSON array with exactly 3 articles. Each object must have:
+- "title": headline (max 120 chars)
+- "summary": 1-2 sentence summary (max 250 chars) 
+- "content": full article (3-5 paragraphs with real details)
+- "category": one of "bitcoin", "ethereum", "defi", "regulation", "market", "technology", "security", "general"
+- "sources": array of strings like ["CoinDesk", "CoinTelegraph", "The Block", "@username on X"]
 
-Return ONLY the JSON array, no other text.`;
+Return ONLY the JSON array. No markdown.`
+          },
+          {
+            role: "user",
+            content: `Report the 3 most significant and recent cryptocurrency news stories. Focus on real events: security breaches, major hacks, scam alerts, big price swings, regulatory crackdowns, protocol vulnerabilities, whale dumps/pumps, exchange delistings, legal cases, or any major market-moving events.
 
-    const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: "You are a crypto news content generator. Always return valid JSON arrays." },
-            { role: "user", content: prompt },
-          ],
-        }),
-      }
-    );
+${existingTitles.length > 0 ? `SKIP these already-reported stories:\n${existingTitles.map((t: string) => `- ${t}`).join("\n")}` : ""}
+
+Remember: Only factual news with real source attribution.`
+          }
+        ],
+      }),
+    });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       console.error("AI gateway error:", aiResponse.status, errText);
-      return new Response(JSON.stringify({ error: "AI gateway error", status: aiResponse.status }), {
+
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limited, try again later" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: "AI gateway error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -70,16 +91,16 @@ Return ONLY the JSON array, no other text.`;
 
     const aiData = await aiResponse.json();
     let content = aiData.choices?.[0]?.message?.content || "";
-
-    // Clean markdown code blocks if present
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+
+    console.log("AI response length:", content.length);
 
     let articles: any[];
     try {
       articles = JSON.parse(content);
     } catch {
-      console.error("Failed to parse AI response:", content);
-      return new Response(JSON.stringify({ error: "Failed to parse AI response" }), {
+      console.error("Failed to parse:", content.substring(0, 300));
+      return new Response(JSON.stringify({ error: "Failed to parse articles" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -92,26 +113,45 @@ Return ONLY the JSON array, no other text.`;
       });
     }
 
-    // Insert articles
-    const rows = articles.map((a: any) => ({
-      title: a.title,
-      summary: a.summary,
-      content: a.content,
-      category: a.category || "general",
-      source: "AI Generated",
-      published_at: new Date().toISOString(),
-    }));
+    // Filter duplicates
+    const newArticles = articles.filter(
+      (a: any) => !existingTitles.some((t: string) => t.toLowerCase() === a.title?.toLowerCase())
+    );
+
+    if (newArticles.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, count: 0, message: "No new unique articles" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const rows = newArticles.map((a: any) => {
+      // Build source string from the sources array
+      const sources = a.sources || [];
+      const sourceStr = sources.length > 0 ? sources.join(", ") : "Crypto News Aggregator";
+
+      return {
+        title: a.title,
+        summary: a.summary,
+        content: a.content,
+        category: a.category || "general",
+        source: sourceStr,
+        image_url: null,
+        published_at: new Date().toISOString(),
+      };
+    });
 
     const { error: insertError } = await supabase.from("crypto_news").insert(rows);
 
     if (insertError) {
       console.error("Insert error:", insertError);
-      return new Response(JSON.stringify({ error: "Failed to save articles" }), {
+      return new Response(JSON.stringify({ error: "Failed to save" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    console.log(`Saved ${rows.length} articles`);
     return new Response(
       JSON.stringify({ success: true, count: rows.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
