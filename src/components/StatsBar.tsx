@@ -30,17 +30,19 @@ const StatsBar = () => {
 
     let total = 0;
     let last24h = 0;
+    let totalUsdt = 0;
 
     for (const deal of completedDeals) {
       const inr = parseFloat(deal.inrAmount) || 0;
+      const usdt = parseFloat(deal.tokenAmount) || 0;
       total += inr;
-      // Use deadline as a proxy for completion time (deadline is set when deal was created)
+      totalUsdt += usdt;
       if (deal.deadline > oneDayAgo || deal.deadline > now - 48 * 60 * 60) {
         last24h += inr;
       }
     }
 
-    return { totalVolume: total, volume24h: last24h, completedCount: completedDeals.length };
+    return { totalVolume: total, volume24h: last24h, completedCount: completedDeals.length, totalUsdtVolume: totalUsdt };
   }, [deals]);
 
   const formatINR = (val: number) => {
