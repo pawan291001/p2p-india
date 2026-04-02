@@ -15,26 +15,32 @@ import News from "./pages/News";
 import NotFound from "./pages/NotFound";
 import SupportButton from "@/components/SupportButton";
 import DisclaimerModal from "@/components/DisclaimerModal";
+import BottomNav from "@/components/BottomNav";
+import NotificationPermission from "@/components/NotificationPermission";
 
 const App = () => (
   <WalletProvider>
     <TooltipProvider>
       <DisclaimerModal />
+      <NotificationPermission />
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/my-ads" element={<MyAds />} />
-          <Route path="/my-orders" element={<MyOrders />} />
-           <Route path="/admin" element={<Admin />} />
-           <Route path="/about" element={<About />} />
-           <Route path="/terms" element={<Terms />} />
-           <Route path="/guide" element={<Guide />} />
-           <Route path="/news" element={<News />} />
-           <Route path="/privacy" element={<Privacy />} />
-           <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="pb-16 md:pb-0">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/my-ads" element={<MyAds />} />
+            <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/guide" element={<Guide />} />
+            <Route path="/news" element={<News />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <BottomNav />
+        </div>
       </BrowserRouter>
       <SupportButton />
     </TooltipProvider>
