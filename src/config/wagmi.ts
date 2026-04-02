@@ -6,6 +6,8 @@ export const config = getDefaultConfig({
   projectId: "demo_project_id", // Replace with your WalletConnect project ID
   chains: [bsc],
   ssr: false,
+  // RainbowKit v2 automatically detects injected wallets (MetaMask, OKX, Trust, etc.)
+  // and shows WalletConnect for mobile deep-linking to any wallet
 });
 
 // Contract address — replace after deploying
