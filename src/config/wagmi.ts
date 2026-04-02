@@ -12,7 +12,7 @@ import { bsc } from "wagmi/chains";
 
 export const config = getDefaultConfig({
   appName: "Crypto P2P",
-  projectId: "demo_project_id", // Replace with your WalletConnect project ID
+  projectId: "28e26a9fa8f1bef0d253abc623eec65c",
   chains: [bsc],
   ssr: false,
   wallets: [
