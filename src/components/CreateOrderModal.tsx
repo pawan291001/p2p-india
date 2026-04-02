@@ -224,9 +224,8 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
 
   const resetForm = () => {
     setPrice(""); setAmount("");
-    setSellerName(""); setSelectedMethod(""); setUpiId("");
-    setBankName(""); setAccountNumber(""); setIfscCode(""); setPaymentId("");
     setStep("form");
+    setProfileLoaded(false);
     resetApprove(); resetCreate();
   };
 
