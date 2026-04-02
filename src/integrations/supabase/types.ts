@@ -83,6 +83,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_payment_profiles: {
+        Row: {
+          account_number: string | null
+          bank_name: string | null
+          created_at: string
+          id: string
+          ifsc_code: string | null
+          payment_id: string | null
+          payment_method: string | null
+          seller_name: string | null
+          updated_at: string
+          upi_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          ifsc_code?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          seller_name?: string | null
+          updated_at?: string
+          upi_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          ifsc_code?: string | null
+          payment_id?: string | null
+          payment_method?: string | null
+          seller_name?: string | null
+          updated_at?: string
+          upi_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
