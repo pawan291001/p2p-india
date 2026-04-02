@@ -181,6 +181,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
 
   useEffect(() => {
     if (createConfirmed && step === "posting") {
+      savePaymentProfile();
       toast.success("Ad posted successfully! Your tokens are in escrow.");
       resetForm();
       onClose();
