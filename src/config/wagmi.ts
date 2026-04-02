@@ -1,13 +1,14 @@
-import { getDefaultConfig, getDefaultWallets } from "@rainbow-me/rainbowkit";
+import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import {
+  metaMaskWallet,
+  walletConnectWallet,
   okxWallet,
   trustWallet,
   coinbaseWallet,
   phantomWallet,
+  injectedWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { bsc } from "wagmi/chains";
-
-const { wallets: defaultWallets } = getDefaultWallets();
 
 export const config = getDefaultConfig({
   appName: "Crypto P2P",
@@ -15,10 +16,13 @@ export const config = getDefaultConfig({
   chains: [bsc],
   ssr: false,
   wallets: [
-    ...defaultWallets,
     {
-      groupName: "More Wallets",
-      wallets: [okxWallet, trustWallet, coinbaseWallet, phantomWallet],
+      groupName: "Popular",
+      wallets: [metaMaskWallet, okxWallet, trustWallet, coinbaseWallet, walletConnectWallet],
+    },
+    {
+      groupName: "More",
+      wallets: [phantomWallet, injectedWallet],
     },
   ],
 });
