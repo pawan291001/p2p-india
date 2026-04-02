@@ -17,25 +17,24 @@ const BottomNav = () => {
   const unreadCount = useGlobalUnreadCount(address);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-surface-1/95 backdrop-blur-xl safe-bottom md:hidden">
-      <div className="flex items-end justify-around px-1 pt-1 pb-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-2xl md:hidden">
+      <div className="flex items-end justify-around px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">
         {NAV_ITEMS.map((item) => {
           const isActive = location.pathname === item.href ||
-            (item.href === "/create" && false); // center button never "active"
+            (item.href === "/create" && false);
           const Icon = item.icon;
 
           if (item.isCenter) {
             return (
               <button
                 key="create"
-                className="relative -mt-5 flex flex-col items-center"
+                className="relative -mt-6 flex flex-col items-center"
                 onClick={() => {
-                  // Dispatch custom event for create modal
                   window.dispatchEvent(new CustomEvent("open-create-modal"));
                 }}
               >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 active:scale-95 transition-transform">
-                  <PlusCircle className="h-7 w-7 text-primary-foreground" strokeWidth={2.5} />
+                <span className="flex h-[3.5rem] w-[3.5rem] items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-xl shadow-primary/30 active:scale-95 transition-transform border-4 border-background">
+                  <PlusCircle className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
                 </span>
               </button>
             );
@@ -47,25 +46,25 @@ const BottomNav = () => {
             <Link
               key={item.href}
               to={item.href}
-              className={`relative flex flex-col items-center gap-0.5 px-3 py-2 min-w-[60px] transition-colors ${
+              className={`relative flex flex-col items-center gap-1 px-3 py-2 min-w-[56px] transition-all ${
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground active:text-foreground"
               }`}
             >
               <div className="relative">
-                <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+                <Icon className={`h-[22px] w-[22px] transition-transform ${isActive ? "scale-110" : ""}`} strokeWidth={isActive ? 2.5 : 1.8} />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground shadow-sm">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] leading-tight ${isActive ? "font-semibold" : "font-medium"}`}>
+              <span className={`text-[10px] leading-none ${isActive ? "font-bold" : "font-medium"}`}>
                 {item.label}
               </span>
               {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-primary" />
+                <span className="absolute -top-[1px] left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-primary" />
               )}
             </Link>
           );
