@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import { useBnbPrice } from "@/hooks/useBnbPrice";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateOrderModalProps {
   open: boolean;
@@ -64,6 +65,48 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const [ifscCode, setIfscCode] = useState("");
   // Generic payment ID (Google Pay, PhonePe, PayPal, Wise)
   const [paymentId, setPaymentId] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  // Load saved payment profile for this wallet
+  useEffect(() => {
+    if (!address || !open || profileLoaded) return;
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from("wallet_payment_profiles")
+        .select("*")
+        .eq("wallet_address", address.toLowerCase())
+        .maybeSingle();
+      if (data) {
+        if (data.seller_name) setSellerName(data.seller_name);
+        if (data.payment_method) setSelectedMethod(data.payment_method as PaymentMethod);
+        if (data.upi_id) setUpiId(data.upi_id);
+        if (data.bank_name) setBankName(data.bank_name);
+        if (data.account_number) setAccountNumber(data.account_number);
+        if (data.ifsc_code) setIfscCode(data.ifsc_code);
+        if (data.payment_id) setPaymentId(data.payment_id);
+      }
+      setProfileLoaded(true);
+    };
+    loadProfile();
+  }, [address, open, profileLoaded]);
+
+  // Save payment profile on successful ad creation
+  const savePaymentProfile = useCallback(async () => {
+    if (!address) return;
+    const profileData = {
+      wallet_address: address.toLowerCase(),
+      seller_name: sellerName.trim(),
+      payment_method: selectedMethod,
+      upi_id: upiId.trim(),
+      bank_name: bankName.trim(),
+      account_number: accountNumber.trim(),
+      ifsc_code: ifscCode.trim(),
+      payment_id: paymentId.trim(),
+    };
+    await supabase
+      .from("wallet_payment_profiles")
+      .upsert(profileData, { onConflict: "wallet_address" });
+  }, [address, sellerName, selectedMethod, upiId, bankName, accountNumber, ifscCode, paymentId]);
 
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
@@ -138,6 +181,7 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
 
   useEffect(() => {
     if (createConfirmed && step === "posting") {
+      savePaymentProfile();
       toast.success("Ad posted successfully! Your tokens are in escrow.");
       resetForm();
       onClose();
@@ -180,9 +224,8 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
 
   const resetForm = () => {
     setPrice(""); setAmount("");
-    setSellerName(""); setSelectedMethod(""); setUpiId("");
-    setBankName(""); setAccountNumber(""); setIfscCode(""); setPaymentId("");
     setStep("form");
+    setProfileLoaded(false);
     resetApprove(); resetCreate();
   };
 
@@ -614,10 +657,10 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
             )}
 
             {/* Spacer so content doesn't hide behind sticky button */}
-            <div className="h-20" />
+            <div className="h-24" />
 
             {/* Sticky submit button */}
-            <div className="sticky bottom-0 left-0 right-0 bg-card pt-2 pb-4 -mb-5 sm:-mb-6 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border">
+            <div className="sticky bottom-0 left-0 right-0 bg-card pt-3 pb-6 -mb-5 sm:-mb-6 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
               <Button
                 variant="sell"
                 className="w-full"
