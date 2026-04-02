@@ -24,6 +24,13 @@ const Index = () => {
   const [crypto, setCrypto] = useState("USDT");
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+
+  // Listen for bottom nav create button
+  useEffect(() => {
+    const handler = () => setShowCreate(true);
+    window.addEventListener("open-create-modal", handler);
+    return () => window.removeEventListener("open-create-modal", handler);
+  }, []);
   const [selectedAd, setSelectedAd] = useState<LiveAd | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [maxPrice, setMaxPrice] = useState("");
