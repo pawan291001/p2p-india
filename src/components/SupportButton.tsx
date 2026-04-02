@@ -1,64 +1,71 @@
 import { MessageCircle, X } from "lucide-react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const TG_LINK = "https://t.me/Tobi3811";
 
 const SupportButton = () => {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [initialized, setInitialized] = useState(false);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const posRef = useRef({ x: 0, y: 0 });
   const dragging = useRef(false);
-  const offset = useRef({ x: 0, y: 0 });
-  const btnRef = useRef<HTMLDivElement>(null);
-  const hasMoved = useRef(false);
+  const startPtr = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 0, y: 0 });
+  const moved = useRef(false);
+  const isDragging = useRef(false);
 
-  // Initialize position to bottom-right, above bottom nav
   useEffect(() => {
     const x = window.innerWidth - 72;
-    const y = window.innerHeight - 160; // above bottom nav
-    setPosition({ x, y });
-    setInitialized(true);
+    const y = window.innerHeight - 160;
+    posRef.current = { x, y };
+    setPos({ x, y });
   }, []);
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+  const onPointerDown = (e: React.PointerEvent) => {
     dragging.current = true;
-    hasMoved.current = false;
-    offset.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [position]);
+    isDragging.current = false;
+    moved.current = false;
+    startPtr.current = { x: e.clientX, y: e.clientY };
+    startPos.current = { ...posRef.current };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
 
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+  const onPointerMove = (e: React.PointerEvent) => {
     if (!dragging.current) return;
-    hasMoved.current = true;
-    const newX = Math.max(8, Math.min(window.innerWidth - 64, e.clientX - offset.current.x));
-    const newY = Math.max(8, Math.min(window.innerHeight - 140, e.clientY - offset.current.y));
-    setPosition({ x: newX, y: newY });
-  }, []);
+    const dx = e.clientX - startPtr.current.x;
+    const dy = e.clientY - startPtr.current.y;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      moved.current = true;
+      isDragging.current = true;
+    }
+    if (!moved.current) return;
+    const newX = Math.max(8, Math.min(window.innerWidth - 64, startPos.current.x + dx));
+    const newY = Math.max(60, Math.min(window.innerHeight - 140, startPos.current.y + dy));
+    posRef.current = { x: newX, y: newY };
+    setPos({ x: newX, y: newY });
+  };
 
-  const handlePointerUp = useCallback(() => {
+  const onPointerUp = () => {
     dragging.current = false;
-  }, []);
+    setTimeout(() => { isDragging.current = false; }, 50);
+  };
 
-  const handleClick = useCallback(() => {
-    if (!hasMoved.current) {
+  const onButtonClick = () => {
+    if (!moved.current) {
       setOpen(prev => !prev);
     }
-  }, []);
+    moved.current = false;
+  };
 
-  if (!initialized) return null;
+  if (!pos) return null;
 
   return (
     <div
-      ref={btnRef}
       className="fixed z-50 flex flex-col items-end gap-2"
       style={{
-        left: position.x,
-        top: position.y,
+        left: pos.x,
+        top: pos.y,
         touchAction: "none",
-        transition: dragging.current ? "none" : "left 0.15s ease, top 0.15s ease",
       }}
     >
       {open && (
@@ -79,11 +86,11 @@ const SupportButton = () => {
         </div>
       )}
       <button
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onClick={handleClick}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl transition-all active:scale-[0.95] cursor-grab active:cursor-grabbing"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onClick={onButtonClick}
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl transition-shadow cursor-grab active:cursor-grabbing select-none"
         aria-label="Support"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
