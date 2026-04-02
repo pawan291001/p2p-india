@@ -65,6 +65,48 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
   const [ifscCode, setIfscCode] = useState("");
   // Generic payment ID (Google Pay, PhonePe, PayPal, Wise)
   const [paymentId, setPaymentId] = useState("");
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  // Load saved payment profile for this wallet
+  useEffect(() => {
+    if (!address || !open || profileLoaded) return;
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from("wallet_payment_profiles")
+        .select("*")
+        .eq("wallet_address", address.toLowerCase())
+        .maybeSingle();
+      if (data) {
+        if (data.seller_name) setSellerName(data.seller_name);
+        if (data.payment_method) setSelectedMethod(data.payment_method as PaymentMethod);
+        if (data.upi_id) setUpiId(data.upi_id);
+        if (data.bank_name) setBankName(data.bank_name);
+        if (data.account_number) setAccountNumber(data.account_number);
+        if (data.ifsc_code) setIfscCode(data.ifsc_code);
+        if (data.payment_id) setPaymentId(data.payment_id);
+      }
+      setProfileLoaded(true);
+    };
+    loadProfile();
+  }, [address, open, profileLoaded]);
+
+  // Save payment profile on successful ad creation
+  const savePaymentProfile = useCallback(async () => {
+    if (!address) return;
+    const profileData = {
+      wallet_address: address.toLowerCase(),
+      seller_name: sellerName.trim(),
+      payment_method: selectedMethod,
+      upi_id: upiId.trim(),
+      bank_name: bankName.trim(),
+      account_number: accountNumber.trim(),
+      ifsc_code: ifscCode.trim(),
+      payment_id: paymentId.trim(),
+    };
+    await supabase
+      .from("wallet_payment_profiles")
+      .upsert(profileData, { onConflict: "wallet_address" });
+  }, [address, sellerName, selectedMethod, upiId, bankName, accountNumber, ifscCode, paymentId]);
 
   const selectedToken = CRYPTOS.find((c) => c.symbol === crypto)!;
   const isBNB = crypto === "BNB";
