@@ -613,26 +613,32 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
               </div>
             )}
 
-            <Button
-              variant="sell"
-              className="w-full mt-2"
-              size="lg"
-              disabled={!canSubmit}
-              onClick={handleSubmit}
-            >
-              {isProcessing ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : null}
-              {step === "approving"
-                ? "Approving…"
-                : step === "posting"
-                ? "Posting…"
-                : isBNB
-                ? `Post Sell Ad — Deposit ${amount || "0"} BNB`
-                : needsApproval
-                ? `Approve & Post — Deposit ${amount || "0"} USDT`
-                : `Post Sell Ad — Deposit ${amount || "0"} USDT`}
-            </Button>
+            {/* Spacer so content doesn't hide behind sticky button */}
+            <div className="h-20" />
+
+            {/* Sticky submit button */}
+            <div className="sticky bottom-0 left-0 right-0 bg-card pt-2 pb-4 -mb-5 sm:-mb-6 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border">
+              <Button
+                variant="sell"
+                className="w-full"
+                size="lg"
+                disabled={!canSubmit}
+                onClick={handleSubmit}
+              >
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : null}
+                {step === "approving"
+                  ? "Approving…"
+                  : step === "posting"
+                  ? "Posting…"
+                  : isBNB
+                  ? `Post Sell Ad — Deposit ${amount || "0"} BNB`
+                  : needsApproval
+                  ? `Approve & Post — Deposit ${amount || "0"} USDT`
+                  : `Post Sell Ad — Deposit ${amount || "0"} USDT`}
+              </Button>
+            </div>
           </div>
         )}
       </div>
