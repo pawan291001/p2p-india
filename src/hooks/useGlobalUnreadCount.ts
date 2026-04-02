@@ -1,32 +1,34 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useGlobalUnreadCount(userAddress: string | undefined) {
   const [count, setCount] = useState(0);
+  const addressRef = useRef(userAddress);
+  addressRef.current = userAddress;
 
-  const fetchCount = useCallback(async () => {
+  useEffect(() => {
     if (!userAddress) { setCount(0); return; }
     const addr = userAddress.toLowerCase();
 
-    const { count: total, error } = await supabase
-      .from("deal_messages")
-      .select("*", { count: "exact", head: true })
-      .neq("sender_address", addr)
-      .is("read_at", null);
+    const fetchCount = async () => {
+      const { count: total, error } = await supabase
+        .from("deal_messages")
+        .select("*", { count: "exact", head: true })
+        .neq("sender_address", addr)
+        .is("read_at", null);
+      if (!error && total !== null) setCount(total);
+    };
 
-    if (!error && total !== null) setCount(total);
-  }, [userAddress]);
+    fetchCount();
 
-  useEffect(() => { fetchCount(); }, [fetchCount]);
-
-  useEffect(() => {
-    if (!userAddress) return;
+    const channelName = `global-unread-${Date.now()}`;
     const channel = supabase
-      .channel("global-unread")
+      .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "deal_messages" }, () => fetchCount())
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
-  }, [userAddress, fetchCount]);
+  }, [userAddress]);
 
   return count;
 }
