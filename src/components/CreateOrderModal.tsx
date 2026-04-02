@@ -657,10 +657,10 @@ const CreateOrderModal = ({ open, onClose }: CreateOrderModalProps) => {
             )}
 
             {/* Spacer so content doesn't hide behind sticky button */}
-            <div className="h-20" />
+            <div className="h-24" />
 
             {/* Sticky submit button */}
-            <div className="sticky bottom-0 left-0 right-0 bg-card pt-2 pb-4 -mb-5 sm:-mb-6 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border">
+            <div className="sticky bottom-0 left-0 right-0 bg-card pt-3 pb-6 -mb-5 sm:-mb-6 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
               <Button
                 variant="sell"
                 className="w-full"
