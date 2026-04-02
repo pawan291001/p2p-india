@@ -1,13 +1,26 @@
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { getDefaultConfig, getDefaultWallets } from "@rainbow-me/rainbowkit";
+import {
+  okxWallet,
+  trustWallet,
+  coinbaseWallet,
+  phantomWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 import { bsc } from "wagmi/chains";
+
+const { wallets: defaultWallets } = getDefaultWallets();
 
 export const config = getDefaultConfig({
   appName: "Crypto P2P",
   projectId: "demo_project_id", // Replace with your WalletConnect project ID
   chains: [bsc],
   ssr: false,
-  // RainbowKit v2 automatically detects injected wallets (MetaMask, OKX, Trust, etc.)
-  // and shows WalletConnect for mobile deep-linking to any wallet
+  wallets: [
+    ...defaultWallets,
+    {
+      groupName: "More Wallets",
+      wallets: [okxWallet, trustWallet, coinbaseWallet, phantomWallet],
+    },
+  ],
 });
 
 // Contract address — replace after deploying
