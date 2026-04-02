@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { P2P_CONTRACT_ADDRESS, USDT_ADDRESS } from "@/config/wagmi";
 import { P2P_ESCROW_ABI, ERC20_ABI } from "@/config/abi";
 import { toast } from "sonner";
 import { useBnbPrice } from "@/hooks/useBnbPrice";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateOrderModalProps {
   open: boolean;

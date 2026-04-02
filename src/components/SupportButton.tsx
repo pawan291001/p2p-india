@@ -61,7 +61,7 @@ const SupportButton = () => {
 
   return (
     <div
-      className="fixed z-50 flex flex-col items-end gap-2"
+      className="fixed z-40 flex flex-col items-end gap-2"
       style={{
         left: pos.x,
         top: pos.y,
